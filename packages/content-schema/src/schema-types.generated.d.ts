@@ -69,6 +69,18 @@ export interface CardCatalogJson {
     "stats"?: {
       [key: string]: number;
     };
+    "display"?: {
+      "layout"?: string;
+      "properties"?: {
+        "property": string;
+        "source"?: "template" | "stats" | "counter" | "resource" | "metadata" | "computed";
+        "slot": string;
+        "icon"?: string;
+        "label"?: string;
+        "priority"?: number;
+      }[];
+      [key: string]: unknown;
+    };
     "metadata"?: {
       [key: string]: unknown;
     };

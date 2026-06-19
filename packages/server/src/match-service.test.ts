@@ -152,6 +152,44 @@ test("match service end_turn advances to next player and starts their phase grap
   assert.ok(updated.events.some((event) => event.type === "phase_entered"));
 });
 
+test("match service creates a fair demo duel and gates behavior commands by active player", () => {
+  const service = new InMemoryMatchService();
+  const match = service.createMatch("sample-duel", { demoDuel: true });
+
+  assert.equal(match.state.turn.activePlayerId, "p1");
+  assert.equal(match.state.turn.phaseId, "main");
+  assert.equal(match.state.players.p1?.resources.health.current, 10);
+  assert.equal(match.state.players.p2?.resources.health.current, 10);
+  assert.ok(match.state.zones.zone_hand_p2?.objectIds.includes("card_firebolt_p2"));
+  assert.ok(match.state.zones.zone_board_p2?.objectIds.includes("minion_loot_p2"));
+
+  assert.throws(
+    () =>
+      service.submitCommand(match.id, {
+        id: "cmd_demo_p2_out_of_turn",
+        matchId: match.id,
+        playerId: "p2",
+        type: "execute_behavior",
+        payload: {
+          behaviorId: "firebolt",
+          sourceObjectId: "card_firebolt_p2",
+          selections: { target: ["p1"] }
+        }
+      }),
+    /active player p1/
+  );
+
+  const p2Turn = service.submitCommand(match.id, {
+    id: "cmd_demo_p1_end_turn",
+    matchId: match.id,
+    playerId: "p1",
+    type: "end_turn",
+    payload: {}
+  });
+  assert.equal(p2Turn.state.turn.activePlayerId, "p2");
+  assert.equal(p2Turn.state.turn.phaseId, "main");
+});
+
 test("match service end_turn runs identity discard/finish and starts next identity turn", () => {
   const service = new InMemoryMatchService();
   const match = service.createMatch("sample-identity");

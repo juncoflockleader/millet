@@ -36,6 +36,7 @@
     "firebolt",
     "minion_attack",
     "weapon_attack",
+    "hero_focus",
     "nova",
     "coin",
     "draw_or_fatigue",

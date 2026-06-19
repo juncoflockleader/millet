@@ -1,0 +1,649 @@
+:root {
+  color-scheme: dark;
+  --ink: #f7efe4;
+  --muted: #bcae9b;
+  --panel: rgba(16, 18, 23, 0.82);
+  --panel-strong: rgba(10, 12, 16, 0.92);
+  --line: rgba(255, 205, 140, 0.22);
+  --accent: #f59d3d;
+  --accent-strong: #ffcf76;
+  --danger: #f0625f;
+  --good: #69d39a;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(3, 5, 10, 0.15), rgba(3, 5, 10, 0.88)),
+    url("/assets/ember-duel-board.png") center / cover no-repeat fixed,
+    #080a0f;
+}
+
+button {
+  min-height: 34px;
+  border: 1px solid rgba(255, 205, 140, 0.24);
+  border-radius: 6px;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(245, 157, 61, 0.96), rgba(165, 82, 30, 0.96));
+  font: inherit;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: rgba(255, 220, 165, 0.75);
+  filter: brightness(1.08);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ghost {
+  background: rgba(16, 18, 23, 0.82);
+}
+
+.app-shell {
+  width: min(1160px, calc(100vw - 12px));
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 6px 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+}
+
+.topbar {
+  min-height: 52px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+p,
+.turn-copy span,
+.meta {
+  color: var(--muted);
+}
+
+.topbar-actions,
+.selector,
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.topbar-actions button {
+  padding: 0 11px;
+}
+
+.topbar p {
+  font-size: 12px;
+}
+
+.play-area {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.arena-scale-box {
+  position: relative;
+  width: 1120px;
+  height: 620px;
+}
+
+.arena {
+  position: relative;
+  width: 1120px;
+  height: 620px;
+  min-height: 0;
+  padding: 12px;
+  display: grid;
+  grid-template-rows: 214px 96px 254px;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 205, 140, 0.18);
+  border-radius: 8px;
+  background: rgba(7, 8, 11, 0.42);
+  box-shadow: inset 0 0 130px rgba(0, 0, 0, 0.52);
+  transform: scale(var(--arena-scale, 1));
+  transform-origin: top left;
+}
+
+.effect-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.effect-burst {
+  position: absolute;
+  left: var(--effect-left);
+  top: var(--effect-top);
+  width: min(250px, 30vw);
+  aspect-ratio: 1 / 2;
+  background: var(--effect-sheet) 0 0 / 600% 100% no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0;
+  translate: -50% -50%;
+  scale: var(--effect-scale, 1);
+  rotate: var(--effect-rotate, 0deg);
+  filter: drop-shadow(0 0 20px rgba(255, 168, 70, 0.42));
+  animation:
+    effectSprite 720ms steps(5, end) forwards,
+    effectFade 720ms ease-out forwards;
+}
+
+.effect-at-p2 {
+  --effect-left: 72%;
+  --effect-top: 23%;
+}
+
+.effect-at-p1 {
+  --effect-left: 28%;
+  --effect-top: 77%;
+}
+
+.effect-at-center {
+  --effect-left: 50%;
+  --effect-top: 50%;
+  --effect-scale: 1.55;
+}
+
+.effect-firebolt {
+  --effect-rotate: -34deg;
+}
+
+.effect-nova {
+  --effect-scale: 1.8;
+}
+
+.effect-coin {
+  --effect-scale: 0.68;
+}
+
+.effect-attack {
+  --effect-rotate: -42deg;
+}
+
+@keyframes effectSprite {
+  to {
+    background-position-x: 100%;
+  }
+}
+
+@keyframes effectFade {
+  0% {
+    opacity: 0;
+    filter: brightness(0.7) drop-shadow(0 0 6px rgba(255, 168, 70, 0.28));
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  78% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 0;
+    filter: brightness(1.25) blur(0.6px) drop-shadow(0 0 26px rgba(255, 168, 70, 0.55));
+  }
+}
+
+.player-row {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.opponent {
+  align-items: start;
+}
+
+.hero,
+.zone,
+.turn-panel,
+.battle-log {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(10px);
+}
+
+.hero {
+  position: relative;
+  padding: 8px;
+  display: grid;
+  align-content: start;
+  grid-template-rows: 54px auto auto auto minmax(0, 1fr) auto auto;
+  gap: 5px;
+}
+
+.hero-card {
+  min-height: 0;
+  cursor: grab;
+  transition: border-color 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+
+.hero-card:active {
+  cursor: grabbing;
+}
+
+.hero-art {
+  min-height: 0;
+  border: 1px solid rgba(255, 222, 171, 0.22);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.38)),
+    var(--hero-art) center / cover no-repeat;
+}
+
+.hero-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hero-title h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.hero-subtitle {
+  color: #dacbb9;
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.active-badge {
+  min-width: 56px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #16100b;
+  background: var(--accent-strong);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.resource {
+  min-height: 42px;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.resource strong {
+  display: block;
+  font-size: 17px;
+}
+
+.hero-ability-text {
+  min-height: 30px;
+  color: #dacbb9;
+  font-size: 11px;
+  line-height: 1.2;
+  overflow: hidden;
+}
+
+.hero-action {
+  min-height: 28px;
+  width: 100%;
+  font-size: 11px;
+}
+
+.zones {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(250px, 0.45fr) minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  gap: 8px;
+}
+
+.zone {
+  min-height: 0;
+  padding: 8px;
+}
+
+.zone h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.cards {
+  height: calc(100% - 22px);
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.card {
+  position: relative;
+  width: 118px;
+  min-width: 118px;
+  min-height: 0;
+  height: 100%;
+  padding: 7px;
+  display: grid;
+  grid-template-rows: 50px auto minmax(0, 1fr) auto;
+  gap: 5px;
+  border: 1px solid rgba(255, 222, 171, 0.3);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at top, rgba(255, 207, 118, 0.22), transparent 38%),
+    linear-gradient(180deg, rgba(55, 32, 24, 0.98), rgba(22, 23, 29, 0.98));
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.24), 0 10px 22px rgba(0, 0, 0, 0.24);
+  transition: border-color 160ms ease, box-shadow 160ms ease, filter 160ms ease, translate 160ms ease;
+  cursor: grab;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.card:hover:not(.disabled-card) {
+  border-color: rgba(255, 220, 165, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 207, 118, 0.08), 0 16px 28px rgba(0, 0, 0, 0.32);
+  translate: 0 -3px;
+}
+
+.card-art {
+  min-height: 0;
+  border: 1px solid rgba(255, 222, 171, 0.22);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.18)),
+    var(--card-art, linear-gradient(135deg, rgba(255, 207, 118, 0.16), rgba(0, 0, 0, 0.24))) center / cover no-repeat;
+  box-shadow: inset 0 -24px 26px rgba(0, 0, 0, 0.18);
+}
+
+.card .name {
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.12;
+}
+
+.card .text {
+  color: #dacbb9;
+  font-size: 11px;
+  line-height: 1.22;
+  overflow: hidden;
+}
+
+.card .card-action {
+  min-height: 27px;
+  width: 100%;
+  font-size: 11px;
+}
+
+.keyword {
+  min-height: 0;
+  width: auto;
+  padding: 0;
+  display: inline;
+  border: 0;
+  border-radius: 0;
+  color: var(--accent-strong);
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  font-weight: 820;
+  text-decoration: underline dotted rgba(255, 207, 118, 0.82);
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+.keyword:hover,
+.keyword:focus-visible {
+  color: #ffe1a6;
+  background: transparent;
+  filter: none;
+  outline: none;
+}
+
+.card.disabled-card {
+  filter: saturate(0.5);
+  opacity: 0.68;
+  cursor: default;
+}
+
+.property-badge {
+  position: absolute;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 233, 186, 0.52);
+  border-radius: 999px;
+  color: #fff7e8;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.2), transparent 28%), rgba(25, 21, 19, 0.94);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.34);
+  font-size: 12px;
+  font-weight: 920;
+}
+
+.slot-top-left {
+  top: 5px;
+  left: 5px;
+}
+
+.slot-top-right {
+  top: 5px;
+  right: 5px;
+}
+
+.slot-bottom-left {
+  bottom: 33px;
+  left: 5px;
+}
+
+.slot-bottom-right {
+  bottom: 33px;
+  right: 5px;
+}
+
+.hero-card .slot-top-left {
+  top: 6px;
+  left: 6px;
+}
+
+.hero-card .property-badge {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.icon-mana {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #216a8f;
+}
+
+.icon-sword {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #8a3d32;
+}
+
+.icon-heart {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #9f2e3f;
+}
+
+.icon-durability {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #75644a;
+}
+
+.selected-source {
+  border-color: rgba(255, 234, 178, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(255, 207, 118, 0.34), 0 0 0 2px rgba(255, 207, 118, 0.22), 0 16px 34px rgba(0, 0, 0, 0.34);
+}
+
+.valid-target {
+  border-color: rgba(105, 211, 154, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(105, 211, 154, 0.22), 0 0 0 2px rgba(105, 211, 154, 0.18), 0 16px 38px rgba(0, 0, 0, 0.32);
+}
+
+.center-lane {
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) 1fr;
+  gap: 8px;
+}
+
+.turn-panel {
+  padding: 9px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.selector button {
+  width: 48px;
+  background: rgba(16, 18, 23, 0.82);
+}
+
+.selector button.selected {
+  color: #16100b;
+  background: var(--accent-strong);
+}
+
+.turn-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.battle-log {
+  min-height: 0;
+  max-height: none;
+  padding: 8px 10px;
+  overflow: auto;
+}
+
+.log-entry {
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #dacbb9;
+  font-size: 12px;
+}
+
+.empty {
+  min-height: 74px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.52);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+}
+
+.result {
+  color: var(--good);
+}
+
+.danger {
+  color: var(--danger);
+}
+
+.tooltip-layer {
+  position: fixed;
+  z-index: 20;
+  width: min(280px, calc(100vw - 20px));
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 220, 165, 0.42);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(10, 12, 16, 0.96);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+  pointer-events: none;
+}
+
+.tooltip-layer strong,
+.tooltip-layer span {
+  display: block;
+}
+
+.tooltip-layer strong {
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.tooltip-layer span {
+  color: #dacbb9;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.tooltip-layer[hidden] {
+  display: none;
+}
+
+@media (max-width: 780px) {
+  .app-shell {
+    width: min(100vw - 8px, 720px);
+    padding: 4px 0;
+  }
+
+  .topbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .effect-burst {
+    width: min(210px, 46vw);
+  }
+}

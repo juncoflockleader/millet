@@ -4,6 +4,18 @@ Millet is a generalized multiplayer turn-based card game engine.
 
 The current implementation covers the M0-M8 milestone path as a set of tested prototype slices: deterministic replay, generic behavior resolution, two reference rulesets, content validation, text/UX sync helpers, playtest-server scaffolding, and internal replay/debug tooling.
 
+## Documentation
+
+Start with `docs/index.md`.
+
+- `docs/quick-start.md` gets you from checkout to a playable match and API command.
+- `docs/quick-start.html` is a standalone interactive quick-start page with checklist, command builder, and doc router.
+- `docs/concepts.md` explains the engine model.
+- `docs/ruleset-authoring.md` explains how to modify or create rulesets.
+- `docs/server-api.md` covers HTTP, SSE, WebSocket, projection, and command submission.
+- `docs/assets-and-ux.md` covers generated assets, behavior-to-UX mapping, prompts, and animation.
+- `docs/testing-and-debugging.md` covers validation, replay, projection, state diffing, and debug workflows.
+
 ## Run Tests
 
 This repo is dependency-free for the first implementation slice and uses Node's built-in test runner.
@@ -23,6 +35,14 @@ In the Codex desktop runtime used for this repository, Node is available at:
 ```sh
 /Users/jiawei/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/run-tests.mjs
 ```
+
+## Play The Basic 1v1 Demo
+
+```sh
+node --experimental-strip-types scripts/serve-demo.mjs
+```
+
+Open `http://127.0.0.1:8787/` to play the hotseat `Ember Duel` prototype. The demo uses the real server command/state APIs and the `sample-duel` ruleset. Notes and known issues are tracked in `docs/basic-duel-demo.md`.
 
 ## CLI
 

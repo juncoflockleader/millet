@@ -11,7 +11,21 @@ Goal: implement M0-M8 from `docs/milestones.md`.
 
 Latest local result:
 
-- 122 tests passing.
+- 125 tests passing.
+
+Basic 1v1 demo smoke:
+
+```sh
+/Users/jiawei/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --experimental-strip-types scripts/serve-demo.mjs
+```
+
+Latest local result:
+
+- Demo server started at `http://127.0.0.1:8787/` with escalated local-listen permission.
+- Headless browser smoke loaded `Ember Duel`, created a demo match, confirmed the image-generated board and card art assets loaded, cast `Firebolt`, confirmed the generated Firebolt VFX sheet rendered, and observed Player 2 health drop from 10 to 7 with no page errors.
+- Multi-viewport browser smoke confirmed the scaled play area remains inside desktop, tablet, mobile, and tiny viewports, with no document scrolling beyond the window and no page errors.
+- Tooltip smoke confirmed whole-card inspection and keyword tooltip rendering for card rules text.
+- Interaction smoke confirmed legacy action buttons, click-to-select targeting, drag-to-target targeting, hero card ability targeting, hero ability button execution, display-slot property badges, and viewport fit at `1280 x 720`.
 
 CLI smoke checks:
 
@@ -155,6 +169,7 @@ Evidence:
 - Tests cover weapon attacks decrementing durability and destroying the weapon at zero.
 - Tests cover the sample duel phase graph refreshing mana, drawing, and stopping at the main action window for both players.
 - Tests cover minion attack exhaustion and next-player turn advancement.
+- Tests cover a hero ability that spends active-player mana and damages the enemy hero without a source card object.
 - Server tests cover `end_turn` advancing to the next player and starting their phase graph.
 
 Remaining hardening:
@@ -339,14 +354,14 @@ Implemented:
 - File-backed scheduled action retention policy via configurable `maxActions`.
 - Match creation for `sample-duel` and `sample-identity`.
 - Match creation writes built-bundle content locks and can populate a bundle store.
-- Service-side command authorization for match id, seated player, player status, source-object control, prompt responders, and active-player end turn.
+- Service-side command authorization for match id, seated player, player status, source-object control, prompt responders, active-player end turn, and active-player behavior execution.
 - Structured HTTP error payloads for authorization, invalid JSON, and engine command rejections.
 - User-session authorization that maps `userId` to seated player ownership for commands and private projections.
 - HTTP prototype session headers:
   - `x-millet-user-id`
   - `x-millet-admin`
 - WebSocket prototype session headers use the same user/admin authorization path for private projection and command messages.
-- HTTP match creation, summary fetch, projected state fetch, projected replay fetch, command submission, SSE, and WebSocket upgrade routes.
+- HTTP match creation, summary fetch, projected state fetch, projected replay fetch, command submission, SSE, WebSocket upgrade, and static demo routes.
 - Command submission through the engine resolver.
 - Event accumulation.
 - Snapshot capture.
@@ -375,7 +390,7 @@ Implemented:
 
 Evidence:
 
-- Tests cover match creation, command submission, completion, snapshot capture, reconnect projection, projected HTTP state fetch, and projected HTTP replay fetch.
+- Tests cover match creation, command submission, completion, snapshot capture, reconnect projection, projected HTTP state fetch, projected HTTP replay fetch, fair demo-duel setup, player 1 first action window startup, mirrored player 2 demo cards, and active-player behavior-command rejection.
 - Tests reject unauthorized commands before mutation.
 - Tests cover structured HTTP engine rejection payloads.
 - Tests reject wrong-user session commands/projections and verify owner sessions receive private projected state.
@@ -392,7 +407,7 @@ Evidence:
 - Tests cover service-level `end_turn` automation.
 - Tests cover service-level identity `end_turn` cleanup and next-turn startup.
 - Tests cover metrics, metrics snapshot export, metrics text export, debug report generation, and transaction log sequence/hash summaries.
-- HTTP server construction is tested. Socket binding is not tested because the current sandbox rejects local `listen`.
+- HTTP server construction and static demo file serving are tested. Socket binding was smoke-tested with escalated local-listen permission for the demo server.
 
 Remaining hardening:
 

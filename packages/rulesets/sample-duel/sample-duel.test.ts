@@ -161,6 +161,23 @@ test("sample-duel second player coin grants one current mana and discards itself
   assert.deepEqual(result.state.zones.zone_discard?.objectIds, ["card_coin_p2"]);
 });
 
+test("sample-duel hero focus spends mana and damages the enemy hero", () => {
+  const result = execute(setup({ p1Mana: 10, p2Health: 10 }), {
+    id: "cmd_hero_focus",
+    matchId: "sample_duel_match",
+    playerId: "p1",
+    type: "execute_behavior",
+    payload: {
+      behaviorId: "hero_focus",
+      selections: { target: ["p2"] }
+    }
+  });
+
+  assert.equal(result.state.players.p1?.resources.mana.current, 8);
+  assert.equal(result.state.players.p2?.resources.health.current, 9);
+  assert.deepEqual(result.events.map((event) => event.type), ["resource_changed", "damage_dealt", "resource_changed"]);
+});
+
 test("sample-duel phase graph refreshes mana, draws, and stops at main action window", () => {
   const state = setup({ p1Mana: 0, p1Health: 10 });
   const result = runPhaseGraph(state, sampleDuelPhaseGraph, {

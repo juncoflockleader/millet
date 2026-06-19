@@ -10,7 +10,13 @@
       "tags": ["spell"],
       "behaviorIds": ["firebolt"],
       "assetRefs": ["card-frame-default"],
-      "manaCost": 2
+      "manaCost": 2,
+      "display": {
+        "layout": "duel-default",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
     },
     {
       "templateId": "nova",
@@ -20,7 +26,13 @@
       "tags": ["spell"],
       "behaviorIds": ["nova"],
       "assetRefs": ["card-frame-default"],
-      "manaCost": 2
+      "manaCost": 2,
+      "display": {
+        "layout": "duel-default",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
     },
     {
       "templateId": "coin",
@@ -29,7 +41,14 @@
       "nameKey": "card.coin.name",
       "tags": ["spell", "coin"],
       "behaviorIds": ["coin"],
-      "assetRefs": ["card-frame-default"]
+      "assetRefs": ["card-frame-default"],
+      "manaCost": 0,
+      "display": {
+        "layout": "duel-default",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
     },
     {
       "templateId": "reward",
@@ -38,7 +57,14 @@
       "nameKey": "card.reward.name",
       "tags": ["spell"],
       "behaviorIds": ["draw_or_fatigue"],
-      "assetRefs": ["card-frame-default"]
+      "assetRefs": ["card-frame-default"],
+      "manaCost": 0,
+      "display": {
+        "layout": "duel-default",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
     },
     {
       "templateId": "loot_minion",
@@ -51,6 +77,13 @@
       "stats": {
         "attack": 1,
         "health": 1
+      },
+      "display": {
+        "layout": "duel-minion",
+        "properties": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Attack", "priority": 20 },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Health", "priority": 30 }
+        ]
       }
     },
     {
@@ -64,6 +97,13 @@
       "stats": {
         "attack": 2,
         "durability": 2
+      },
+      "display": {
+        "layout": "duel-weapon",
+        "properties": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Attack", "priority": 20 },
+          { "property": "durability", "source": "counter", "slot": "bottom-right", "icon": "durability", "label": "Durability", "priority": 30 }
+        ]
       }
     }
   ]

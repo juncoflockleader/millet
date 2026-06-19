@@ -14,6 +14,7 @@ interface DuelSetupOptions {
   p1Mana?: number;
   p2Mana?: number;
   contentLock?: ContentLock;
+  mirrorP2Hand?: boolean;
 }
 
 export function createSampleDuelSetupEvents(options: DuelSetupOptions = {}): MatchEvent[] {
@@ -69,7 +70,7 @@ export function createSampleDuelSetupEvents(options: DuelSetupOptions = {}): Mat
         creatorId: "system",
         zoneId,
         position,
-        visibility: { kind: "owner" },
+        visibility: zoneId.includes("_board_") || zoneId.includes("_weapon_") ? { kind: "public" } : { kind: "owner" },
         stats: {},
         counters,
         tags,
@@ -141,6 +142,14 @@ export function createSampleDuelSetupEvents(options: DuelSetupOptions = {}): Mat
     object("card_firebolt", "firebolt", "zone_hand_p1", 0, "p1", ["spell"]),
     object("card_nova", "nova", "zone_hand_p1", 1, "p1", ["spell"]),
     object("card_coin_p2", "coin", "zone_hand_p2", 0, "p2", ["spell", "coin"]),
+    ...(options.mirrorP2Hand
+      ? [
+          object("card_firebolt_p2", "firebolt", "zone_hand_p2", 1, "p2", ["spell"]),
+          object("card_nova_p2", "nova", "zone_hand_p2", 2, "p2", ["spell"]),
+          object("minion_loot_p2", "loot_minion", "zone_board_p2", 0, "p2", ["minion"]),
+          object("weapon_axe_p2", "training_axe", "zone_weapon_p2", 0, "p2", ["weapon"], { durability: 2 })
+        ]
+      : []),
     object("minion_loot", "loot_minion", "zone_board_p1", 0, "p1", ["minion"]),
     object("weapon_axe_p1", "training_axe", "zone_weapon_p1", 0, "p1", ["weapon"], { durability: 2 }),
     object("card_reward", "reward", "zone_deck_p1", 0, "p1", ["spell"]),
@@ -203,6 +212,21 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
         { type: "adjust_object_counter", object: "self", counter: "durability", delta: -1, min: 0, reason: "weapon_attack" },
         { type: "destroy_object_if_counter_at_most", object: "self", counter: "durability", value: 0, toZoneId: "zone_discard", reason: "durability_zero" }
       ]
+    },
+    hero_focus: {
+      id: "hero_focus",
+      version: "0.1.0",
+      kind: "ability",
+      costs: [{ type: "spend_resource", player: "command_player", resource: "mana", amount: 2 }],
+      selectors: [
+        {
+          id: "target",
+          from: "players",
+          count: { min: 1, max: 1 },
+          match: { status: "alive", notSelf: true }
+        }
+      ],
+      effects: [{ type: "deal_damage", to: { selector: "target" }, amount: 1, damageType: "hero_power" }]
     },
     nova: {
       id: "nova",

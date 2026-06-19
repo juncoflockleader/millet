@@ -1,8 +1,14 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { extname, join, normalize, relative } from "node:path";
 import { CommandRejectedError, projectEvent, projectState } from "../../engine-core/src/index.ts";
 import { attachMatchEventSseStream, SSE_HEADERS } from "./event-stream.ts";
 import { AuthorizationError, InMemoryMatchService, type UserSession } from "./match-service.ts";
 import { handleMilletWebSocketUpgrade } from "./websocket.ts";
+
+export interface MilletHttpServerOptions {
+  staticRoot?: string;
+}
 
 async function readJson(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
@@ -20,6 +26,11 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
 function send(res: ServerResponse, status: number, payload: unknown): void {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(payload));
+}
+
+function sendBytes(res: ServerResponse, status: number, bytes: Buffer | string, contentType: string): void {
+  res.writeHead(status, { "content-type": contentType });
+  res.end(bytes);
 }
 
 function headerValue(value: string | string[] | undefined): string | undefined {
@@ -73,14 +84,17 @@ function errorResponse(error: unknown): { status: number; payload: { error: stri
   };
 }
 
-export function createMilletHttpServer(service = new InMemoryMatchService()) {
+export function createMilletHttpServer(service = new InMemoryMatchService(), options: MilletHttpServerOptions = {}) {
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
 
       if (req.method === "POST" && url.pathname === "/matches") {
-        const body = (await readJson(req)) as { rulesetId?: "sample-duel" | "sample-identity"; playerCount?: 6 | 8 };
-        const match = service.createMatch(body.rulesetId ?? "sample-duel", { playerCount: body.playerCount });
+        const body = (await readJson(req)) as { rulesetId?: "sample-duel" | "sample-identity"; playerCount?: 6 | 8; demoDuel?: boolean };
+        const match = service.createMatch(body.rulesetId ?? "sample-duel", {
+          playerCount: body.playerCount,
+          demoDuel: body.demoDuel
+        });
         send(res, 201, { matchId: match.id, status: match.state.status, lastSequence: match.state.lastSequence });
         return;
       }
@@ -179,6 +193,10 @@ export function createMilletHttpServer(service = new InMemoryMatchService()) {
         return;
       }
 
+      if (req.method === "GET" && options.staticRoot && tryServeStatic(options.staticRoot, url.pathname, res)) {
+        return;
+      }
+
       send(res, 404, { error: "not_found" });
     } catch (error) {
       const response = errorResponse(error);
@@ -199,4 +217,52 @@ export function createMilletHttpServer(service = new InMemoryMatchService()) {
   });
 
   return server;
+}
+
+function tryServeStatic(staticRoot: string, pathname: string, res: ServerResponse): boolean {
+  const normalizedRoot = normalize(staticRoot);
+  const filePath = pathname === "/" || pathname === "/basic-duel"
+    ? join(normalizedRoot, "index.html")
+    : join(normalizedRoot, decodeURIComponent(pathname).replace(/^\/+/, ""));
+  const normalizedFile = normalize(filePath);
+  const relativePath = relative(normalizedRoot, normalizedFile);
+
+  if (relativePath.startsWith("..") || relativePath === "" || relativePath.includes("..")) {
+    sendBytes(res, 403, "Forbidden", "text/plain; charset=utf-8");
+    return true;
+  }
+
+  if (!existsSync(normalizedFile)) {
+    return false;
+  }
+
+  const stat = statSync(normalizedFile);
+  if (!stat.isFile()) {
+    return false;
+  }
+
+  sendBytes(res, 200, readFileSync(normalizedFile), contentTypeForPath(normalizedFile));
+  return true;
+}
+
+function contentTypeForPath(path: string): string {
+  switch (extname(path)) {
+    case ".html":
+      return "text/html; charset=utf-8";
+    case ".css":
+      return "text/css; charset=utf-8";
+    case ".js":
+      return "text/javascript; charset=utf-8";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".webp":
+      return "image/webp";
+    case ".svg":
+      return "image/svg+xml";
+    default:
+      return "application/octet-stream";
+  }
 }

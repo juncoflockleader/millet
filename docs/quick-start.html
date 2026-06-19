@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Millet Interactive Quick Start</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f3ed;
+        --ink: #1e2525;
+        --muted: #66716d;
+        --panel: rgba(255, 255, 255, 0.88);
+        --panel-strong: #ffffff;
+        --line: #d9d1c3;
+        --accent: #b8552f;
+        --accent-strong: #7d301f;
+        --teal: #1f766d;
+        --teal-soft: #dff0ed;
+        --gold: #c88a25;
+        --code-bg: #17201f;
+        --code-ink: #eef8f4;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(180deg, rgba(246, 243, 237, 0.84), rgba(246, 243, 237, 0.98)),
+          url("../packages/demo-basic-duel/public/assets/ember-duel-board.png") center / cover fixed,
+          var(--bg);
+      }
+
+      button,
+      select,
+      input {
+        font: inherit;
+      }
+
+      button,
+      .link-button {
+        min-height: 38px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        color: #fff;
+        background: var(--accent);
+        font-weight: 760;
+        cursor: pointer;
+      }
+
+      button:hover,
+      .link-button:hover {
+        background: var(--accent-strong);
+      }
+
+      a {
+        color: var(--accent-strong);
+        font-weight: 720;
+      }
+
+      .shell {
+        width: min(1180px, calc(100vw - 28px));
+        margin: 0 auto;
+        padding: 20px 0 28px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .topbar,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 18px 46px rgba(34, 30, 24, 0.12);
+        backdrop-filter: blur(10px);
+      }
+
+      .topbar {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 44px);
+        line-height: 1;
+      }
+
+      h2 {
+        font-size: 21px;
+      }
+
+      h3 {
+        font-size: 15px;
+      }
+
+      .subtle,
+      .meta {
+        color: var(--muted);
+      }
+
+      .topbar p {
+        margin-top: 8px;
+        max-width: 72ch;
+      }
+
+      .top-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .link-button {
+        padding: 9px 12px;
+        display: inline-grid;
+        place-items: center;
+        text-decoration: none;
+      }
+
+      .ghost {
+        color: var(--ink);
+        background: var(--panel-strong);
+        border-color: var(--line);
+      }
+
+      .ghost:hover {
+        color: #fff;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+        gap: 14px;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .progress-wrap {
+        display: grid;
+        gap: 8px;
+      }
+
+      .progress {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e6ded1;
+      }
+
+      .progress span {
+        display: block;
+        width: var(--progress, 0%);
+        height: 100%;
+        background: linear-gradient(90deg, var(--teal), var(--gold));
+        transition: width 180ms ease;
+      }
+
+      .checklist {
+        display: grid;
+        gap: 8px;
+      }
+
+      .check-item {
+        min-height: 48px;
+        padding: 9px 10px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .check-item input {
+        margin-top: 3px;
+        accent-color: var(--teal);
+      }
+
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tab {
+        padding: 0 12px;
+        color: var(--ink);
+        background: var(--panel-strong);
+        border-color: var(--line);
+      }
+
+      .tab.active {
+        color: #fff;
+        background: var(--teal);
+      }
+
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: grid;
+        gap: 12px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        min-height: 156px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-strong);
+      }
+
+      .card img {
+        width: 100%;
+        height: 90px;
+        display: block;
+        object-fit: cover;
+      }
+
+      .card div {
+        padding: 9px;
+      }
+
+      .card p {
+        margin-top: 4px;
+        font-size: 13px;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .step {
+        min-height: 128px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--teal);
+      }
+
+      .code-card {
+        overflow: hidden;
+        border: 1px solid #293533;
+        border-radius: 8px;
+        background: var(--code-bg);
+      }
+
+      .code-head {
+        padding: 8px 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        color: var(--code-ink);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .code-head button {
+        min-height: 30px;
+        padding: 0 9px;
+        color: var(--code-ink);
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.26);
+      }
+
+      pre {
+        margin: 0;
+        padding: 12px;
+        overflow: auto;
+        color: var(--code-ink);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      .builder {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 720;
+      }
+
+      input,
+      select {
+        min-height: 38px;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        color: var(--ink);
+        background: #fff;
+        padding: 0 10px;
+      }
+
+      .doc-route {
+        min-height: 116px;
+        padding: 12px;
+        border-radius: 8px;
+        background: var(--teal-soft);
+        border: 1px solid #b9d9d4;
+      }
+
+      .doc-route ul {
+        margin: 8px 0 0;
+        padding-left: 20px;
+      }
+
+      .status {
+        min-height: 24px;
+        color: var(--teal);
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      @media (max-width: 880px) {
+        .topbar,
+        .layout,
+        .builder {
+          grid-template-columns: 1fr;
+        }
+
+        .top-actions {
+          justify-content: start;
+        }
+
+        .steps,
+        .cards {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Millet Quick Start</h1>
+          <p class="subtle">Run the engine, play the Ember Duel demo, send your first API command, and pick the next doc to read.</p>
+        </div>
+        <nav class="top-actions" aria-label="Quick links">
+          <a class="link-button" href="quick-start.md">Markdown Guide</a>
+          <a class="link-button ghost" href="index.md">Docs Home</a>
+          <a class="link-button ghost" href="http://127.0.0.1:8787/">Open Demo</a>
+        </nav>
+      </header>
+
+      <section class="layout">
+        <aside class="panel stack">
+          <div class="progress-wrap">
+            <h2>Setup Checklist</h2>
+            <p class="subtle">Progress is saved in this browser.</p>
+            <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+            <p class="status" id="progressText">0 of 6 complete</p>
+          </div>
+
+          <div class="checklist" id="checklist">
+            <label class="check-item"><input type="checkbox" data-check="node"><span><strong>Node is ready</strong><br><span class="meta">Use Node.js 24 or newer.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="tests"><span><strong>Tests pass</strong><br><span class="meta">Run <code>npm test</code>.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="server"><span><strong>Demo server runs</strong><br><span class="meta">Run <code>npm run demo</code>.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="match"><span><strong>Created a match</strong><br><span class="meta">Click <code>New Match</code> in Ember Duel.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="api"><span><strong>Sent an API command</strong><br><span class="meta">Use the command builder below.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="docs"><span><strong>Picked next doc</strong><br><span class="meta">Choose a role in the doc router.</span></span></label>
+          </div>
+
+          <button class="ghost" id="resetProgress" type="button">Reset Checklist</button>
+        </aside>
+
+        <section class="panel stack">
+          <div class="tabs" role="tablist" aria-label="Quick start sections">
+            <button class="tab active" type="button" data-tab="play">Play</button>
+            <button class="tab" type="button" data-tab="api">API</button>
+            <button class="tab" type="button" data-tab="author">Author</button>
+            <button class="tab" type="button" data-tab="debug">Debug</button>
+          </div>
+
+          <section class="tab-panel active" id="tab-play">
+            <div class="steps">
+              <article class="step">
+                <strong>1. Run tests</strong>
+                <p>Start with the deterministic suite so you know the local repo is healthy.</p>
+              </article>
+              <article class="step">
+                <strong>2. Start demo</strong>
+                <p>Run the hotseat server and open the Ember Duel browser UI.</p>
+              </article>
+              <article class="step">
+                <strong>3. Take an action</strong>
+                <p>Click a card or hero to select it, then click or drag it onto a highlighted target. Action buttons still work for explicit commands.</p>
+              </article>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>Run commands</span><button type="button" data-copy="playCommands">Copy</button></div>
+              <pre><code id="playCommands">node --version
+npm test
+npm run demo</code></pre>
+            </div>
+
+            <div class="cards" aria-label="Generated card art preview">
+              <article class="card">
+                <img src="../packages/demo-basic-duel/public/assets/cards/firebolt.png" alt="Firebolt card art">
+                <div><h3>Firebolt</h3><p class="subtle">Targeted damage and a generated impact VFX sheet.</p></div>
+              </article>
+              <article class="card">
+                <img src="../packages/demo-basic-duel/public/assets/cards/nova.png" alt="Nova card art">
+                <div><h3>Nova</h3><p class="subtle">All-player damage with a radial burst sheet.</p></div>
+              </article>
+              <article class="card">
+                <img src="../packages/demo-basic-duel/public/assets/cards/training-axe.png" alt="Training Axe card art">
+                <div><h3>Training Axe</h3><p class="subtle">Weapon durability and attack feedback.</p></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-api">
+            <h2>API Command Builder</h2>
+            <p class="subtle">Generate a curl command for the local demo server. Replace the match id with the value returned by <code>POST /matches</code>.</p>
+
+            <div class="builder">
+              <label>Match id<input id="matchIdInput" value="match_1"></label>
+              <label>Player<select id="playerInput"><option value="p1">p1 / u1</option><option value="p2">p2 / u2</option></select></label>
+              <label>Action<select id="actionInput"><option value="firebolt">Firebolt</option><option value="nova">Nova</option><option value="coin">Coin</option><option value="minion_attack">Minion Attack</option><option value="weapon_attack">Weapon Attack</option><option value="hero_focus">Hero Focus</option><option value="end_turn">End Turn</option></select></label>
+              <label>Target<select id="targetInput"><option value="p2">p2</option><option value="p1">p1</option></select></label>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>Create match</span><button type="button" data-copy="createMatchCommand">Copy</button></div>
+              <pre><code id="createMatchCommand"></code></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>Submit command</span><button type="button" data-copy="apiCommand">Copy</button></div>
+              <pre><code id="apiCommand"></code></pre>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-author">
+            <h2>Ruleset Authoring Path</h2>
+            <div class="steps">
+              <article class="step"><strong>Change content</strong><p>Edit card templates, behavior ids, localization, and asset refs together.</p></article>
+              <article class="step"><strong>Implement behavior</strong><p>Add or update structured behavior definitions in the ruleset runtime file.</p></article>
+              <article class="step"><strong>Validate</strong><p>Run validation, dependency reports, and tests before trying it in the client.</p></article>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>Authoring checks</span><button type="button" data-copy="authorCommands">Copy</button></div>
+              <pre><code id="authorCommands">node --experimental-strip-types scripts/millet.mjs validate packages/rulesets/sample-duel
+node --experimental-strip-types scripts/millet.mjs deps-ruleset packages/rulesets/sample-duel
+npm test</code></pre>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-debug">
+            <h2>Debugging Path</h2>
+            <div class="steps">
+              <article class="step"><strong>Capture event sequence</strong><p>Events are the replayable source of truth.</p></article>
+              <article class="step"><strong>Project for viewer</strong><p>Check what the affected player is allowed to see.</p></article>
+              <article class="step"><strong>Diff state</strong><p>Use structural diffs to avoid guessing which path changed.</p></article>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>Debug commands</span><button type="button" data-copy="debugCommands">Copy</button></div>
+              <pre><code id="debugCommands">node --experimental-strip-types scripts/millet.mjs replay packages/replay-tools/fixtures/m0-zone-movement.fixture.json
+node --experimental-strip-types scripts/millet.mjs project-fixture packages/replay-tools/fixtures/m0-zone-movement.fixture.json p1 3
+node --experimental-strip-types scripts/millet.mjs diff-state /tmp/left.json /tmp/right.json</code></pre>
+            </div>
+          </section>
+
+          <section class="doc-route">
+            <h2>Doc Router</h2>
+            <label>What are you doing?
+              <select id="docGoal">
+                <option value="designer">Designing cards or rules</option>
+                <option value="client">Building a client</option>
+                <option value="server">Integrating server APIs</option>
+                <option value="debugging">Debugging a match</option>
+                <option value="planning">Reviewing product direction</option>
+              </select>
+            </label>
+            <ul id="docLinks"></ul>
+          </section>
+
+          <p class="status" id="copyStatus" aria-live="polite"></p>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const storageKey = "millet.quickStart.checks";
+      const checks = Array.from(document.querySelectorAll("[data-check]"));
+      const progressBar = document.querySelector("#progressBar");
+      const progressText = document.querySelector("#progressText");
+      const copyStatus = document.querySelector("#copyStatus");
+
+      function readProgress() {
+        try {
+          return JSON.parse(localStorage.getItem(storageKey) || "{}");
+        } catch {
+          return {};
+        }
+      }
+
+      function writeProgress() {
+        const state = {};
+        checks.forEach((check) => {
+          state[check.dataset.check] = check.checked;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        updateProgress();
+      }
+
+      function updateProgress() {
+        const done = checks.filter((check) => check.checked).length;
+        const pct = Math.round((done / checks.length) * 100);
+        progressBar.style.setProperty("--progress", pct + "%");
+        progressText.textContent = done + " of " + checks.length + " complete";
+      }
+
+      function restoreProgress() {
+        const state = readProgress();
+        checks.forEach((check) => {
+          check.checked = Boolean(state[check.dataset.check]);
+          check.addEventListener("change", writeProgress);
+        });
+        updateProgress();
+      }
+
+      document.querySelector("#resetProgress").addEventListener("click", () => {
+        checks.forEach((check) => {
+          check.checked = false;
+        });
+        writeProgress();
+      });
+
+      document.querySelectorAll("[data-tab]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll("[data-tab]").forEach((candidate) => candidate.classList.toggle("active", candidate === button));
+          document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === "tab-" + button.dataset.tab));
+        });
+      });
+
+      const createMatchCommand = document.querySelector("#createMatchCommand");
+      const apiCommand = document.querySelector("#apiCommand");
+      const matchIdInput = document.querySelector("#matchIdInput");
+      const playerInput = document.querySelector("#playerInput");
+      const actionInput = document.querySelector("#actionInput");
+      const targetInput = document.querySelector("#targetInput");
+
+      function actionPayload(action, player, target) {
+        const source = {
+          firebolt: player === "p1" ? "card_firebolt" : "card_firebolt_p2",
+          nova: player === "p1" ? "card_nova" : "card_nova_p2",
+          coin: player === "p1" ? "card_coin_p1" : "card_coin_p2",
+          minion_attack: player === "p1" ? "minion_loot" : "minion_loot_p2",
+          weapon_attack: player === "p1" ? "weapon_axe_p1" : "weapon_axe_p2"
+        }[action];
+
+        if (action === "end_turn") {
+          return { type: "end_turn", payload: {} };
+        }
+
+        const payload = { behaviorId: action };
+        if (source) {
+          payload.sourceObjectId = source;
+        }
+        if (action === "firebolt" || action === "minion_attack" || action === "weapon_attack" || action === "hero_focus") {
+          payload.selections = { target: [target] };
+        }
+        return { type: "execute_behavior", payload };
+      }
+
+      function updateApiCommand() {
+        const matchId = matchIdInput.value || "match_1";
+        const player = playerInput.value;
+        const target = targetInput.value;
+        const action = actionInput.value;
+        const user = player === "p1" ? "u1" : "u2";
+        const commandDetails = actionPayload(action, player, target);
+        const body = {
+          command: {
+            id: "cmd_quickstart_" + action,
+            matchId,
+            playerId: player,
+            type: commandDetails.type,
+            payload: commandDetails.payload
+          }
+        };
+
+        createMatchCommand.textContent = [
+          'curl -s -X POST "http://127.0.0.1:8787/matches" \\',
+          '  -H "content-type: application/json" \\',
+          "  -d '{\"rulesetId\":\"sample-duel\",\"demoDuel\":true}'"
+        ].join("\n");
+
+        apiCommand.textContent = [
+          'curl -s -X POST "http://127.0.0.1:8787/matches/' + matchId + '/commands" \\',
+          '  -H "content-type: application/json" \\',
+          '  -H "x-millet-user-id: ' + user + '" \\',
+          "  -d '" + JSON.stringify(body, null, 2) + "'"
+        ].join("\n");
+      }
+
+      [matchIdInput, playerInput, actionInput, targetInput].forEach((control) => {
+        control.addEventListener("input", updateApiCommand);
+        control.addEventListener("change", updateApiCommand);
+      });
+
+      const routes = {
+        designer: [
+          ["Ruleset Authoring Guide", "ruleset-authoring.md"],
+          ["Assets And UX Guide", "assets-and-ux.md"],
+          ["Core Concepts", "concepts.md"]
+        ],
+        client: [
+          ["Server API Guide", "server-api.md"],
+          ["Basic 1v1 Demo", "basic-duel-demo.md"],
+          ["Assets And UX Guide", "assets-and-ux.md"]
+        ],
+        server: [
+          ["Server API Guide", "server-api.md"],
+          ["Testing And Debugging Guide", "testing-and-debugging.md"],
+          ["Technical Design", "technical-design-multiplayer-turn-based-card-game-engine.md"]
+        ],
+        debugging: [
+          ["Testing And Debugging Guide", "testing-and-debugging.md"],
+          ["Implementation Status", "implementation-status.md"],
+          ["Core Concepts", "concepts.md"]
+        ],
+        planning: [
+          ["PRD", "prd-multiplayer-turn-based-card-game-engine.md"],
+          ["Technical Design", "technical-design-multiplayer-turn-based-card-game-engine.md"],
+          ["Milestones", "milestones.md"]
+        ]
+      };
+
+      const docGoal = document.querySelector("#docGoal");
+      const docLinks = document.querySelector("#docLinks");
+
+      function updateDocLinks() {
+        docLinks.innerHTML = routes[docGoal.value]
+          .map(([label, href]) => '<li><a href="' + href + '">' + label + "</a></li>")
+          .join("");
+      }
+
+      docGoal.addEventListener("change", updateDocLinks);
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.append(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const target = document.querySelector("#" + button.dataset.copy);
+          await copyText(target.textContent.trim());
+          copyStatus.textContent = "Copied " + button.dataset.copy + ".";
+          window.setTimeout(() => {
+            copyStatus.textContent = "";
+          }, 1800);
+        });
+      });
+
+      restoreProgress();
+      updateApiCommand();
+      updateDocLinks();
+    </script>
+  </body>
+</html>

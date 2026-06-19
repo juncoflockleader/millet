@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { join } from "node:path";
 import { Readable } from "node:stream";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createMilletHttpServer } from "./http-server.ts";
@@ -44,7 +45,7 @@ async function dispatch(
     statusCode: response.statusCode,
     headers: response.headers,
     body: response.body,
-    json: response.body ? (JSON.parse(response.body) as Record<string, unknown>) : {}
+    json: response.headers["content-type"] === "application/json" && response.body ? (JSON.parse(response.body) as Record<string, unknown>) : {}
   };
 }
 
@@ -53,6 +54,44 @@ test("HTTP server can be constructed around the match API handler", () => {
   assert.equal(typeof server.listen, "function");
   assert.equal(typeof server.close, "function");
   assert.equal(server.listenerCount("upgrade"), 1);
+});
+
+test("HTTP server can serve the basic duel demo shell and assets", async () => {
+  const server = createMilletHttpServer(new InMemoryMatchService(), {
+    staticRoot: join("packages", "demo-basic-duel", "public")
+  });
+
+  const html = await dispatch(server, {
+    method: "GET",
+    url: "/basic-duel"
+  });
+  assert.equal(html.statusCode, 200);
+  assert.equal(html.headers["content-type"], "text/html; charset=utf-8");
+  assert.match(html.body, /Ember Duel/);
+
+  const asset = await dispatch(server, {
+    method: "GET",
+    url: "/assets/ember-duel-board.png"
+  });
+  assert.equal(asset.statusCode, 200);
+  assert.equal(asset.headers["content-type"], "image/png");
+  assert.match(asset.body, /^\uFFFDPNG/);
+
+  const cardArt = await dispatch(server, {
+    method: "GET",
+    url: "/assets/cards/firebolt.png"
+  });
+  assert.equal(cardArt.statusCode, 200);
+  assert.equal(cardArt.headers["content-type"], "image/png");
+  assert.match(cardArt.body, /^\uFFFDPNG/);
+
+  const effectSheet = await dispatch(server, {
+    method: "GET",
+    url: "/assets/effects/firebolt-sheet.png"
+  });
+  assert.equal(effectSheet.statusCode, 200);
+  assert.equal(effectSheet.headers["content-type"], "image/png");
+  assert.match(effectSheet.body, /^\uFFFDPNG/);
 });
 
 test("HTTP state endpoint returns viewer-projected match state", async () => {
@@ -73,6 +112,8 @@ test("HTTP state endpoint returns viewer-projected match state", async () => {
   assert.equal(state.objects.card_coin_p2?.templateId, "coin");
   assert.equal(state.objects.card_firebolt?.objectType, "hidden");
   assert.equal(state.objects.card_firebolt?.templateId, undefined);
+  assert.equal(state.objects.minion_loot?.templateId, "loot_minion");
+  assert.equal(state.objects.weapon_axe_p1?.templateId, "training_axe");
 });
 
 test("HTTP replay endpoint returns projected events after a sequence cursor", async () => {

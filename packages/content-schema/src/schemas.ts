@@ -163,6 +163,29 @@ export const cardCatalogSchema = {
             type: "object",
             additionalProperties: { type: "number" }
           },
+          display: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              layout: { type: "string", minLength: 1 },
+              properties: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["property", "slot"],
+                  additionalProperties: false,
+                  properties: {
+                    property: { type: "string", minLength: 1 },
+                    source: { enum: ["template", "stats", "counter", "resource", "metadata", "computed"] },
+                    slot: { type: "string", minLength: 1 },
+                    icon: { type: "string", minLength: 1 },
+                    label: { type: "string", minLength: 1 },
+                    priority: { type: "integer" }
+                  }
+                }
+              }
+            }
+          },
           metadata: {
             type: "object",
             additionalProperties: true

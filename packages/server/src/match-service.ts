@@ -35,6 +35,11 @@ export interface StoredMatch {
   behaviorLibrary: BehaviorLibrary;
 }
 
+export interface CreateMatchOptions {
+  playerCount?: 6 | 8;
+  demoDuel?: boolean;
+}
+
 const RULESET_DIRS: Record<StoredMatch["rulesetId"], string> = {
   "sample-duel": "packages/rulesets/sample-duel",
   "sample-identity": "packages/rulesets/sample-identity"
@@ -118,19 +123,42 @@ export class InMemoryMatchService {
     this.scheduler = options.scheduler ?? new DeterministicScheduler(options.scheduledActions);
   }
 
-  createMatch(rulesetId: "sample-duel" | "sample-identity", options: { playerCount?: 6 | 8 } = {}): StoredMatch {
+  createMatch(rulesetId: "sample-duel" | "sample-identity", options: CreateMatchOptions = {}): StoredMatch {
     const bundle = this.buildAndStoreRulesetBundle(rulesetId);
     const contentLock = contentLockFromBundle(bundle);
     const setupEvents =
       rulesetId === "sample-duel"
-        ? createSampleDuelSetupEvents({ contentLock })
+        ? createSampleDuelSetupEvents({
+            contentLock,
+            ...(options.demoDuel
+              ? {
+                  p1Health: 10,
+                  p2Health: 10,
+                  p1Mana: 10,
+                  p2Mana: 10,
+                  mirrorP2Hand: true
+                }
+              : {})
+          })
         : createSampleIdentitySetupEvents({ playerCount: options.playerCount ?? 6, contentLock });
-    const state = setupEvents.reduce((current, event) => reduceEvent(current, event), createEmptyMatchState());
+    let state = setupEvents.reduce((current, event) => reduceEvent(current, event), createEmptyMatchState());
+    let events = setupEvents;
+
+    if (rulesetId === "sample-duel" && options.demoDuel) {
+      const phaseRun = runPhaseGraph(state, sampleDuelPhaseGraph, {
+        activePlayerId: "p1",
+        behaviorLibrary: sampleDuelBehaviors,
+        outcomeMode: "last_alive"
+      });
+      state = phaseRun.state;
+      events = [...setupEvents, ...phaseRun.events];
+    }
+
     const match: StoredMatch = {
       id: state.matchId,
       rulesetId,
       state,
-      events: setupEvents,
+      events,
       snapshots: [{ sequence: state.lastSequence, state: structuredClone(state) }],
       behaviorLibrary: rulesetId === "sample-duel" ? sampleDuelBehaviors : sampleIdentityBehaviors
     };
@@ -342,6 +370,11 @@ export class InMemoryMatchService {
     }
 
     if (command.type === "execute_behavior") {
+      const activePlayerId = match.state.turn.activePlayerId;
+      if (activePlayerId && activePlayerId !== command.playerId) {
+        throw new Error(`Player ${command.playerId} cannot act during active player ${activePlayerId}'s turn`);
+      }
+
       const payload = command.payload as ExecuteBehaviorPayload;
       if (payload.sourceObjectId) {
         const sourceObject = match.state.objects[payload.sourceObjectId];

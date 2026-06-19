@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ember Duel</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Ember Duel</h1>
+          <p id="matchLine">Start a match to play a basic 1v1 engine demo.</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="newMatchButton" type="button">New Match</button>
+          <button id="refreshButton" type="button" disabled>Refresh</button>
+        </div>
+      </header>
+
+      <section class="play-area" id="playArea" aria-label="Scaled Ember Duel play area">
+        <div class="arena-scale-box" id="arenaScaleBox">
+          <section class="arena" id="arena" aria-label="Ember Duel board">
+            <div class="effect-layer" id="effectLayer" aria-hidden="true"></div>
+            <div class="player-row opponent" id="p2Panel"></div>
+            <div class="center-lane" data-target-area="battlefield">
+              <div class="turn-panel">
+                <div class="selector" role="tablist" aria-label="Current player controls">
+                  <button id="selectP1" type="button" data-player="p1">P1</button>
+                  <button id="selectP2" type="button" data-player="p2">P2</button>
+                </div>
+                <div class="turn-copy">
+                  <strong id="turnText">No match</strong>
+                  <span id="statusText">Waiting</span>
+                </div>
+                <button id="endTurnButton" class="ghost" type="button" disabled>End Turn</button>
+              </div>
+              <div class="battle-log" id="battleLog" aria-live="polite"></div>
+            </div>
+            <div class="player-row" id="p1Panel"></div>
+          </section>
+        </div>
+      </section>
+      <div class="tooltip-layer" id="tooltipLayer" role="tooltip" hidden></div>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
