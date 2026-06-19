@@ -1,0 +1,143 @@
+{
+  "id": "m0-zone-movement",
+  "events": [
+    {
+      "id": "evt_1",
+      "matchId": "match_m0",
+      "sequence": 1,
+      "transactionId": "tx_1",
+      "type": "match_initialized",
+      "payload": {
+        "matchId": "match_m0",
+        "gameDefinitionId": "sample-foundation",
+        "gameDefinitionVersion": "0.0.1",
+        "seed": "m0-seed",
+        "contentLock": {
+          "gameDefinition": {
+            "id": "sample-foundation",
+            "version": "0.0.1",
+            "contentHash": "sha256:sample-foundation-placeholder"
+          }
+        }
+      },
+      "visibility": {
+        "default": {
+          "kind": "public"
+        }
+      }
+    },
+    {
+      "id": "evt_2",
+      "matchId": "match_m0",
+      "sequence": 2,
+      "transactionId": "tx_1",
+      "type": "zone_created",
+      "payload": {
+        "zone": {
+          "id": "zone_deck_p1",
+          "ownerId": "p1",
+          "zoneType": "deck",
+          "visibility": {
+            "kind": "owner"
+          },
+          "ordering": "hidden_ordered",
+          "objectIds": []
+        }
+      },
+      "visibility": {
+        "default": {
+          "kind": "public"
+        }
+      }
+    },
+    {
+      "id": "evt_3",
+      "matchId": "match_m0",
+      "sequence": 3,
+      "transactionId": "tx_1",
+      "type": "zone_created",
+      "payload": {
+        "zone": {
+          "id": "zone_hand_p1",
+          "ownerId": "p1",
+          "zoneType": "hand",
+          "visibility": {
+            "kind": "owner"
+          },
+          "ordering": "ordered",
+          "objectIds": []
+        }
+      },
+      "visibility": {
+        "default": {
+          "kind": "public"
+        }
+      }
+    },
+    {
+      "id": "evt_4",
+      "matchId": "match_m0",
+      "sequence": 4,
+      "transactionId": "tx_1",
+      "type": "object_created",
+      "payload": {
+        "object": {
+          "id": "card_1",
+          "templateId": "sample-card",
+          "objectType": "card",
+          "ownerId": "p1",
+          "controllerId": "p1",
+          "creatorId": "system",
+          "zoneId": "zone_deck_p1",
+          "position": 0,
+          "visibility": {
+            "kind": "owner"
+          },
+          "stats": {},
+          "counters": {},
+          "tags": [
+            "sample"
+          ],
+          "keywords": [],
+          "attachments": [],
+          "modifiers": [],
+          "createdAtSequence": 4,
+          "lastChangedAtSequence": 4
+        }
+      },
+      "visibility": {
+        "default": {
+          "kind": "public"
+        }
+      }
+    },
+    {
+      "id": "evt_5",
+      "matchId": "match_m0",
+      "sequence": 5,
+      "transactionId": "tx_2",
+      "type": "card_moved",
+      "payload": {
+        "objectId": "card_1",
+        "fromZoneId": "zone_deck_p1",
+        "toZoneId": "zone_hand_p1"
+      },
+      "visibility": {
+        "default": {
+          "kind": "public"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "objectZones": {
+      "card_1": "zone_hand_p1"
+    },
+    "zoneObjects": {
+      "zone_deck_p1": [],
+      "zone_hand_p1": [
+        "card_1"
+      ]
+    }
+  }
+}

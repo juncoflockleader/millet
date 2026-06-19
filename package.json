@@ -1,0 +1,13 @@
+{
+  "name": "millet",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generalized multiplayer turn-based card game engine.",
+  "scripts": {
+    "test": "node scripts/run-tests.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

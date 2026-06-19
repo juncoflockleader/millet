@@ -1,0 +1,27 @@
+{
+  "id": "sample-identity-en",
+  "version": "0.1.0",
+  "locale": "en",
+  "strings": {
+    "game.sample_identity.name": "Sample Identity",
+    "card.sample_basic.name": "Sample Basic",
+    "card.sample_trick.name": "Sample Trick",
+    "card.nullification.name": "Nullification",
+    "card.delayed_lightning.name": "Delayed Lightning",
+    "card.delayed_skip_play.name": "Delayed Skip Play",
+    "card.delayed_skip_draw.name": "Delayed Skip Draw",
+    "card.training_spear.name": "Training Spear",
+    "card.training_dagger.name": "Training Dagger",
+    "card.training_armor.name": "Training Armor",
+    "card.scout_horse.name": "Scout Horse",
+    "card.guard_horse.name": "Guard Horse",
+    "card.judgment_spade_7.name": "Spade Seven Judgment",
+    "card.judgment_heart_10.name": "Heart Ten Judgment",
+    "card.judgment_club_2.name": "Club Two Judgment",
+    "identity.lord.name": "Lord",
+    "identity.loyalist.name": "Loyalist",
+    "identity.rebel.name": "Rebel",
+    "identity.spy.name": "Spy",
+    "prompt.rescue": "A player is dying. Respond with a rescue card."
+  }
+}

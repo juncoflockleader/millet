@@ -1,0 +1,15 @@
+{
+  "id": "sample-duel-en",
+  "version": "0.1.0",
+  "locale": "en",
+  "strings": {
+    "game.sample_duel.name": "Sample Duel",
+    "card.firebolt.name": "Firebolt",
+    "card.nova.name": "Nova",
+    "card.coin.name": "Coin",
+    "card.reward.name": "Reward",
+    "card.loot_minion.name": "Loot Minion",
+    "card.training_axe.name": "Training Axe",
+    "prompt.mulligan": "Choose cards to replace."
+  }
+}

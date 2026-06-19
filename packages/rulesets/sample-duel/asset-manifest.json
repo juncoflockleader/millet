@@ -1,0 +1,18 @@
+{
+  "id": "sample-duel-assets",
+  "version": "0.1.0",
+  "assets": [
+    {
+      "assetId": "card-frame-default",
+      "version": "0.1.0",
+      "kind": "card_frame",
+      "contentHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sourceUri": "memory://sample-duel/card-frame-default",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 512,
+      "height": 768
+    }
+  ]
+}

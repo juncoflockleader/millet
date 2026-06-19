@@ -1,0 +1,48 @@
+{
+  "id": "sample-duel",
+  "version": "0.1.0",
+  "metadata": {
+    "name": "Sample Duel",
+    "description": "Hearthstone-like two-player vertical slice for Millet."
+  },
+  "playerConfig": {
+    "minPlayers": 2,
+    "maxPlayers": 2
+  },
+  "zones": [
+    { "id": "hand", "zoneType": "hand", "scope": "player" },
+    { "id": "deck", "zoneType": "deck", "scope": "player" },
+    { "id": "board", "zoneType": "board", "scope": "player", "capacity": 7 },
+    { "id": "weapon", "zoneType": "weapon", "scope": "player", "capacity": 1 },
+    { "id": "discard", "zoneType": "discard", "scope": "match" },
+    { "id": "graveyard", "zoneType": "graveyard", "scope": "match" }
+  ],
+  "resources": [
+    { "id": "health", "defaultMax": 30 },
+    { "id": "mana", "defaultMax": 10 },
+    { "id": "fatigue", "defaultCurrent": 0 }
+  ],
+  "turnGraph": [
+    "match_start",
+    "mulligan",
+    "turn_start",
+    "resource_refresh",
+    "draw",
+    "main",
+    "turn_end"
+  ],
+  "cardCatalog": "card-catalog.json",
+  "behaviors": [
+    "firebolt",
+    "minion_attack",
+    "weapon_attack",
+    "nova",
+    "coin",
+    "draw_or_fatigue",
+    "arm_death_draw",
+    "death_draw",
+    "mulligan_prompt",
+    "refresh_mana_p1",
+    "open_main_prompt"
+  ]
+}

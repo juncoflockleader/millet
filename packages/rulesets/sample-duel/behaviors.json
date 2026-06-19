@@ -1,0 +1,17 @@
+{
+  "id": "sample-duel-behaviors",
+  "version": "0.1.0",
+  "behaviors": [
+    "firebolt",
+    "minion_attack",
+    "weapon_attack",
+    "nova",
+    "coin",
+    "draw_or_fatigue",
+    "arm_death_draw",
+    "death_draw",
+    "mulligan_prompt",
+    "refresh_mana_p1",
+    "open_main_prompt"
+  ]
+}

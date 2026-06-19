@@ -1,0 +1,182 @@
+{
+  "id": "sample-identity-cards",
+  "version": "0.1.0",
+  "templates": [
+    {
+      "templateId": "sample_basic",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.sample_basic.name",
+      "tags": ["basic"],
+      "behaviorIds": ["attack_with_dodge_prompt"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "sample_trick",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.sample_trick.name",
+      "tags": ["trick"],
+      "behaviorIds": ["trick_with_nullification_stack"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "nullification",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.nullification.name",
+      "tags": ["trick", "nullification"],
+      "behaviorIds": ["nullification_response"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "delayed_lightning",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.delayed_lightning.name",
+      "tags": ["delayed_trick", "lightning_trick"],
+      "behaviorIds": ["place_delayed_lightning", "resolve_delayed_lightning"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "delayed_skip_play",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.delayed_skip_play.name",
+      "tags": ["delayed_trick", "skip_play_trick"],
+      "behaviorIds": ["place_delayed_skip_play"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "delayed_skip_draw",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.delayed_skip_draw.name",
+      "tags": ["delayed_trick", "skip_draw_trick"],
+      "behaviorIds": ["place_delayed_skip_draw"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "training_spear",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.training_spear.name",
+      "tags": ["weapon"],
+      "behaviorIds": ["equip_weapon"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "attackRangeModifier": 2
+      }
+    },
+    {
+      "templateId": "training_dagger",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.training_dagger.name",
+      "tags": ["weapon"],
+      "behaviorIds": ["equip_weapon"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "training_armor",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.training_armor.name",
+      "tags": ["armor", "auto_dodge_armor"],
+      "behaviorIds": ["equip_armor", "armor_auto_dodge_response"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "damageReduction": 1
+      }
+    },
+    {
+      "templateId": "scout_horse",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.scout_horse.name",
+      "tags": ["mount_minus"],
+      "behaviorIds": ["equip_mount_minus"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "outgoingDistanceModifier": -1
+      }
+    },
+    {
+      "templateId": "guard_horse",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.guard_horse.name",
+      "tags": ["mount_plus"],
+      "behaviorIds": ["equip_mount_plus"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "incomingDistanceModifier": 1
+      }
+    },
+    {
+      "templateId": "judgment_spade_7",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.judgment_spade_7.name",
+      "tags": ["basic", "suit_spade", "color_black"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "rank": 7
+      }
+    },
+    {
+      "templateId": "judgment_heart_10",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.judgment_heart_10.name",
+      "tags": ["basic", "suit_heart", "color_red"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "rank": 10
+      }
+    },
+    {
+      "templateId": "judgment_club_2",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.judgment_club_2.name",
+      "tags": ["basic", "suit_club", "color_black"],
+      "assetRefs": ["identity-role-back"],
+      "stats": {
+        "rank": 2
+      }
+    },
+    {
+      "templateId": "lord",
+      "version": "0.1.0",
+      "objectType": "identity",
+      "nameKey": "identity.lord.name",
+      "tags": ["lord"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "loyalist",
+      "version": "0.1.0",
+      "objectType": "identity",
+      "nameKey": "identity.loyalist.name",
+      "tags": ["loyalist"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "rebel",
+      "version": "0.1.0",
+      "objectType": "identity",
+      "nameKey": "identity.rebel.name",
+      "tags": ["rebel"],
+      "assetRefs": ["identity-role-back"]
+    },
+    {
+      "templateId": "spy",
+      "version": "0.1.0",
+      "objectType": "identity",
+      "nameKey": "identity.spy.name",
+      "tags": ["spy"],
+      "assetRefs": ["identity-role-back"]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "sample-identity-assets",
+  "version": "0.1.0",
+  "assets": [
+    {
+      "assetId": "identity-role-back",
+      "version": "0.1.0",
+      "kind": "card_back",
+      "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "sourceUri": "memory://sample-identity/identity-role-back",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 512,
+      "height": 768
+    }
+  ]
+}

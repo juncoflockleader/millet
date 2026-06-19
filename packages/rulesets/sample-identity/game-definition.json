@@ -1,0 +1,58 @@
+{
+  "id": "sample-identity",
+  "version": "0.1.0",
+  "metadata": {
+    "name": "Sample Identity",
+    "description": "三国杀-like hidden-role multiplayer vertical slice for Millet."
+  },
+  "playerConfig": {
+    "minPlayers": 6,
+    "maxPlayers": 8,
+    "rolePresets": {
+      "6": ["lord", "loyalist", "rebel", "rebel", "rebel", "spy"],
+      "8": ["lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "rebel", "spy"]
+    }
+  },
+  "zones": [
+    { "id": "roles", "zoneType": "roles", "scope": "match" },
+    { "id": "shared_deck", "zoneType": "deck", "scope": "match" },
+    { "id": "discard", "zoneType": "discard", "scope": "match" },
+    { "id": "hand", "zoneType": "hand", "scope": "player" },
+    { "id": "judgment", "zoneType": "judgment", "scope": "player" },
+    { "id": "equipment", "zoneType": "equipment", "scope": "player", "capacity": 5 }
+  ],
+  "turnGraph": ["prepare", "judgment", "draw", "play", "discard", "finish"],
+  "cardCatalog": "card-catalog.json",
+  "behaviors": [
+    "attack",
+    "attack_with_dodge_prompt",
+    "attack_damage_after_no_dodge",
+    "dodge_response",
+    "armor_auto_dodge_response",
+    "trick_with_nullification_stack",
+    "nullification_response",
+    "settle_nullification_stack",
+    "trick_damage_after_nullification",
+    "equip_weapon",
+    "equip_armor",
+    "equip_mount_minus",
+    "equip_mount_plus",
+    "place_delayed_lightning",
+    "place_delayed_skip_play",
+    "place_delayed_skip_draw",
+    "resolve_delayed_lightning",
+    "delayed_lightning_judgment",
+    "delayed_skip_play_judgment",
+    "delayed_skip_draw_judgment",
+    "rescue",
+    "finish_dying",
+    "reward_for_rebel_kill",
+    "lord_kills_loyalist_penalty",
+    "grant_extra_draw_phase",
+    "yingzi_grant_extra_draw_phase",
+    "identity_resolve_judgment",
+    "identity_draw_two",
+    "identity_open_play_prompt",
+    "identity_discard_to_hand_limit"
+  ]
+}

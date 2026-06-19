@@ -1,0 +1,22 @@
+{
+  "id": "sample-foundation",
+  "version": "0.0.1",
+  "metadata": {
+    "name": "Sample Foundation",
+    "description": "Minimal M0 game definition used to verify deterministic zones, objects, and replay."
+  },
+  "playerConfig": {
+    "minPlayers": 1,
+    "maxPlayers": 1
+  },
+  "zones": [
+    {
+      "id": "deck",
+      "zoneType": "deck"
+    },
+    {
+      "id": "hand",
+      "zoneType": "hand"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "id": "sample-duel-cards",
+  "version": "0.1.0",
+  "templates": [
+    {
+      "templateId": "firebolt",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.firebolt.name",
+      "tags": ["spell"],
+      "behaviorIds": ["firebolt"],
+      "assetRefs": ["card-frame-default"],
+      "manaCost": 2
+    },
+    {
+      "templateId": "nova",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.nova.name",
+      "tags": ["spell"],
+      "behaviorIds": ["nova"],
+      "assetRefs": ["card-frame-default"],
+      "manaCost": 2
+    },
+    {
+      "templateId": "coin",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.coin.name",
+      "tags": ["spell", "coin"],
+      "behaviorIds": ["coin"],
+      "assetRefs": ["card-frame-default"]
+    },
+    {
+      "templateId": "reward",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.reward.name",
+      "tags": ["spell"],
+      "behaviorIds": ["draw_or_fatigue"],
+      "assetRefs": ["card-frame-default"]
+    },
+    {
+      "templateId": "loot_minion",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.loot_minion.name",
+      "tags": ["minion"],
+      "behaviorIds": ["minion_attack", "arm_death_draw"],
+      "assetRefs": ["card-frame-default"],
+      "stats": {
+        "attack": 1,
+        "health": 1
+      }
+    },
+    {
+      "templateId": "training_axe",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.training_axe.name",
+      "tags": ["weapon"],
+      "behaviorIds": ["weapon_attack"],
+      "assetRefs": ["card-frame-default"],
+      "stats": {
+        "attack": 2,
+        "durability": 2
+      }
+    }
+  ]
+}
