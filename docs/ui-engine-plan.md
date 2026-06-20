@@ -39,7 +39,7 @@ Current implemented slice:
 - `UiPlaytestScriptJson` schema for authored project playtest scripts with create-match, command, state/replay fetch, and resource assertion steps.
 - `sample-duel` playtest scripts at `packages/rulesets/sample-duel/ui/ember-duel-playtests.json`.
 - `game-definition.json` `ui.defaultPlaytestScript` discovery and ruleset validation for missing script refs, duplicate script ids, duplicate step ids, live-match create-match steps, and unknown behavior refs.
-- Millet Studio `Playtest` panel reports active browser-local layout/card/presentation/asset drafts, lists authored ruleset playtest scripts, runs the selected script through the live match APIs, updates the board to the generated match, and summarizes replay/debug output.
+- Millet Studio `Playtest` panel reports active browser-local layout/card/presentation/asset drafts, lists authored ruleset playtest scripts, runs the selected script through the live match APIs, updates the board to the generated match, summarizes replay/debug output, renders a state diff from baseline to final state, and exposes selectable replay event payloads.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
 - Millet Studio can load `?project=sanguosha-identity` or legacy `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
 - Ember Duel identity preview seats and role summaries render projection-safe role badges for public roles, viewer-owned roles, and hidden roles without exposing redacted role refs or hidden object ids.
@@ -550,10 +550,10 @@ Validation should cover:
 
 - Combine authoring changes with fixture-driven previews, replay, legal target overlays, and state diff.
 - Acceptance: a designer can edit a card/minion/equipment behavior, run a scripted playtest, inspect events, and publish a validated draft bundle.
-- Current slice: Millet Studio `Playtest` panel surfaces local draft status for layout/cards/presentation/assets, loads authored ruleset playtest scripts from `game-definition.ui.defaultPlaytestScript`, lists selectable scripts, runs the selected live-match script through `/matches`, `/commands`, `/state`, and `/replay`, applies resource assertions, updates the live board to the generated match, and summarizes sequence, event count, damage events, the script's primary resource metric, and recent replay lines. Preview-only projects route authors back to fixture previews until scripted identity playtests are added.
+- Current slice: Millet Studio `Playtest` panel surfaces local draft status for layout/cards/presentation/assets, loads authored ruleset playtest scripts from `game-definition.ui.defaultPlaytestScript`, lists selectable scripts, runs the selected live-match script through `/matches`, `/commands`, `/state`, and `/replay`, applies resource assertions, updates the live board to the generated match, summarizes sequence/event/resource metrics, renders a compact state diff from match creation to final state, and exposes a replay inspector for selecting events and reading projected payload JSON. Preview-only projects route authors back to fixture previews until scripted identity playtests are added.
 
 ## Immediate Next Steps
 
-1. Add a replay/debug inspector inside Playtest so authored script runs expose event payloads and state diffs without leaving Studio.
+1. Add legal-target overlay snapshots to Playtest so scripted runs can compare expected action affordances by viewer projection.
 2. Add broader equipment authoring examples for armor, mount, and treasure slots once their rules modules are ready.
 3. Add broader minion authoring examples for token, summon, and companion variants once their rules modules are ready.

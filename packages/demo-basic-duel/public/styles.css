@@ -2268,6 +2268,94 @@ p,
   gap: 4px;
 }
 
+.playtest-debug-inspector,
+.playtest-state-diff,
+.playtest-event-payload {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.playtest-debug-inspector {
+  padding-top: 2px;
+}
+
+.playtest-debug-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.playtest-replay-list {
+  max-height: 210px;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  overflow: auto;
+}
+
+.playtest-event-row {
+  min-width: 0;
+  padding: 6px 7px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 3px 6px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--ink);
+  text-align: left;
+}
+
+.playtest-event-row.selected {
+  border-color: rgba(255, 220, 165, 0.62);
+  background: rgba(62, 43, 29, 0.84);
+}
+
+.playtest-event-row span,
+.playtest-event-row small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.playtest-event-row strong,
+.playtest-event-row small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playtest-event-row small {
+  grid-column: 2;
+}
+
+.playtest-event-payload {
+  min-height: 0;
+}
+
+.playtest-event-payload strong,
+.playtest-state-diff strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.playtest-event-payload pre {
+  max-height: 210px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #dffcea;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 10px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+
 .playtest-event-list span {
   padding: 5px 7px;
   border-radius: 5px;
@@ -3492,7 +3580,8 @@ p,
 
   .playtest-draft-grid,
   .playtest-actions,
-  .playtest-metrics {
+  .playtest-metrics,
+  .playtest-debug-grid {
     grid-template-columns: 1fr;
   }
 }

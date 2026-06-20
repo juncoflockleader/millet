@@ -542,6 +542,7 @@ let playtestPanelOpen = false;
 let playtestScriptDocument = null;
 let activePlaytestScriptId = "";
 let playtestRun = null;
+let activePlaytestEventIndex = null;
 
 const dom = {
   matchLine: document.querySelector("#matchLine"),
@@ -1222,8 +1223,16 @@ function installPlaytestPanel() {
     const scriptRow = event.target.closest("[data-playtest-script-id]");
     if (scriptRow) {
       activePlaytestScriptId = scriptRow.dataset.playtestScriptId ?? "";
+      activePlaytestEventIndex = null;
       renderPlaytestPanel();
       setPlaytestStatus(`Selected ${scriptRow.dataset.playtestScriptLabel ?? activePlaytestScriptId}.`);
+      return;
+    }
+
+    const eventRow = event.target.closest("[data-playtest-event-index]");
+    if (eventRow) {
+      activePlaytestEventIndex = Number(eventRow.dataset.playtestEventIndex);
+      renderPlaytestPanel();
       return;
     }
 
@@ -1949,8 +1958,79 @@ function renderPlaytestRunResult() {
       <div class="playtest-event-list">
         ${playtestRun.recentEvents.map((event) => `<span>${escapeHtml(event)}</span>`).join("")}
       </div>
+      ${renderPlaytestDebugInspector(playtestRun)}
     </section>
   `;
+}
+
+function renderPlaytestDebugInspector(run) {
+  const runEvents = Array.isArray(run.events) ? run.events : [];
+  const selectedIndex = selectedPlaytestEventIndex(runEvents);
+  const selectedEvent = runEvents[selectedIndex] ?? null;
+  return `
+    <div class="playtest-debug-inspector">
+      <div class="asset-review-head">
+        <strong>Replay Inspector</strong>
+        <span>${escapeHtml(`${runEvents.length} events`)}</span>
+      </div>
+      ${renderPlaytestStateDiff(run.stateDiffs)}
+      <div class="playtest-debug-grid">
+        <div class="playtest-replay-list" role="listbox" aria-label="Replay events">
+          ${runEvents.map((event, index) => renderPlaytestEventRow(event, index, index === selectedIndex)).join("")}
+        </div>
+        <div class="playtest-event-payload">
+          <strong>${selectedEvent ? escapeHtml(`#${selectedEvent.sequence} ${selectedEvent.type}`) : "No event selected"}</strong>
+          <pre>${escapeHtml(selectedEvent ? JSON.stringify(selectedEvent.payload ?? {}, null, 2) : "{}")}</pre>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPlaytestStateDiff(diffs) {
+  if (!Array.isArray(diffs) || diffs.length === 0) {
+    return `<p class="asset-review-empty">No state changes detected between match creation and final script state.</p>`;
+  }
+
+  return `
+    <div class="playtest-state-diff">
+      <strong>State Diff</strong>
+      <div class="asset-diff-list">
+        ${diffs.map((row) => `
+          <div>
+            <span>${escapeHtml(row.field)}</span>
+            <code>${escapeHtml(row.before)}</code>
+            <code>${escapeHtml(row.after)}</code>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderPlaytestEventRow(event, index, selected) {
+  return `
+    <button
+      type="button"
+      class="playtest-event-row ${selected ? "selected" : ""}"
+      role="option"
+      aria-selected="${selected ? "true" : "false"}"
+      data-playtest-event-index="${index}"
+    >
+      <span>#${escapeHtml(event.sequence ?? index + 1)}</span>
+      <strong>${escapeHtml(event.type ?? "event")}</strong>
+      <small>${escapeHtml(logLine(event))}</small>
+    </button>
+  `;
+}
+
+function selectedPlaytestEventIndex(eventsForRun) {
+  if (!Array.isArray(eventsForRun) || eventsForRun.length === 0) {
+    return -1;
+  }
+  return Number.isInteger(activePlaytestEventIndex)
+    ? Math.min(eventsForRun.length - 1, Math.max(0, activePlaytestEventIndex))
+    : eventsForRun.length - 1;
 }
 
 function playtestDraftStatuses() {
@@ -2029,12 +2109,13 @@ async function runSelectedPlaytestScript() {
   }
 
   playtestRun = { status: "running" };
+  activePlaytestEventIndex = null;
   renderPlaytestPanel();
   setPlaytestStatus(`Running ${script.label ?? script.id} through local match APIs.`);
 
   try {
     const result = await executePlaytestScript(script);
-    const { nextMatchId, statePayload, replayPayload } = result;
+    const { nextMatchId, initialState, statePayload, replayPayload } = result;
 
     matchId = nextMatchId;
     state = statePayload.state;
@@ -2045,7 +2126,8 @@ async function runSelectedPlaytestScript() {
     selectedPlayerId = state?.turn?.activePlayerId ?? "p1";
     render();
 
-    playtestRun = summarizePlaytestRun(script, nextMatchId, statePayload.state, replayPayload.events ?? []);
+    playtestRun = summarizePlaytestRun(script, nextMatchId, initialState, statePayload.state, replayPayload.events ?? []);
+    activePlaytestEventIndex = playtestRun.events.length - 1;
     setPlaytestStatus(`${script.label ?? script.id} completed. The live board now shows the generated match.`);
   } catch (error) {
     playtestRun = {
@@ -2060,6 +2142,7 @@ async function runSelectedPlaytestScript() {
 
 async function executePlaytestScript(script) {
   let nextMatchId = "";
+  let initialState = null;
   let statePayload = null;
   let replayPayload = null;
 
@@ -2081,7 +2164,8 @@ async function executePlaytestScript(script) {
         throw new Error(created.message ?? created.error ?? "Could not create playtest match.");
       }
       nextMatchId = created.matchId;
-      statePayload = null;
+      statePayload = await fetchPlaytestState(nextMatchId);
+      initialState = cloneJson(statePayload.state);
       replayPayload = null;
     } else if (action === "submit_command") {
       if (!nextMatchId) {
@@ -2103,7 +2187,7 @@ async function executePlaytestScript(script) {
   statePayload ??= await fetchPlaytestState(nextMatchId);
   replayPayload ??= await fetchPlaytestReplay(nextMatchId);
 
-  return { nextMatchId, statePayload, replayPayload };
+  return { nextMatchId, initialState, statePayload, replayPayload };
 }
 
 async function submitPlaytestCommand(step, script, nextMatchId) {
@@ -2170,7 +2254,7 @@ function assertPlaytestResource(step, playtestState) {
   }
 }
 
-function summarizePlaytestRun(script, nextMatchId, playtestState, playtestEvents) {
+function summarizePlaytestRun(script, nextMatchId, initialState, playtestState, playtestEvents) {
   const eventTypes = eventTypeCounts(playtestEvents);
   const primaryResource = primaryPlaytestResource(script, playtestState);
   return {
@@ -2182,8 +2266,87 @@ function summarizePlaytestRun(script, nextMatchId, playtestState, playtestEvents
     damageEvents: eventTypes.damage_dealt ?? 0,
     resourceLabel: primaryResource.label,
     resourceValue: primaryResource.value,
-    recentEvents: playtestEvents.slice(-5).map((event) => logLine(event))
+    recentEvents: playtestEvents.slice(-5).map((event) => logLine(event)),
+    events: cloneJson(playtestEvents),
+    stateDiffs: playtestStateDiffRows(initialState, playtestState)
   };
+}
+
+function playtestStateDiffRows(initialState, finalState) {
+  if (!initialState || !finalState) {
+    return [];
+  }
+
+  const rows = [];
+  addDiffRow(rows, "sequence", initialState.lastSequence, finalState.lastSequence);
+  addDiffRow(rows, "status", initialState.status, finalState.status);
+  addDiffRow(rows, "turn.player", initialState.turn?.activePlayerId, finalState.turn?.activePlayerId);
+  addDiffRow(rows, "turn.phase", initialState.turn?.phaseId, finalState.turn?.phaseId);
+
+  const playerIds = sortedUnion(Object.keys(initialState.players ?? {}), Object.keys(finalState.players ?? {}));
+  playerIds.forEach((playerId) => {
+    addDiffRow(rows, `player.${playerId}.status`, initialState.players?.[playerId]?.status, finalState.players?.[playerId]?.status);
+    const resourceIds = sortedUnion(
+      Object.keys(initialState.players?.[playerId]?.resources ?? {}),
+      Object.keys(finalState.players?.[playerId]?.resources ?? {})
+    );
+    resourceIds.forEach((resourceId) => {
+      addDiffRow(
+        rows,
+        `${playerId}.${resourceId}`,
+        resourceValueLabel(initialState.players?.[playerId]?.resources?.[resourceId]),
+        resourceValueLabel(finalState.players?.[playerId]?.resources?.[resourceId])
+      );
+    });
+  });
+
+  const zoneIds = sortedUnion(Object.keys(initialState.zones ?? {}), Object.keys(finalState.zones ?? {}));
+  zoneIds.forEach((zoneId) => {
+    addDiffRow(
+      rows,
+      `zone.${zoneId}`,
+      zoneObjectCountLabel(initialState.zones?.[zoneId]),
+      zoneObjectCountLabel(finalState.zones?.[zoneId])
+    );
+  });
+
+  addDiffRow(rows, "objects", Object.keys(initialState.objects ?? {}).length, Object.keys(finalState.objects ?? {}).length);
+  addDiffRow(rows, "prompts", Object.keys(initialState.prompts ?? {}).length, Object.keys(finalState.prompts ?? {}).length);
+  addDiffRow(rows, "outcomes", initialState.outcomes?.length ?? 0, finalState.outcomes?.length ?? 0);
+  return rows.slice(0, 24);
+}
+
+function addDiffRow(rows, field, before, after) {
+  const beforeLabel = diffValueLabel(before);
+  const afterLabel = diffValueLabel(after);
+  if (beforeLabel !== afterLabel) {
+    rows.push({ field, before: beforeLabel, after: afterLabel });
+  }
+}
+
+function resourceValueLabel(resource) {
+  if (!resource || typeof resource !== "object") {
+    return "-";
+  }
+  return resource.max !== undefined ? `${resource.current ?? "-"} / ${resource.max}` : `${resource.current ?? "-"}`;
+}
+
+function zoneObjectCountLabel(zone) {
+  return Array.isArray(zone?.objectIds) ? `${zone.objectIds.length}` : "-";
+}
+
+function diffValueLabel(value) {
+  if (value === undefined || value === null) {
+    return "-";
+  }
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function sortedUnion(left, right) {
+  return Array.from(new Set([...left, ...right])).sort();
 }
 
 function primaryPlaytestResource(script, playtestState) {
