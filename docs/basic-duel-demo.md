@@ -24,6 +24,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Click a usable card, board object, or hero card to select it, then click or drag it onto a highlighted legal target.
 - Hero cards can be targets and action sources. In the demo, each hero has a `Focus Flame` ability that spends 2 mana to damage the enemy hero.
 - `Preview` opens ruleset UI preview fixtures for read-only card, hero, equipment, and minion states.
+- `?ruleset=sample-identity` loads the Sanguosha-like eight-player ruleset preview and renders authored absolute board regions for seats, roles, piles, hand, equipment, judgment, prompt, and history.
 - `Assets` opens the ruleset asset library.
 - `Layout` opens the board layout editor.
 - `End Turn` submits the engine-level `end_turn` command.

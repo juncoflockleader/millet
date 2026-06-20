@@ -30,6 +30,7 @@ Current implemented slice:
 - Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, and shows manifest/presentation/effect usage references.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
+- Ember Duel can load `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
 
 ## North Star
 
@@ -535,7 +536,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add runtime renderer coverage for the Sanguosha-like multi-player layout.
-2. Add authoring UI panels for editing asset and presentation catalog entries.
-3. Add import/write workflows for the asset library; the current panel is read-only.
-4. Add projection-safe hidden role/player widgets for identity-game previews.
+1. Add authoring UI panels for editing asset and presentation catalog entries.
+2. Add import/write workflows for the asset library; the current panel is read-only.
+3. Add projection-safe hidden role/player widgets for identity-game previews.

@@ -93,15 +93,19 @@ const EFFECTS = {
   attack: { sheet: "/assets/effects/attack-slash-sheet.png", className: "attack" }
 };
 
-const PLAY_AREA = {
+const urlParams = new URLSearchParams(window.location.search);
+const RULESET_ID = urlParams.get("ruleset") === "sample-identity" ? "sample-identity" : "sample-duel";
+const RULESET_BASE_URL = `/content/rulesets/${RULESET_ID}`;
+
+let PLAY_AREA = {
   width: 1120,
   height: 620,
   minScale: 0.2
 };
 
-const LAYOUT_STORAGE_KEY = "ember-duel.layout.v1";
-const GAME_DEFINITION_URL = "/content/rulesets/sample-duel/game-definition.json";
-const ASSET_MANIFEST_URL = "/content/rulesets/sample-duel/asset-manifest.json";
+const LAYOUT_STORAGE_KEY = `ember-duel.layout.${RULESET_ID}.v1`;
+const GAME_DEFINITION_URL = `${RULESET_BASE_URL}/game-definition.json`;
+const ASSET_MANIFEST_URL = `${RULESET_BASE_URL}/asset-manifest.json`;
 const FALLBACK_BOARD_LAYOUT_URL = "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json";
 const FALLBACK_PRESENTATION_CATALOG_URL = "/content/rulesets/sample-duel/ui/ember-duel-presentation.json";
 const FALLBACK_PREVIEW_FIXTURES_URL = "/content/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json";
@@ -233,6 +237,7 @@ const dom = {
   playArea: document.querySelector("#playArea"),
   arenaScaleBox: document.querySelector("#arenaScaleBox"),
   arena: document.querySelector("#arena"),
+  absolutePreviewBoard: document.querySelector("#absolutePreviewBoard"),
   effectLayer: document.querySelector("#effectLayer"),
   centerLane: document.querySelector("#centerLane"),
   turnPanel: document.querySelector("#turnPanel"),
@@ -319,6 +324,10 @@ loadAssetManifest();
 loadPreviewFixtures();
 
 async function startMatch() {
+  if (RULESET_ID !== "sample-duel") {
+    showError("Live demo matches are available for sample-duel. Use Preview for this ruleset.");
+    return;
+  }
   if (previewPanelOpen) {
     togglePreviewPanel(false);
   }
@@ -328,7 +337,7 @@ async function startMatch() {
   const response = await fetch("/matches", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ rulesetId: "sample-duel", demoDuel: true })
+    body: JSON.stringify({ rulesetId: RULESET_ID, demoDuel: true })
   });
   const payload = await readJson(response);
   if (!response.ok) {
@@ -1237,6 +1246,7 @@ async function loadAuthoredBoardLayout() {
 
     const boardLayout = await response.json();
     boardLayoutDocument = boardLayout;
+    applyPlayAreaFromBoardLayout(boardLayout);
     authoredDefaultLayout = layoutTokensFromBoardLayout(boardLayout);
     renderLayoutRegionGuides();
     annotateStaticLayoutRegions();
@@ -1256,7 +1266,12 @@ async function loadAuthoredBoardLayout() {
 
 async function loadAuthoredPresentationCatalog() {
   try {
-    const response = await fetch(await resolvePresentationCatalogUrl());
+    const catalogUrl = await resolvePresentationCatalogUrl();
+    if (!catalogUrl) {
+      return;
+    }
+
+    const response = await fetch(catalogUrl);
     if (!response.ok) {
       throw new Error(`Presentation catalog request failed: ${response.status}`);
     }
@@ -1277,7 +1292,7 @@ async function resolveBoardLayoutUrl() {
     const gameDefinition = await response.json();
     const layoutPath = gameDefinition?.ui?.defaultBoardLayout;
     return typeof layoutPath === "string" && layoutPath.length > 0
-      ? `/content/rulesets/sample-duel/${layoutPath}`
+      ? `${RULESET_BASE_URL}/${layoutPath}`
       : FALLBACK_BOARD_LAYOUT_URL;
   } catch {
     return FALLBACK_BOARD_LAYOUT_URL;
@@ -1293,10 +1308,10 @@ async function resolvePresentationCatalogUrl() {
     const gameDefinition = await response.json();
     const catalogPath = gameDefinition?.ui?.defaultPresentationCatalog;
     return typeof catalogPath === "string" && catalogPath.length > 0
-      ? `/content/rulesets/sample-duel/${catalogPath}`
-      : FALLBACK_PRESENTATION_CATALOG_URL;
+      ? `${RULESET_BASE_URL}/${catalogPath}`
+      : (RULESET_ID === "sample-duel" ? FALLBACK_PRESENTATION_CATALOG_URL : null);
   } catch {
-    return FALLBACK_PRESENTATION_CATALOG_URL;
+    return RULESET_ID === "sample-duel" ? FALLBACK_PRESENTATION_CATALOG_URL : null;
   }
 }
 
@@ -1309,10 +1324,26 @@ async function resolvePreviewFixturesUrl() {
     const gameDefinition = await response.json();
     const fixturePath = gameDefinition?.ui?.defaultPreviewFixture;
     return typeof fixturePath === "string" && fixturePath.length > 0
-      ? `/content/rulesets/sample-duel/${fixturePath}`
+      ? `${RULESET_BASE_URL}/${fixturePath}`
       : FALLBACK_PREVIEW_FIXTURES_URL;
   } catch {
     return FALLBACK_PREVIEW_FIXTURES_URL;
+  }
+}
+
+function applyPlayAreaFromBoardLayout(boardLayout) {
+  const width = Number(boardLayout?.logicalSize?.width);
+  const height = Number(boardLayout?.logicalSize?.height);
+  const minScale = Number(boardLayout?.scaling?.minScale);
+  if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+    PLAY_AREA = {
+      width,
+      height,
+      minScale: Number.isFinite(minScale) && minScale > 0 ? minScale : PLAY_AREA.minScale
+    };
+    dom.arena?.style.setProperty("--play-area-width", `${Math.round(width)}px`);
+    dom.arena?.style.setProperty("--play-area-height", `${Math.round(height)}px`);
+    window.dispatchEvent(new Event("resize"));
   }
 }
 
@@ -1637,13 +1668,20 @@ function render() {
   dom.selectP1.classList.toggle("selected", selectedPlayerId === "p1");
   dom.selectP2.classList.toggle("selected", selectedPlayerId === "p2");
   dom.previewPanelButton?.classList.toggle("selected", previewPanelOpen || previewMode);
+  const absolutePreview = shouldRenderAbsolutePreviewBoard();
+  dom.arena?.classList.toggle("absolute-preview-active", absolutePreview);
 
   if (!state) {
-    dom.matchLine.textContent = "Start a match to play a basic 1v1 engine demo.";
+    dom.matchLine.textContent = RULESET_ID === "sample-duel"
+      ? "Start a match to play a basic 1v1 engine demo."
+      : "Open Preview to inspect this ruleset layout.";
     dom.turnText.textContent = "No match";
     dom.statusText.textContent = "Waiting";
     dom.p1Panel.innerHTML = "";
     dom.p2Panel.innerHTML = "";
+    if (dom.absolutePreviewBoard) {
+      dom.absolutePreviewBoard.innerHTML = "";
+    }
     dom.battleLog.innerHTML = "";
     renderActionPanel();
     selectedAction = null;
@@ -1662,13 +1700,26 @@ function render() {
   }
 
   renderActionPanel();
-  dom.p2Panel.innerHTML = renderPlayer("p2");
-  dom.p1Panel.innerHTML = renderPlayer("p1");
+  if (absolutePreview) {
+    dom.absolutePreviewBoard.innerHTML = renderAbsolutePreviewBoard();
+    dom.p2Panel.innerHTML = "";
+    dom.p1Panel.innerHTML = "";
+  } else {
+    if (dom.absolutePreviewBoard) {
+      dom.absolutePreviewBoard.innerHTML = "";
+    }
+    dom.p2Panel.innerHTML = renderPlayer("p2");
+    dom.p1Panel.innerHTML = renderPlayer("p1");
+  }
   bindActionButtons();
   bindNaturalActions();
   bindTooltips();
   paintSelectionState();
   renderLog();
+}
+
+function shouldRenderAbsolutePreviewBoard() {
+  return previewMode && Boolean(state) && (Object.keys(state.players ?? {}).length > 2 || boardLayoutDocument?.id === "sanguosha-eight-player-board");
 }
 
 function renderActionPanel() {
@@ -1746,7 +1797,7 @@ function renderPromptResponders(prompt) {
           : "waiting";
     return `
       <span class="prompt-responder ${escapeAttr(status)}" data-responder-status="${escapeAttr(status)}">
-        ${escapeHtml(PLAYER_NAMES[responderId] ?? responderId)}
+        ${escapeHtml(PLAYER_NAMES[responderId] ?? labelFromId(responderId))}
       </span>
     `;
   }).join("");
@@ -1811,6 +1862,202 @@ function canAnswerPrompt(prompt, responder) {
   }
 
   return !prompt.currentResponderId || prompt.currentResponderId === responder;
+}
+
+function renderAbsolutePreviewBoard() {
+  const regions = Array.isArray(boardLayoutDocument?.regions) ? boardLayoutDocument.regions : [];
+  if (regions.length === 0) {
+    return `<div class="absolute-empty">No authored board regions</div>`;
+  }
+
+  return regions.map((region) => renderAbsolutePreviewRegion(region)).join("");
+}
+
+function renderAbsolutePreviewRegion(region) {
+  if (!region || typeof region !== "object" || typeof region.id !== "string") {
+    return "";
+  }
+
+  const geometry = layoutGuideGeometry(region);
+  if (!geometry) {
+    return "";
+  }
+
+  const metadata = layoutRegionMetadata(region.id);
+  const style = `left: ${geometry.x}px; top: ${geometry.y}px; width: ${geometry.width}px; height: ${geometry.height}px;`;
+  const content = renderAbsoluteRegionContent(metadata);
+  return `
+    <section
+      class="absolute-region absolute-region-${escapeAttr(metadata.kind)}"
+      ${layoutRegionAttrs(metadata.id)}
+      style="${style}"
+      aria-label="${escapeAttr(metadata.label)}"
+    >
+      ${content}
+    </section>
+  `;
+}
+
+function renderAbsoluteRegionContent(region) {
+  if (region.kind === "hero") {
+    return renderIdentitySeat(region);
+  }
+  if (region.kind === "hand") {
+    return renderIdentityCardStrip(region, `zone_hand_${selectedPlayerId}`, "Hand");
+  }
+  if (region.kind === "equipment") {
+    return renderIdentityCardStrip(region, `zone_equipment_${selectedPlayerId}`, "Equipment");
+  }
+  if (region.kind === "judgment") {
+    return renderIdentityCardStrip(region, `zone_judgment_${selectedPlayerId}`, "Judgment");
+  }
+  if (region.kind === "deck") {
+    return renderIdentityPile(region, "zone_shared_deck", "Deck");
+  }
+  if (region.kind === "discard") {
+    return renderIdentityPile(region, "zone_discard", "Discard");
+  }
+  if (region.kind === "action_window") {
+    return renderIdentityPromptWindow(region);
+  }
+  if (region.kind === "opponent_summary") {
+    return renderIdentityRoleSummary(region);
+  }
+  if (region.kind === "history_log") {
+    return renderIdentityHistory(region);
+  }
+
+  return `<strong>${escapeHtml(region.label)}</strong>`;
+}
+
+function renderIdentitySeat(region) {
+  const playerId = playerIdForSeatRegion(region.id);
+  const player = playerId ? state.players?.[playerId] : null;
+  if (!player) {
+    return `<strong>${escapeHtml(region.label)}</strong><span class="identity-muted">Empty seat</span>`;
+  }
+
+  const role = identityRoleLabel(player.roleRef);
+  const health = player.resources?.health;
+  const handCount = cardsInZone(`zone_hand_${playerId}`).length;
+  const equipmentCount = cardsInZone(`zone_equipment_${playerId}`).length;
+  const active = state.turn?.activePlayerId === playerId;
+
+  return `
+    <div class="identity-seat ${active ? "active-seat" : ""} ${player.status !== "alive" ? "dim-seat" : ""}">
+      <div class="identity-seat-head">
+        <strong>${escapeHtml(PLAYER_NAMES[playerId] ?? labelFromId(playerId))}</strong>
+        <span>${escapeHtml(role)}</span>
+      </div>
+      <div class="identity-seat-stats">
+        <span>HP ${escapeHtml(health ? `${health.current}/${health.max ?? health.current}` : "-")}</span>
+        <span>Hand ${handCount}</span>
+        <span>Equip ${equipmentCount}</span>
+      </div>
+      <small>${escapeHtml(labelFromId(player.status ?? "unknown"))}</small>
+    </div>
+  `;
+}
+
+function renderIdentityCardStrip(region, zoneId, fallbackLabel) {
+  const objects = cardsInZone(zoneId);
+  return `
+    <div class="identity-strip">
+      <strong>${escapeHtml(region.label || fallbackLabel)}</strong>
+      <div class="identity-mini-cards">
+        ${objects.map((object) => renderIdentityObjectChip(object)).join("") || `<span class="identity-muted">Empty</span>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderIdentityPile(region, zoneId, fallbackLabel) {
+  const objects = cardsInZone(zoneId);
+  const top = objects[objects.length - 1];
+  return `
+    <div class="identity-pile">
+      <strong>${escapeHtml(region.label || fallbackLabel)}</strong>
+      <span class="identity-pile-count">${objects.length}</span>
+      <small>${top ? escapeHtml(objectDisplayName(top)) : "Empty"}</small>
+    </div>
+  `;
+}
+
+function renderIdentityPromptWindow(region) {
+  const prompt = openPromptForActionPanel();
+  if (!prompt) {
+    return `<strong>${escapeHtml(region.label)}</strong><span class="identity-muted">No open prompt</span>`;
+  }
+
+  const responder = currentPromptResponder(prompt);
+  const actions = Array.isArray(prompt.payload?.actions) ? prompt.payload.actions : [];
+  const responseBehaviors = Array.isArray(prompt.payload?.allowedResponseBehaviors) ? prompt.payload.allowedResponseBehaviors : [];
+  return `
+    <div class="identity-prompt">
+      <span class="prompt-label">${escapeHtml(labelFromId(prompt.promptType))}</span>
+      <strong>${escapeHtml(PLAYER_NAMES[responder] ?? responder ?? "Responder")}</strong>
+      <small>${escapeHtml(promptMeta(prompt, prompt.answeredResponderIds?.length ?? 0, prompt.responderIds?.length ?? 0))}</small>
+      <div class="prompt-responders">${renderPromptResponders(prompt)}</div>
+      <div class="prompt-actions">
+        ${actions.map((action) => renderPromptAction(action, responder)).join("")}
+        ${responseBehaviors.map((behaviorId) => renderPromptResponseBehavior(prompt, behaviorId, responder)).join("")}
+        ${renderPromptPassAction(prompt, responder, actions)}
+      </div>
+    </div>
+  `;
+}
+
+function renderIdentityRoleSummary(region) {
+  const players = Object.values(state.players ?? {});
+  return `
+    <div class="identity-summary">
+      <strong>${escapeHtml(region.label)}</strong>
+      ${players.map((player) => `
+        <span>
+          <b>${escapeHtml(PLAYER_NAMES[player.id] ?? labelFromId(player.id))}</b>
+          ${escapeHtml(identityRoleLabel(player.roleRef))}
+        </span>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderIdentityHistory(region) {
+  return `
+    <div class="identity-history">
+      <strong>${escapeHtml(region.label)}</strong>
+      ${events.slice(-5).reverse().map((event) => `<span>${escapeHtml(logLine(event))}</span>`).join("") || `<span class="identity-muted">No events</span>`}
+    </div>
+  `;
+}
+
+function renderIdentityObjectChip(object) {
+  const hidden = object?.objectType === "hidden";
+  return `
+    <span class="identity-object-chip ${hidden ? "hidden-object-chip" : ""}">
+      ${escapeHtml(hidden ? "Hidden Card" : objectDisplayName(object))}
+    </span>
+  `;
+}
+
+function objectDisplayName(object) {
+  if (!object || object.objectType === "hidden") {
+    return "Hidden Card";
+  }
+  return CARD_DEFS[object.templateId]?.name ?? labelFromId(object.templateId ?? object.objectType ?? "object");
+}
+
+function identityRoleLabel(roleRef) {
+  const roleObject = roleRef ? state.objects?.[roleRef] : null;
+  if (!roleObject || roleObject.objectType === "hidden") {
+    return "Hidden Role";
+  }
+  return labelFromId(roleObject.templateId ?? roleObject.objectType);
+}
+
+function playerIdForSeatRegion(regionId) {
+  const match = String(regionId ?? "").match(/^seat_(\d+)/);
+  return match ? `p${match[1]}` : null;
 }
 
 function renderPlayer(playerId) {
