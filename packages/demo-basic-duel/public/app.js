@@ -3111,24 +3111,29 @@ function renderIdentitySeat(region) {
     return `<strong>${escapeHtml(region.label)}</strong><span class="identity-muted">Empty seat</span>`;
   }
 
-  const role = identityRoleLabel(player.roleRef);
+  const role = identityRoleView(player);
   const health = player.resources?.health;
   const handCount = cardsInZone(`zone_hand_${playerId}`).length;
   const equipmentCount = cardsInZone(`zone_equipment_${playerId}`).length;
   const active = state.turn?.activePlayerId === playerId;
+  const viewer = activePreviewFixture?.viewerId ?? selectedPlayerId;
 
   return `
-    <div class="identity-seat ${active ? "active-seat" : ""} ${player.status !== "alive" ? "dim-seat" : ""}">
+    <div
+      class="identity-seat ${active ? "active-seat" : ""} ${player.status !== "alive" ? "dim-seat" : ""}"
+      data-role-visibility="${escapeAttr(role.visibility)}"
+      data-seat-status="${escapeAttr(player.status ?? "unknown")}"
+    >
       <div class="identity-seat-head">
         <strong>${escapeHtml(PLAYER_NAMES[playerId] ?? labelFromId(playerId))}</strong>
-        <span>${escapeHtml(role)}</span>
+        ${renderIdentityRoleBadge(role)}
       </div>
       <div class="identity-seat-stats">
         <span>HP ${escapeHtml(health ? `${health.current}/${health.max ?? health.current}` : "-")}</span>
         <span>Hand ${handCount}</span>
         <span>Equip ${equipmentCount}</span>
       </div>
-      <small>${escapeHtml(labelFromId(player.status ?? "unknown"))}</small>
+      <small>${escapeHtml(playerId === viewer ? "Viewer" : labelFromId(player.status ?? "unknown"))}</small>
     </div>
   `;
 }
@@ -3186,13 +3191,30 @@ function renderIdentityRoleSummary(region) {
   return `
     <div class="identity-summary">
       <strong>${escapeHtml(region.label)}</strong>
-      ${players.map((player) => `
-        <span>
-          <b>${escapeHtml(PLAYER_NAMES[player.id] ?? labelFromId(player.id))}</b>
-          ${escapeHtml(identityRoleLabel(player.roleRef))}
-        </span>
-      `).join("")}
+      <div class="identity-summary-list">
+        ${players.map((player) => renderIdentityPlayerSummaryRow(player)).join("")}
+      </div>
     </div>
+  `;
+}
+
+function renderIdentityPlayerSummaryRow(player) {
+  const role = identityRoleView(player);
+  const health = player.resources?.health;
+  const handSize = player.resources?.hand_size;
+  const handCount = handSize?.current ?? cardsInZone(`zone_hand_${player.id}`).length;
+  return `
+    <span
+      class="identity-player-summary ${role.visibility === "hidden" ? "hidden-player-summary" : ""}"
+      data-role-visibility="${escapeAttr(role.visibility)}"
+      data-seat-status="${escapeAttr(player.status ?? "unknown")}"
+    >
+      <b>${escapeHtml(PLAYER_NAMES[player.id] ?? labelFromId(player.id))}</b>
+      ${renderIdentityRoleBadge(role)}
+      <small>${escapeHtml(health ? `HP ${health.current}/${health.max ?? health.current}` : "HP -")}</small>
+      <small>${escapeHtml(`Hand ${handCount}`)}</small>
+      <small>${escapeHtml(labelFromId(player.status ?? "unknown"))}</small>
+    </span>
   `;
 }
 
@@ -3221,12 +3243,37 @@ function objectDisplayName(object) {
   return CARD_DEFS[object.templateId]?.name ?? labelFromId(object.templateId ?? object.objectType ?? "object");
 }
 
-function identityRoleLabel(roleRef) {
-  const roleObject = roleRef ? state.objects?.[roleRef] : null;
+function identityRoleView(player) {
+  const roleObject = player?.roleRef ? state.objects?.[player.roleRef] : null;
+  const viewer = activePreviewFixture?.viewerId ?? selectedPlayerId;
   if (!roleObject || roleObject.objectType === "hidden") {
-    return "Hidden Role";
+    return {
+      label: "Unknown",
+      title: "Hidden Role",
+      visibility: "hidden"
+    };
   }
-  return labelFromId(roleObject.templateId ?? roleObject.objectType);
+
+  const ownerVisible = typeof roleObject.ownerId === "string" && roleObject.ownerId === viewer;
+  const template = typeof roleObject.templateId === "string" ? roleObject.templateId : roleObject.objectType;
+  return {
+    label: labelFromId(template),
+    title: ownerVisible ? "Your Role" : "Public Role",
+    visibility: ownerVisible ? "owner" : "public"
+  };
+}
+
+function renderIdentityRoleBadge(role) {
+  return `
+    <span
+      class="identity-role-badge role-${escapeAttr(role.visibility)}"
+      title="${escapeAttr(role.title)}"
+      aria-label="${escapeAttr(`${role.title}: ${role.label}`)}"
+    >
+      <i aria-hidden="true">${escapeHtml(role.visibility === "hidden" ? "?" : role.label.slice(0, 1))}</i>
+      <span>${escapeHtml(role.label)}</span>
+    </span>
+  `;
 }
 
 function playerIdForSeatRegion(regionId) {

@@ -32,6 +32,7 @@ Current implemented slice:
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
 - Ember Duel can load `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
+- Ember Duel identity preview seats and role summaries render projection-safe role badges for public roles, viewer-owned roles, and hidden roles without exposing redacted role refs or hidden object ids.
 
 ## North Star
 
@@ -538,6 +539,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add projection-safe hidden role/player widgets for identity-game previews.
-2. Harden asset promotion UX with conflict warnings, before/after diffs, and explicit dirty-worktree indicators.
-3. Add asset promotion support for creating brand-new asset ids instead of replacing an existing manifest entry.
+1. Harden asset promotion UX with conflict warnings, before/after diffs, and explicit dirty-worktree indicators.
+2. Add asset promotion support for creating brand-new asset ids instead of replacing an existing manifest entry.
+3. Add card template list/detail editing for identity, assets, layout, properties, behavior, preview, and validation.

@@ -214,7 +214,7 @@ p,
 
 .identity-seat-head,
 .identity-seat-stats,
-.identity-summary span {
+.identity-player-summary {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -234,7 +234,7 @@ p,
 .identity-seat small,
 .identity-muted,
 .identity-history span,
-.identity-summary span {
+.identity-player-summary {
   color: var(--muted);
   font-size: 10px;
   font-weight: 720;
@@ -310,11 +310,88 @@ p,
   gap: 3px;
 }
 
-.identity-summary span,
+.identity-summary-list {
+  min-height: 0;
+  display: grid;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.identity-player-summary,
 .identity-history span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.identity-player-summary small {
+  min-width: 0;
+  color: rgba(218, 203, 185, 0.78);
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hidden-player-summary {
+  color: #c9d6ca;
+}
+
+.identity-role-badge {
+  min-width: 42px;
+  max-width: 78px;
+  height: 20px;
+  padding: 0 6px 0 3px;
+  display: inline-grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: center;
+  gap: 3px;
+  border: 1px solid rgba(255, 205, 140, 0.28);
+  border-radius: 999px;
+  color: #fff2cf;
+  background: rgba(105, 72, 34, 0.38);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.identity-role-badge i {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #17120e;
+  background: rgba(255, 205, 140, 0.86);
+  font-style: normal;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.identity-role-badge span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-owner {
+  border-color: rgba(105, 211, 154, 0.46);
+  color: #dffcea;
+  background: rgba(105, 211, 154, 0.12);
+}
+
+.role-owner i {
+  background: #69d39a;
+}
+
+.role-hidden {
+  border-color: rgba(151, 171, 162, 0.34);
+  color: #d6dfd9;
+  background: rgba(105, 211, 154, 0.07);
+}
+
+.role-hidden i {
+  color: #d6dfd9;
+  background: rgba(105, 211, 154, 0.18);
 }
 
 .absolute-empty {

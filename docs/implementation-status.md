@@ -39,6 +39,7 @@ Latest local result:
 - Preview fixture smoke confirmed the `Preview` panel opens, reads 5 ruleset fixtures, renders equipment/minion/projected prompt states, disables live refresh/end-turn controls, and reports read-only action attempts in the log.
 - Prompt-control browser smoke confirmed live main-action `End Turn` advances from Player 1 to Player 2, and the read-only prompt fixture renders responder progress plus disabled response/pass controls with no page errors.
 - Hidden-object preview smoke confirmed projected hidden cards render as generic `Hidden Card` surfaces and do not leak the redacted template or object id in visible UI.
+- Hidden-role widget smoke confirmed the eight-seat identity preview renders 8 seats, 8 role-summary rows, public lord badges, viewer-owned loyalist badges, 12 hidden role badges across seats and summary, 6 hidden player summary rows, and no visible `role_hidden_*` or hidden object ids.
 - UI engine implementation has started with schema-backed board layout content, ruleset `ui.defaultBoardLayout` discovery, read-only ruleset content serving, and Ember Duel consuming ruleset layout tokens as authored defaults.
 - The next layout-editor slice added board layout region geometry bounds validation and a schema-backed region/widget guide overlay in Ember Duel.
 - The next runtime-layout slice threaded schema-backed board region/widget metadata into live Ember Duel DOM surfaces and target validation.
@@ -57,6 +58,7 @@ Latest local result:
 - The next identity-preview slice added a projection-safe eight-player preview fixture for `sample-identity`, covering public lord role, viewer-owned role, redacted hidden roles, hidden hands/deck, equipment, judgment, discard, and a nullification response prompt. Local content smoke confirmed the server serves it as one full-board fixture with 8 players, 20 hidden objects, and a `nullification_stack` priority-loop prompt.
 - The next property-display slice added board-layout-declared slot/icon registries, validation for duplicate registry entries, and Sanguosha-like `suit-point`, `role-corner`, `suit`, `rank`, and `faction` display tokens in `sample-identity`.
 - The next identity-runtime-renderer slice added `?ruleset=sample-identity` demo loading and an authored absolute board renderer for the eight-seat identity preview. Browser smoke confirmed the 1280x720 board fits in a 1280x720 viewport at scale `0.899`, renders 16 authored regions and 8 seat panels, shows the `nullification_stack` prompt, and does not leak hidden role/object ids.
+- The next hidden-role-widget slice added projection-safe identity role badges and player summary rows for public, viewer-owned, and hidden roles without exposing redacted role refs.
 
 CLI smoke checks:
 
