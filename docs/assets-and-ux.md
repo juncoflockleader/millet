@@ -169,7 +169,7 @@ Identity seats and role summaries render dedicated role badges instead of raw ro
 
 `Ember Duel` also loads its card, hero, equipment, and minion presentation defaults from `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`. That catalog gives the runtime a content-driven source for art paths, names, rules text, action labels, property displays, layouts, and behavior references.
 
-The `Presentation` panel lets designers inspect catalog entries, edit selected entry JSON locally, apply/reset `localStorage`-backed drafts, copy the active catalog, and see cards/heroes re-render without changing ruleset files.
+The `Presentation` panel lets designers inspect catalog entries, edit selected entry JSON locally, apply/reset `localStorage`-backed drafts, copy the active catalog, and see cards/heroes re-render without changing ruleset files. When a hero entry is selected, the same panel shows a Hero Studio with structured controls for hero identity, art/frame/crop, ability presentation, behavior id, target mode, mana cost, and a live hero-card preview.
 
 ### Cards are self-contained
 

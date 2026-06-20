@@ -525,6 +525,7 @@ const dom = {
   closePresentationEditorButton: document.querySelector("#closePresentationEditorButton"),
   presentationEntryCount: document.querySelector("#presentationEntryCount"),
   presentationEntryList: document.querySelector("#presentationEntryList"),
+  heroPresentationEditor: document.querySelector("#heroPresentationEditor"),
   presentationEntryJson: document.querySelector("#presentationEntryJson"),
   applyPresentationEntryButton: document.querySelector("#applyPresentationEntryButton"),
   copyPresentationCatalogButton: document.querySelector("#copyPresentationCatalogButton"),
@@ -926,6 +927,12 @@ function installPresentationEditor() {
     selectedPresentationEntryId = button.dataset.presentationEntryId;
     renderPresentationEditor();
   });
+  dom.heroPresentationEditor?.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-hero-presentation-field]");
+    if (input) {
+      updateHeroPresentationDraftFromInput(input);
+    }
+  });
   dom.applyPresentationEntryButton?.addEventListener("click", () => applyPresentationEntryDraft());
   dom.resetPresentationCatalogButton?.addEventListener("click", () => resetPresentationCatalogDraft());
   dom.copyPresentationCatalogButton?.addEventListener("click", async () => {
@@ -1075,10 +1082,168 @@ function renderPresentationEditor() {
       ? entries.map((entry) => renderPresentationEntryRow(entry)).join("")
       : `<div class="asset-empty">No presentation catalog</div>`;
   }
+  const selected = entries.find((entry) => entry.id === selectedPresentationEntryId);
+  if (dom.heroPresentationEditor) {
+    dom.heroPresentationEditor.innerHTML = selected?.section === "heroes"
+      ? renderHeroPresentationEditor(selected.value)
+      : "";
+  }
   if (dom.presentationEntryJson && document.activeElement !== dom.presentationEntryJson) {
-    const selected = entries.find((entry) => entry.id === selectedPresentationEntryId);
     dom.presentationEntryJson.value = selected ? JSON.stringify(selected.value, null, 2) : "";
   }
+}
+
+function renderHeroPresentationEditor(hero) {
+  const assets = hero.assets && typeof hero.assets === "object" ? hero.assets : {};
+  const layout = hero.layout && typeof hero.layout === "object" ? hero.layout : {};
+  const ability = hero.ability && typeof hero.ability === "object" ? hero.ability : {};
+  const datalistId = `hero-art-assets-${safeDomId(hero.playerId)}`;
+  const behaviorDatalistId = `hero-behaviors-${safeDomId(hero.playerId)}`;
+
+  return `
+    <div class="hero-studio-panel">
+      <div class="hero-studio-preview">
+        ${renderHeroPresentationPreview(hero)}
+      </div>
+      <div class="hero-studio-controls">
+        <div class="card-display-head">
+          <div>
+            <strong>Hero Studio</strong>
+            <span>${escapeHtml(hero.playerId)} · ${escapeHtml(layout.variant ?? "default")}</span>
+          </div>
+        </div>
+        <div class="hero-studio-grid">
+          <label class="card-frame-field">
+            <span>Name</span>
+            <input type="text" value="${escapeAttr(hero.name ?? "")}" data-hero-presentation-field="name">
+          </label>
+          <label class="card-frame-field">
+            <span>Title</span>
+            <input type="text" value="${escapeAttr(hero.title ?? "")}" data-hero-presentation-field="title">
+          </label>
+          <label class="card-frame-field wide">
+            <span>Art path</span>
+            <input type="text" list="${escapeAttr(datalistId)}" value="${escapeAttr(assets.art ?? "")}" data-hero-presentation-field="assets.art">
+          </label>
+          <label class="card-frame-field wide">
+            <span>Frame path</span>
+            <input type="text" list="${escapeAttr(datalistId)}" value="${escapeAttr(assets.frame ?? "")}" data-hero-presentation-field="assets.frame">
+          </label>
+          <label class="card-frame-field">
+            <span>Variant</span>
+            <input type="text" value="${escapeAttr(layout.variant ?? "")}" data-hero-presentation-field="layout.variant">
+          </label>
+          <label class="card-frame-field">
+            <span>Fit</span>
+            <select data-hero-presentation-field="layout.artFit">
+              ${renderSelectOptions(["cover", "contain", "fill"], layout.artFit ?? "cover")}
+            </select>
+          </label>
+          ${renderHeroPresentationNumberField("layout.artPositionX", "Art X", layout.artPositionX ?? 50, 0, 100, 1)}
+          ${renderHeroPresentationNumberField("layout.artPositionY", "Art Y", layout.artPositionY ?? 50, 0, 100, 1)}
+          ${renderHeroPresentationNumberField("layout.artHeight", "Art H", layout.artHeight ?? "", 32, 110, 1)}
+        </div>
+        <div class="hero-ability-editor">
+          <div class="card-display-head">
+            <div>
+              <strong>Hero Ability</strong>
+              <span>${escapeHtml(ability.behaviorId ?? "No behavior")}</span>
+            </div>
+          </div>
+          <div class="hero-studio-grid">
+            <label class="card-frame-field">
+              <span>Ability</span>
+              <input type="text" value="${escapeAttr(ability.name ?? "")}" data-hero-presentation-field="ability.name">
+            </label>
+            <label class="card-frame-field">
+              <span>Action</span>
+              <input type="text" value="${escapeAttr(ability.action ?? "")}" data-hero-presentation-field="ability.action">
+            </label>
+            <label class="card-frame-field">
+              <span>Behavior</span>
+              <input type="text" list="${escapeAttr(behaviorDatalistId)}" value="${escapeAttr(ability.behaviorId ?? "")}" data-hero-presentation-field="ability.behaviorId">
+            </label>
+            <label class="card-frame-field">
+              <span>Target</span>
+              <select data-hero-presentation-field="ability.targetMode">
+                ${renderSelectOptions(["enemyHero", "selfHero", "battlefield", "targeted"], ability.targetMode ?? "enemyHero")}
+              </select>
+            </label>
+            ${renderHeroPresentationNumberField("ability.manaCost", "Mana", ability.manaCost ?? 0, 0, 20, 1)}
+            <label class="card-frame-field wide">
+              <span>Text</span>
+              <textarea data-hero-presentation-field="ability.text" rows="3">${escapeHtml(ability.text ?? "")}</textarea>
+            </label>
+          </div>
+        </div>
+        ${renderAssetPathDatalist(datalistId)}
+        ${renderHeroBehaviorDatalist(behaviorDatalistId)}
+      </div>
+    </div>
+  `;
+}
+
+function renderHeroPresentationNumberField(field, label, value, min, max, step) {
+  return `
+    <label class="card-frame-field">
+      <span>${escapeHtml(label)}</span>
+      <input
+        type="number"
+        min="${escapeAttr(min)}"
+        max="${escapeAttr(max)}"
+        step="${escapeAttr(step)}"
+        value="${escapeAttr(value)}"
+        data-hero-presentation-field="${escapeAttr(field)}"
+      >
+    </label>
+  `;
+}
+
+function renderHeroBehaviorDatalist(datalistId) {
+  const behaviorIds = Object.keys(behaviorSummaryDocument?.behaviors ?? {}).sort();
+  return `
+    <datalist id="${escapeAttr(datalistId)}">
+      ${behaviorIds.map((behaviorId) => `<option value="${escapeAttr(behaviorId)}"></option>`).join("")}
+    </datalist>
+  `;
+}
+
+function renderHeroPresentationPreview(hero) {
+  const ability = hero.ability && typeof hero.ability === "object" ? hero.ability : null;
+  const health = { current: 10, max: 10 };
+  const manaCost = Number(ability?.manaCost ?? 0);
+  const mana = { current: Math.max(manaCost, 2), max: Math.max(manaCost, 2) };
+  const previewHero = presentationHeroToHeroDef(hero) ?? {
+    name: hero.name ?? hero.playerId,
+    title: hero.title ?? "Hero",
+    art: hero.assets?.art,
+    ability
+  };
+  return `
+    <section
+      class="hero hero-card hero-studio-card"
+      ${heroPresentationStyle(previewHero)}
+      data-region-kind="hero"
+      tabindex="0"
+      aria-label="${escapeAttr(`${previewHero.name}. ${previewHero.title}.`)}"
+    >
+      ${ability ? renderDisplayProperties({ ...ability, display: ability.display ?? [] }, {}, "hero-ability") : ""}
+      <div class="hero-art" aria-hidden="true"></div>
+      <div class="hero-title">
+        <h2>${escapeHtml(previewHero.name)}</h2>
+        <span class="active-badge">Preview</span>
+      </div>
+      <div class="hero-subtitle">${escapeHtml(previewHero.title)}</div>
+      <div class="resource-grid">
+        <div class="resource stat-health" data-stat-icon="heart"><span class="meta">Health</span><strong>${health.current}</strong></div>
+        <div class="resource stat-mana" data-stat-icon="mana"><span class="meta">Mana</span><strong>${mana.current}/${mana.max}</strong></div>
+      </div>
+      ${ability ? `
+        <div class="hero-ability-text">${renderRulesText(ability.text ?? "")}</div>
+        <button class="hero-action" type="button" disabled>${escapeHtml(ability.action ?? "Ability")}</button>
+      ` : `<div class="card-display-empty">No hero ability.</div>`}
+    </section>
+  `;
 }
 
 function renderPresentationEntryRow(entry) {
@@ -1577,6 +1742,49 @@ function updateCardFrameDraftFromInput(input) {
   renderCardStudio();
   render();
   setCardStudioStatus(`Updated frame and art presentation for ${selected.templateId}.`);
+}
+
+function updateHeroPresentationDraftFromInput(input) {
+  const selected = presentationEntries().find((entry) => entry.id === selectedPresentationEntryId);
+  if (!selected || selected.section !== "heroes" || !presentationCatalog) {
+    setPresentationEditorStatus("No hero presentation entry selected.");
+    return;
+  }
+
+  const nextCatalog = cloneJson(presentationCatalog);
+  const entry = findHeroPresentationEntryRecord(nextCatalog, selected.key);
+  if (!entry) {
+    setPresentationEditorStatus(`Could not find hero presentation for ${selected.key}.`);
+    return;
+  }
+
+  setNestedPresentationValue(entry, input.dataset.heroPresentationField, heroPresentationInputValue(input));
+  cleanupPresentationEntry(entry);
+  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  applyPresentationCatalog(nextCatalog);
+  renderPresentationEditor();
+  render();
+  setPresentationEditorStatus(`Updated hero presentation for ${selected.key}.`);
+}
+
+function heroPresentationInputValue(input) {
+  if (input.type === "number") {
+    if (input.value === "") {
+      return undefined;
+    }
+    const value = Number(input.value);
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  const value = input.value.trim();
+  const field = input.dataset.heroPresentationField ?? "";
+  if (field.startsWith("assets.") || field.startsWith("layout.")) {
+    return value ? value : undefined;
+  }
+  if (field === "ability.text") {
+    return input.value;
+  }
+  return value;
 }
 
 function cardFrameInputValue(input) {
@@ -2148,6 +2356,10 @@ function findPresentationEntryRecord(catalog, templateId) {
     }
   }
   return null;
+}
+
+function findHeroPresentationEntryRecord(catalog, playerId) {
+  return (catalog?.heroes ?? []).find((entry) => entry?.playerId === playerId) ?? null;
 }
 
 function handleCardTemplateAction(action) {
@@ -3272,6 +3484,28 @@ function cardPresentationStyle(info) {
   const artHeight = Number(info.artHeight);
   if (Number.isFinite(artHeight) && artHeight > 0) {
     styles.push(`--card-art-height: ${Math.round(artHeight)}px`);
+  }
+  return styles.length > 0 ? `style="${escapeAttr(styles.join("; "))}"` : "";
+}
+
+function heroPresentationStyle(hero) {
+  const styles = [];
+  if (hero.art) {
+    styles.push(`--hero-art: url('${cssUrlValue(hero.art)}')`);
+  }
+  if (hero.frame) {
+    styles.push(`--hero-frame: url('${cssUrlValue(hero.frame)}')`);
+  }
+  if (hero.artFit) {
+    styles.push(`--hero-art-fit: ${cardArtFitValue(hero.artFit)}`);
+  }
+  const position = cardArtPositionValue(hero.artPositionX, hero.artPositionY);
+  if (position) {
+    styles.push(`--hero-art-position: ${position}`);
+  }
+  const artHeight = Number(hero.artHeight);
+  if (Number.isFinite(artHeight) && artHeight > 0) {
+    styles.push(`--hero-art-height: ${Math.round(artHeight)}px`);
   }
   return styles.length > 0 ? `style="${escapeAttr(styles.join("; "))}"` : "";
 }
@@ -5730,6 +5964,7 @@ function renderHeroCard(playerId, regionId = runtimeRegionIdForPlayer(playerId, 
     <section
       class="hero hero-card ${isActive ? "active-hero" : ""} ${disabled ? "disabled-card" : ""}"
       ${layoutRegionAttrs(regionId)}
+      ${heroPresentationStyle(hero)}
       data-target-player="${playerId}"
       data-target-kind="hero"
       ${actionDataAttrs(ability)}
@@ -5739,7 +5974,7 @@ function renderHeroCard(playerId, regionId = runtimeRegionIdForPlayer(playerId, 
       tabindex="0"
     >
       ${hero.ability ? renderDisplayProperties(hero.ability, {}, "hero-ability") : ""}
-      <div class="hero-art" style="--hero-art: url('${escapeHtml(hero.art ?? "")}')" aria-hidden="true"></div>
+      <div class="hero-art" aria-hidden="true"></div>
       <div class="hero-title">
         <h2>${escapeHtml(hero.name)}</h2>
         ${isActive ? `<span class="active-badge">Active</span>` : `<span class="meta">${escapeHtml(player.status)}</span>`}
