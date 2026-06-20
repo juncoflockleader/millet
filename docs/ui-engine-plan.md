@@ -27,7 +27,7 @@ Current implemented slice:
 - Ember Duel `ActionPanel` renders live open prompt controls from projected match state, including prompt type, response mode, responder progress, pass controls, main-action chips, and allowed response behavior buttons.
 - Ember Duel runtime consumes the ruleset presentation catalog for card, hero, equipment, and minion art/text/action/property display definitions.
 - `sample-duel` asset manifest now covers the demo board background, card portraits, VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
-- Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, shows manifest/presentation/effect usage references, supports local manifest entry JSON drafts with apply/copy/reset, can import image files into local drafts with computed content hash, dimensions, media type, data URL preview/publicPath, and can promote imported drafts through the demo authoring server into durable public assets plus updated ruleset manifests.
+- Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, shows manifest/presentation/effect usage references, supports local manifest entry JSON drafts with apply/copy/reset, can import image files into local drafts with computed content hash, dimensions, media type, data URL preview/publicPath, can promote imported drafts through the demo authoring server into durable public assets plus updated ruleset manifests, and shows promotion target/diff/worktree-dirty warnings before promotion.
 - Ember Duel `Presentation` panel lets designers inspect, locally edit, copy, apply, and reset presentation catalog entries while live previews re-render from the draft catalog.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
@@ -503,7 +503,7 @@ Validation should cover:
 - Build asset browser, metadata editor, previewers, and dependency panel.
 - Support generated asset draft metadata.
 - Acceptance: a card portrait and VFX sheet can be imported, validated, previewed, and referenced by a card.
-- Current slice: manifest-backed browser panel with previews, kind filters, generated metadata, usage/dependency labels, local asset entry JSON drafts, image file import that computes hash/dimensions/media type, and a guarded demo-server Promote flow that writes imported files under `assets/imported/<rulesetId>/` and updates the ruleset `asset-manifest.json`.
+- Current slice: manifest-backed browser panel with previews, kind filters, generated metadata, usage/dependency labels, local asset entry JSON drafts, image file import that computes hash/dimensions/media type, a guarded demo-server Promote flow that writes imported files under `assets/imported/<rulesetId>/` and updates the ruleset `asset-manifest.json`, plus promotion review showing target path, before/after manifest field diffs, and git dirty-worktree status.
 
 ### UI-M2: Board Layout Editor
 
@@ -539,6 +539,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Harden asset promotion UX with conflict warnings, before/after diffs, and explicit dirty-worktree indicators.
-2. Add asset promotion support for creating brand-new asset ids instead of replacing an existing manifest entry.
-3. Add card template list/detail editing for identity, assets, layout, properties, behavior, preview, and validation.
+1. Add asset promotion support for creating brand-new asset ids instead of replacing an existing manifest entry.
+2. Add card template list/detail editing for identity, assets, layout, properties, behavior, preview, and validation.
+3. Add card frame/property layout editing for compact card variants and ruleset-specific display slots.

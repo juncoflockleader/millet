@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, normalize, relative } from "node:path";
@@ -235,6 +236,11 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
         return;
       }
 
+      if (req.method === "GET" && url.pathname === "/authoring/status") {
+        send(res, 200, readAuthoringStatus());
+        return;
+      }
+
       if (req.method === "GET" && options.staticRoot && tryServeStatic(options.staticRoot, url.pathname, res)) {
         return;
       }
@@ -259,6 +265,32 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
   });
 
   return server;
+}
+
+function readAuthoringStatus(): { gitAvailable: boolean; dirty: boolean; changedFiles: string[]; message?: string } {
+  try {
+    const output = execFileSync("git", ["status", "--short"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    });
+    const changedFiles = output
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return {
+      gitAvailable: true,
+      dirty: changedFiles.length > 0,
+      changedFiles
+    };
+  } catch (error) {
+    return {
+      gitAvailable: false,
+      dirty: false,
+      changedFiles: [],
+      message: error instanceof Error ? error.message : String(error)
+    };
+  }
 }
 
 function promoteAssetDraft(

@@ -270,6 +270,7 @@ let presentationEditorOpen = false;
 let selectedPresentationEntryId = "";
 let assetManifest = null;
 let authoredAssetManifest = null;
+let authoringStatus = null;
 let assetLibraryOpen = false;
 let selectedAssetId = "";
 let assetFilterKind = "all";
@@ -572,6 +573,7 @@ function installLayoutEditor() {
 
 function installAssetLibrary() {
   renderAssetLibrary();
+  loadAuthoringStatus();
 
   dom.assetLibraryButton?.addEventListener("click", () => toggleAssetLibrary());
   dom.closeAssetLibraryButton?.addEventListener("click", () => toggleAssetLibrary(false));
@@ -690,6 +692,9 @@ function toggleAssetLibrary(open = !assetLibraryOpen) {
   hideTooltip();
   dom.assetLibrary.hidden = !assetLibraryOpen;
   dom.assetLibraryButton?.classList.toggle("selected", assetLibraryOpen);
+  if (assetLibraryOpen) {
+    loadAuthoringStatus();
+  }
   renderAssetLibrary();
 }
 
@@ -950,6 +955,24 @@ async function loadAssetManifest() {
   }
 }
 
+async function loadAuthoringStatus() {
+  try {
+    const response = await fetch("/authoring/status");
+    if (!response.ok) {
+      throw new Error(`Authoring status request failed: ${response.status}`);
+    }
+    authoringStatus = await response.json();
+  } catch (error) {
+    authoringStatus = {
+      gitAvailable: false,
+      dirty: false,
+      changedFiles: [],
+      message: error instanceof Error ? error.message : "Could not load authoring status."
+    };
+  }
+  renderAssetLibrary();
+}
+
 function renderAssetLibrary() {
   if (!dom.assetLibrary) {
     return;
@@ -1028,6 +1051,7 @@ function renderAssetRow(asset, selected) {
 function renderAssetDetail(asset) {
   const usage = assetUsageIndex[asset.assetId] ?? [];
   const hasDraft = Boolean(localStorage.getItem(ASSET_STORAGE_KEY));
+  const promotionReview = renderAssetPromotionReview(asset);
   const preview = asset.publicPath
     ? `<div class="asset-preview"><img src="${escapeAttr(asset.publicPath)}" alt="${escapeAttr(asset.assetId)} preview"></div>`
     : `<div class="asset-preview no-preview">No preview</div>`;
@@ -1060,6 +1084,7 @@ function renderAssetDetail(asset) {
         <span>${hasDraft ? "Local draft active" : "Ruleset source"}</span>
       </div>
       <textarea class="asset-entry-json" spellcheck="false" aria-label="Asset manifest entry JSON">${escapeHtml(JSON.stringify(asset, null, 2))}</textarea>
+      ${promotionReview}
       <div class="asset-editor-actions">
         <button type="button" data-asset-action="apply">Apply Entry</button>
         <label class="asset-import-button">
@@ -1072,6 +1097,89 @@ function renderAssetDetail(asset) {
       </div>
     </div>
   `;
+}
+
+function renderAssetPromotionReview(asset) {
+  const authored = authoredAssetManifest?.assets?.find((entry) => entry?.assetId === asset.assetId) ?? null;
+  const targetPath = promotedAssetTargetPath(asset);
+  const diffRows = assetDiffRows(authored, asset);
+  const status = authoringStatus ?? { gitAvailable: false, dirty: false, changedFiles: [] };
+  const importedDraft = typeof asset.publicPath === "string" && asset.publicPath.startsWith("data:");
+  const dirtyLabel = status.gitAvailable
+    ? (status.dirty ? `${status.changedFiles.length} uncommitted change${status.changedFiles.length === 1 ? "" : "s"}` : "Clean worktree")
+    : "Git status unavailable";
+
+  return `
+    <div class="asset-promotion-review ${importedDraft ? "ready" : "idle"}">
+      <div class="asset-review-head">
+        <strong>Promotion Review</strong>
+        <span class="${status.dirty ? "dirty" : "clean"}">${escapeHtml(dirtyLabel)}</span>
+      </div>
+      <div class="asset-review-grid">
+        <span>Target</span>
+        <strong>${escapeHtml(targetPath ?? "Import a file to preview target path")}</strong>
+        <span>Mode</span>
+        <strong>${escapeHtml(importedDraft ? "Replace existing asset entry" : "Waiting for imported data URL draft")}</strong>
+      </div>
+      ${status.dirty ? `<p class="asset-review-warning">Promotion will add more workspace changes on top of the current dirty tree.</p>` : ""}
+      ${diffRows.length > 0 ? `
+        <div class="asset-diff-list">
+          ${diffRows.map((row) => `
+            <div>
+              <span>${escapeHtml(row.field)}</span>
+              <code>${escapeHtml(row.before)}</code>
+              <code>${escapeHtml(row.after)}</code>
+            </div>
+          `).join("")}
+        </div>
+      ` : `<p class="asset-review-empty">No manifest field changes yet.</p>`}
+    </div>
+  `;
+}
+
+function promotedAssetTargetPath(asset) {
+  const extension = assetExtensionForMediaType(asset.mediaType);
+  return extension ? `/assets/imported/${RULESET_ID}/${asset.assetId}.${extension}` : "";
+}
+
+function assetExtensionForMediaType(mediaType) {
+  if (mediaType === "image/png") {
+    return "png";
+  }
+  if (mediaType === "image/jpeg") {
+    return "jpg";
+  }
+  if (mediaType === "image/webp") {
+    return "webp";
+  }
+  return "";
+}
+
+function assetDiffRows(before, after) {
+  if (!before || !after) {
+    return [];
+  }
+
+  return ["contentHash", "sourceUri", "publicPath", "mediaType", "width", "height", "usage"]
+    .filter((field) => JSON.stringify(before[field]) !== JSON.stringify(after[field]))
+    .map((field) => ({
+      field,
+      before: summarizeAssetValue(before[field]),
+      after: summarizeAssetValue(after[field])
+    }));
+}
+
+function summarizeAssetValue(value) {
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+  if (typeof value === "string" && value.startsWith("data:")) {
+    return `${value.slice(0, 28)}...`;
+  }
+  if (value === undefined) {
+    return "-";
+  }
+  return String(value);
 }
 
 function handleAssetDetailAction(action) {
@@ -1180,6 +1288,7 @@ async function promoteAssetEntryDraft() {
     assetUsageIndex = buildAssetUsageIndex();
     selectedAssetId = result.asset?.assetId ?? selected.assetId;
     renderAssetLibrary();
+    loadAuthoringStatus();
     setAssetLibraryStatus(`Promoted ${selectedAssetId} to ${result.publicPath}.`);
   } catch (error) {
     setAssetLibraryStatus(error instanceof Error ? error.message : "Could not promote asset draft.");

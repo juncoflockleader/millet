@@ -41,6 +41,8 @@ The editor also has an image import affordance for local drafts. Importing an im
 
 For the local demo authoring server, the same entry can be promoted into the workspace. `Promote` posts the selected draft to `/authoring/assets/promote`, which accepts image data URLs for existing manifest entries, writes the decoded file under `packages/demo-basic-duel/public/assets/imported/<rulesetId>/`, recalculates the committed hash, assigns a durable `/assets/imported/...` public path, and writes the ruleset `asset-manifest.json`. This endpoint is intentionally guarded and development-oriented; production authoring should add conflict handling, review diffs, and explicit publishing controls.
 
+The promotion review panel now surfaces those risks before the write: it shows the deterministic target path, whether the workspace is already dirty, and a compact before/after diff for manifest fields such as `contentHash`, `sourceUri`, `publicPath`, dimensions, media type, and usage labels.
+
 ## Demo Asset Notes
 
 The current `Ember Duel` assets were generated with the built-in image generator and saved into the repo:

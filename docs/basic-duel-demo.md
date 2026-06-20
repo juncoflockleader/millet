@@ -53,7 +53,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Presentation editor changes are stored in browser `localStorage` under `ember-duel.presentation.<rulesetId>.v1` and can be reset to the authored ruleset catalog.
 - UI preview fixtures are loaded from `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
 - The asset library is loaded from `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, with previews from each asset `publicPath`.
-- Asset editor changes are stored in browser `localStorage` under `ember-duel.assets.<rulesetId>.v1` and can be copied as active manifest JSON or reset to the authored ruleset source. Imported image drafts compute content hash, dimensions, media type, local source URI, and a data URL `publicPath` for immediate preview. `Promote` writes imported image drafts to `packages/demo-basic-duel/public/assets/imported/<rulesetId>/` and updates the selected ruleset `asset-manifest.json` through the local authoring endpoint.
+- Asset editor changes are stored in browser `localStorage` under `ember-duel.assets.<rulesetId>.v1` and can be copied as active manifest JSON or reset to the authored ruleset source. Imported image drafts compute content hash, dimensions, media type, local source URI, and a data URL `publicPath` for immediate preview. The promotion review shows the target path, dirty-worktree status, and manifest field diff before `Promote` writes imported image drafts to `packages/demo-basic-duel/public/assets/imported/<rulesetId>/` and updates the selected ruleset `asset-manifest.json` through the local authoring endpoint.
 
 ## Assets
 

@@ -226,6 +226,23 @@ test("HTTP asset promotion rejects non-data-url drafts", async () => {
   }
 });
 
+test("HTTP authoring status reports git dirty-state shape", async () => {
+  const server = createMilletHttpServer(new InMemoryMatchService(), {
+    staticRoot: join("packages", "demo-basic-duel", "public"),
+    rulesetRoot: join("packages", "rulesets")
+  });
+
+  const response = await dispatch(server, {
+    method: "GET",
+    url: "/authoring/status"
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(typeof response.json.gitAvailable, "boolean");
+  assert.equal(typeof response.json.dirty, "boolean");
+  assert.ok(Array.isArray(response.json.changedFiles));
+});
+
 test("HTTP state endpoint returns viewer-projected match state", async () => {
   const service = new InMemoryMatchService();
   const match = service.createMatch("sample-duel");
