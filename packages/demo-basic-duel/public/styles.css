@@ -1575,6 +1575,21 @@ p,
   background: rgba(105, 211, 154, 0.06);
 }
 
+.layout-template-tools {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.layout-template-tools button {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
 .layout-control-group-head {
   grid-column: 1 / -1;
   display: flex;
@@ -3101,6 +3116,10 @@ p,
   }
 
   .layout-document-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-template-tools {
     grid-template-columns: 1fr;
   }
 

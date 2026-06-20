@@ -347,6 +347,25 @@ const REGION_PRESETS = [
     widget: { kind: "system", component: "HistoryLog" }
   }
 ];
+const BOARD_LAYOUT_TEMPLATES = [
+  {
+    id: "ruleset-default",
+    label: "Ruleset Default",
+    source: "authored"
+  },
+  {
+    id: "duel-2p",
+    label: "2P Duel",
+    url: "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json",
+    layoutId: "ember-duel-default-board"
+  },
+  {
+    id: "identity-8p",
+    label: "8-Seat Identity",
+    url: "/content/rulesets/sample-identity/ui/sanguosha-eight-player-board-layout.json",
+    layoutId: "sanguosha-eight-player-board"
+  }
+];
 const LAYOUT_SNAP_SIZE = 8;
 const CARD_TEMPLATE_REQUIRED_FIELDS = ["templateId", "version", "objectType", "nameKey"];
 const CARD_TEMPLATE_OPTIONAL_FIELDS = ["descriptionKey", "tags", "behaviorIds", "assetRefs", "manaCost", "stats", "display", "metadata"];
@@ -776,6 +795,13 @@ function installLayoutEditor() {
     }
     setLayoutValue(input.dataset.layoutPath, Number(input.value));
     commitLayoutChange();
+  });
+  dom.layoutControls?.addEventListener("click", (event) => {
+    const templateButton = event.target.closest("[data-layout-template-action]");
+    if (!templateButton) {
+      return;
+    }
+    void handleLayoutTemplateAction(templateButton.dataset.layoutTemplateAction);
   });
   dom.layoutControls?.addEventListener("change", (event) => {
     const documentInput = event.target.closest("[data-layout-document-field]");
@@ -4170,6 +4196,29 @@ function renderLayoutDocumentEditor() {
         ${renderDocumentNumberField("scaling.minScale", "Min", scaling.minScale, 0.05, 2, 0.01)}
         ${renderDocumentNumberField("scaling.maxScale", "Max", scaling.maxScale, 0.05, 4, 0.01)}
       </div>
+      ${renderLayoutTemplateEditor()}
+    </div>
+  `;
+}
+
+function renderLayoutTemplateEditor() {
+  const activeTemplate = layoutTemplateIdForDocument(boardLayoutDocument) ?? "ruleset-default";
+  return `
+    <div class="layout-template-tools">
+      <label class="layout-field">
+        <span>Template</span>
+        <select data-layout-template-select aria-label="Board layout template">
+          ${BOARD_LAYOUT_TEMPLATES.map((template) => `
+            <option value="${escapeAttr(template.id)}" ${template.id === activeTemplate ? "selected" : ""}>${escapeHtml(template.label)}</option>
+          `).join("")}
+        </select>
+      </label>
+      <button
+        class="ghost"
+        type="button"
+        data-layout-template-action="apply"
+        title="Apply selected board layout template to the local draft"
+      >Apply</button>
     </div>
   `;
 }
@@ -5457,6 +5506,55 @@ function importBoardLayoutDraft(value) {
   syncLayoutEditor();
   annotateStaticLayoutRegions();
   render();
+}
+
+async function handleLayoutTemplateAction(action) {
+  if (action !== "apply") {
+    return;
+  }
+
+  const select = dom.layoutControls?.querySelector("[data-layout-template-select]");
+  const templateId = select?.value || layoutTemplateIdForDocument(boardLayoutDocument) || "ruleset-default";
+  const template = BOARD_LAYOUT_TEMPLATES.find((candidate) => candidate.id === templateId) ?? BOARD_LAYOUT_TEMPLATES[0];
+  try {
+    setLayoutStatus(`Loading ${template.label} layout.`);
+    const templateDocument = await loadBoardLayoutTemplate(template);
+    importBoardLayoutDraft(templateDocument);
+    setLayoutStatus(`Applied ${template.label} layout as a local draft.`);
+  } catch (error) {
+    setLayoutStatus(error instanceof Error ? error.message : `Could not load ${template.label} layout.`);
+  }
+}
+
+async function loadBoardLayoutTemplate(template) {
+  if (template?.source === "authored") {
+    if (!authoredBoardLayoutDocument) {
+      throw new Error("Ruleset default layout is still loading.");
+    }
+    return cloneJson(authoredBoardLayoutDocument);
+  }
+
+  if (!template?.url) {
+    throw new Error("Layout template is missing a source URL.");
+  }
+
+  const response = await fetch(template.url);
+  if (!response.ok) {
+    throw new Error(`Layout template request failed: ${response.status}`);
+  }
+  return await response.json();
+}
+
+function layoutTemplateIdForDocument(document) {
+  const documentId = typeof document?.id === "string" ? document.id : "";
+  const matched = BOARD_LAYOUT_TEMPLATES.find((template) => template.layoutId === documentId);
+  if (matched) {
+    return matched.id;
+  }
+  if (authoredBoardLayoutDocument && documentId === authoredBoardLayoutDocument.id) {
+    return "ruleset-default";
+  }
+  return null;
 }
 
 function applyPresentationCatalog(catalog) {
