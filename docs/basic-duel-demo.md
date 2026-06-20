@@ -26,6 +26,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - `Preview` opens ruleset UI preview fixtures for read-only card, hero, equipment, and minion states.
 - `?ruleset=sample-identity` loads the Sanguosha-like eight-player ruleset preview and renders authored absolute board regions for seats, projection-safe public/owned/hidden role badges, piles, hand, equipment, judgment, prompt, and history.
 - `Assets` opens the ruleset asset library, local manifest entry editor, browser-local image import draft flow, new asset draft creation, and demo-server asset promotion control.
+- `Cards` opens the ruleset card template studio for local template JSON drafts, type filters, dependency health, and card preview.
 - `Presentation` opens a local presentation catalog entry editor.
 - `Layout` opens the board layout editor for token controls, region fields, snap-to-grid region drag/resize, region copy/flip/fill actions, and full `BoardLayoutJson` import/export.
 - `End Turn` submits the engine-level `end_turn` command.
@@ -50,6 +51,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - The authored default layout is loaded from `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json` through `/content/rulesets/sample-duel/ui/ember-duel-board-layout.json`.
 - Layout editor changes are stored in browser `localStorage` under `ember-duel.layout.<rulesetId>.v1` and can be copied or imported as full `BoardLayoutJson`.
 - Card, hero, equipment, and minion presentation defaults are loaded from `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`.
+- Card templates are loaded from `packages/rulesets/<rulesetId>/card-catalog.json`. The `Cards` panel stores local template edits in browser `localStorage` under `ember-duel.cards.<rulesetId>.v1`, validates template shape, shows declared behavior/asset dependency health, renders a card preview from catalog plus presentation data, and can copy/reset the active catalog draft.
 - Presentation editor changes are stored in browser `localStorage` under `ember-duel.presentation.<rulesetId>.v1` and can be reset to the authored ruleset catalog.
 - UI preview fixtures are loaded from `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
 - The asset library is loaded from `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, with previews from each asset `publicPath`.

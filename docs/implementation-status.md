@@ -39,6 +39,8 @@ Latest local result:
 - Asset promotion browser smoke ran against temporary static/ruleset roots and confirmed `Import File` plus `Promote` clears localStorage, writes `/assets/imported/sample-duel/card-art-firebolt.png`, updates the textarea/preview to the durable path, and leaves the real workspace manifest untouched during smoke.
 - Asset promotion review smoke confirmed the `Assets` panel shows dirty-worktree status, deterministic target path, replace-vs-waiting mode, and before/after diffs for `contentHash`, `sourceUri`, `publicPath`, dimensions, and usage before promotion.
 - Asset new-entry smoke confirmed `New Asset` creates a unique local manifest draft, importing a PNG computes dimensions and a data URL public path, and the promotion review switches to `Create new asset entry` with `assetId` diff rows and no page errors.
+- Card template studio smoke confirmed the `Cards` panel opens, reads 6 `sample-duel` templates, filters by object type, previews `Firebolt` and `Training Axe`, applies a local `training_axe` JSON draft to `ember-duel.cards.sample-duel.v1`, resets back to ruleset source, and emits no page errors.
+- Identity card template smoke confirmed `?ruleset=sample-identity` reads 18 templates, shows card/equipment/identity filters, displays localized names such as `Sample Basic`, and validates the selected template without page errors.
 - Preview fixture smoke confirmed the `Preview` panel opens, reads 5 ruleset fixtures, renders equipment/minion/projected prompt states, disables live refresh/end-turn controls, and reports read-only action attempts in the log.
 - Prompt-control browser smoke confirmed live main-action `End Turn` advances from Player 1 to Player 2, and the read-only prompt fixture renders responder progress plus disabled response/pass controls with no page errors.
 - Hidden-object preview smoke confirmed projected hidden cards render as generic `Hidden Card` surfaces and do not leak the redacted template or object id in visible UI.
@@ -56,6 +58,7 @@ Latest local result:
 - The next asset-promotion slice added a guarded demo-server authoring endpoint plus `Assets` panel Promote control for turning imported data URL drafts into workspace files and durable manifest updates.
 - The next asset-promotion-hardening slice added `/authoring/status`, dirty-worktree indicators, target-path preview, and compact manifest before/after diffs to the `Assets` panel promotion review.
 - The next asset-create slice added `New Asset` local manifest drafts plus create-mode promotion support for adding brand-new asset ids to a ruleset manifest.
+- The next card-studio slice added a browser-local `Cards` panel for card catalog template list/detail editing, object-type filters, dependency health, card previews, and validated local JSON drafts.
 - The next display-validation slice added semantic checks for unsupported default property display slots/icons in card catalogs, presentation catalogs, hero displays, and hero ability displays.
 - The next preview-fixture slice added schema-backed read-only UI preview states for card, hero, equipment, and minion rendering, plus demo consumption through the `Preview` panel.
 - The next hidden-rendering slice made UI preview fixtures projection-safe for hidden objects and added a generic hidden-card renderer for redacted projected cards.

@@ -16,6 +16,7 @@
         <div class="topbar-actions">
           <button id="previewPanelButton" class="ghost" type="button">Preview</button>
           <button id="assetLibraryButton" class="ghost" type="button">Assets</button>
+          <button id="cardStudioButton" class="ghost" type="button">Cards</button>
           <button id="presentationEditorButton" class="ghost" type="button">Presentation</button>
           <button id="layoutEditorButton" class="ghost" type="button">Layout</button>
           <button id="newMatchButton" type="button">New Match</button>
@@ -135,6 +136,21 @@
           <div class="asset-detail" id="assetDetail"></div>
         </div>
         <p class="asset-library-status" id="assetLibraryStatus" aria-live="polite"></p>
+      </aside>
+      <aside class="card-studio" id="cardStudio" aria-label="Card template studio" hidden>
+        <div class="panel-head">
+          <div>
+            <strong>Card Templates</strong>
+            <span id="cardTemplateCount">0 templates</span>
+          </div>
+          <button id="closeCardStudioButton" class="ghost icon-button" type="button" aria-label="Close card template studio">X</button>
+        </div>
+        <div class="card-filter" id="cardTemplateFilter" role="tablist" aria-label="Card template filters"></div>
+        <div class="card-studio-body">
+          <div class="card-template-list" id="cardTemplateList" role="listbox" aria-label="Card templates"></div>
+          <div class="card-template-detail" id="cardTemplateDetail"></div>
+        </div>
+        <p class="card-studio-status" id="cardStudioStatus" aria-live="polite"></p>
       </aside>
       <aside class="presentation-editor" id="presentationEditor" aria-label="Presentation catalog editor" hidden>
         <div class="panel-head">

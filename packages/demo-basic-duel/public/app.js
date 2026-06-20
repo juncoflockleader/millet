@@ -108,9 +108,12 @@ let PLAY_AREA = {
 
 const LAYOUT_STORAGE_KEY = `ember-duel.layout.${RULESET_ID}.v1`;
 const LAYOUT_SNAP_STORAGE_KEY = `ember-duel.layout.snap.${RULESET_ID}.v1`;
+const CARD_CATALOG_STORAGE_KEY = `ember-duel.cards.${RULESET_ID}.v1`;
 const PRESENTATION_STORAGE_KEY = `ember-duel.presentation.${RULESET_ID}.v1`;
 const ASSET_STORAGE_KEY = `ember-duel.assets.${RULESET_ID}.v1`;
 const GAME_DEFINITION_URL = `${RULESET_BASE_URL}/game-definition.json`;
+const LOCALIZATION_URL = `${RULESET_BASE_URL}/localization.json`;
+const FALLBACK_CARD_CATALOG_URL = "/content/rulesets/sample-duel/card-catalog.json";
 const ASSET_MANIFEST_URL = `${RULESET_BASE_URL}/asset-manifest.json`;
 const FALLBACK_BOARD_LAYOUT_URL = "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json";
 const FALLBACK_PRESENTATION_CATALOG_URL = "/content/rulesets/sample-duel/ui/ember-duel-presentation.json";
@@ -201,6 +204,10 @@ const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "seat", "team", "o
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "admin", "hidden"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
 const LAYOUT_SNAP_SIZE = 8;
+const CARD_TEMPLATE_REQUIRED_FIELDS = ["templateId", "version", "objectType", "nameKey"];
+const CARD_TEMPLATE_OPTIONAL_FIELDS = ["descriptionKey", "tags", "behaviorIds", "assetRefs", "manaCost", "stats", "display", "metadata"];
+const CARD_TEMPLATE_ALLOWED_FIELDS = new Set([...CARD_TEMPLATE_REQUIRED_FIELDS, ...CARD_TEMPLATE_OPTIONAL_FIELDS]);
+const PROPERTY_DISPLAY_SOURCES = ["template", "stats", "counter", "resource", "metadata", "computed"];
 
 const ASSET_REQUIRED_FIELDS = ["assetId", "version", "kind", "contentHash", "sourceUri", "license", "owner"];
 const ASSET_OPTIONAL_FIELDS = [
@@ -266,6 +273,13 @@ let activeLayoutDrag = null;
 let activeRegionDrag = null;
 let selectedLayoutRegionId = "";
 let layoutSnapEnabled = loadLayoutSnapEnabled();
+let gameDefinitionDocument = null;
+let localizationBundle = null;
+let cardCatalog = null;
+let authoredCardCatalog = null;
+let cardStudioOpen = false;
+let selectedCardTemplateId = "";
+let cardTemplateFilter = "all";
 let presentationCatalogId = "fallback";
 let presentationCatalog = null;
 let authoredPresentationCatalog = null;
@@ -309,6 +323,14 @@ const dom = {
   assetList: document.querySelector("#assetList"),
   assetDetail: document.querySelector("#assetDetail"),
   assetLibraryStatus: document.querySelector("#assetLibraryStatus"),
+  cardStudio: document.querySelector("#cardStudio"),
+  cardStudioButton: document.querySelector("#cardStudioButton"),
+  closeCardStudioButton: document.querySelector("#closeCardStudioButton"),
+  cardTemplateCount: document.querySelector("#cardTemplateCount"),
+  cardTemplateFilter: document.querySelector("#cardTemplateFilter"),
+  cardTemplateList: document.querySelector("#cardTemplateList"),
+  cardTemplateDetail: document.querySelector("#cardTemplateDetail"),
+  cardStudioStatus: document.querySelector("#cardStudioStatus"),
   presentationEditor: document.querySelector("#presentationEditor"),
   presentationEditorButton: document.querySelector("#presentationEditorButton"),
   closePresentationEditorButton: document.querySelector("#closePresentationEditorButton"),
@@ -385,6 +407,7 @@ dom.selectP2.addEventListener("click", () => selectPlayer("p2"));
 
 installLayoutEditor();
 installAssetLibrary();
+installCardStudio();
 installPresentationEditor();
 installPreviewPanel();
 applyLayout();
@@ -392,6 +415,8 @@ annotateStaticLayoutRegions();
 installViewportFitter();
 render();
 loadAuthoredBoardLayout();
+loadLocalizationBundle();
+loadCardCatalog();
 loadAuthoredPresentationCatalog();
 loadAssetManifest();
 loadPreviewFixtures();
@@ -632,6 +657,36 @@ function installAssetLibrary() {
   });
 }
 
+function installCardStudio() {
+  renderCardStudio();
+
+  dom.cardStudioButton?.addEventListener("click", () => toggleCardStudio());
+  dom.closeCardStudioButton?.addEventListener("click", () => toggleCardStudio(false));
+  dom.cardTemplateFilter?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-card-filter]");
+    if (!button) {
+      return;
+    }
+    cardTemplateFilter = button.dataset.cardFilter;
+    renderCardStudio();
+  });
+  dom.cardTemplateList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-card-template-id]");
+    if (!button) {
+      return;
+    }
+    selectedCardTemplateId = button.dataset.cardTemplateId;
+    renderCardStudio();
+  });
+  dom.cardTemplateDetail?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-card-action]");
+    if (!button) {
+      return;
+    }
+    handleCardTemplateAction(button.dataset.cardAction);
+  });
+}
+
 function installPresentationEditor() {
   renderPresentationEditor();
 
@@ -686,6 +741,9 @@ function togglePreviewPanel(open = !previewPanelOpen) {
     if (assetLibraryOpen) {
       toggleAssetLibrary(false);
     }
+    if (cardStudioOpen) {
+      toggleCardStudio(false);
+    }
     if (presentationEditorOpen) {
       togglePresentationEditor(false);
     }
@@ -699,14 +757,19 @@ function togglePreviewPanel(open = !previewPanelOpen) {
 
 function toggleAssetLibrary(open = !assetLibraryOpen) {
   assetLibraryOpen = open;
-  if (assetLibraryOpen && layoutEditorOpen) {
-    toggleLayoutEditor(false);
-  }
-  if (assetLibraryOpen && previewPanelOpen) {
-    togglePreviewPanel(false);
-  }
-  if (assetLibraryOpen && presentationEditorOpen) {
-    togglePresentationEditor(false);
+  if (assetLibraryOpen) {
+    if (layoutEditorOpen) {
+      toggleLayoutEditor(false);
+    }
+    if (previewPanelOpen) {
+      togglePreviewPanel(false);
+    }
+    if (cardStudioOpen) {
+      toggleCardStudio(false);
+    }
+    if (presentationEditorOpen) {
+      togglePresentationEditor(false);
+    }
   }
 
   hideTooltip();
@@ -716,6 +779,29 @@ function toggleAssetLibrary(open = !assetLibraryOpen) {
     loadAuthoringStatus();
   }
   renderAssetLibrary();
+}
+
+function toggleCardStudio(open = !cardStudioOpen) {
+  cardStudioOpen = open;
+  if (cardStudioOpen) {
+    if (layoutEditorOpen) {
+      toggleLayoutEditor(false);
+    }
+    if (previewPanelOpen) {
+      togglePreviewPanel(false);
+    }
+    if (assetLibraryOpen) {
+      toggleAssetLibrary(false);
+    }
+    if (presentationEditorOpen) {
+      togglePresentationEditor(false);
+    }
+  }
+
+  hideTooltip();
+  dom.cardStudio.hidden = !cardStudioOpen;
+  dom.cardStudioButton?.classList.toggle("selected", cardStudioOpen);
+  renderCardStudio();
 }
 
 function togglePresentationEditor(open = !presentationEditorOpen) {
@@ -729,6 +815,9 @@ function togglePresentationEditor(open = !presentationEditorOpen) {
     }
     if (assetLibraryOpen) {
       toggleAssetLibrary(false);
+    }
+    if (cardStudioOpen) {
+      toggleCardStudio(false);
     }
   }
 
@@ -956,6 +1045,559 @@ function previewFixtures() {
   return Array.isArray(previewFixtureDocument?.fixtures) ? previewFixtureDocument.fixtures : [];
 }
 
+async function loadCardCatalog() {
+  try {
+    gameDefinitionDocument = await loadGameDefinitionDocument();
+    const response = await fetch(await resolveCardCatalogUrl());
+    if (!response.ok) {
+      throw new Error(`Card catalog request failed: ${response.status}`);
+    }
+
+    authoredCardCatalog = await response.json();
+    const draft = loadCardCatalogDraft();
+    cardCatalog = draft ?? cloneJson(authoredCardCatalog);
+    selectedCardTemplateId = selectedCardTemplateId || firstVisibleCardTemplate()?.templateId || "";
+    renderCardStudio();
+    setCardStudioStatus(draft ? "Loaded local card catalog draft." : `Loaded ${cardTemplates().length} card templates.`);
+  } catch (error) {
+    setCardStudioStatus(error instanceof Error ? error.message : "Could not load card catalog.");
+  }
+}
+
+async function loadGameDefinitionDocument() {
+  if (gameDefinitionDocument) {
+    return gameDefinitionDocument;
+  }
+
+  const response = await fetch(GAME_DEFINITION_URL);
+  if (!response.ok) {
+    throw new Error(`Game definition request failed: ${response.status}`);
+  }
+  gameDefinitionDocument = await response.json();
+  return gameDefinitionDocument;
+}
+
+async function loadLocalizationBundle() {
+  try {
+    const response = await fetch(LOCALIZATION_URL);
+    if (!response.ok) {
+      return;
+    }
+    localizationBundle = await response.json();
+    renderCardStudio();
+  } catch {
+    localizationBundle = null;
+  }
+}
+
+async function resolveCardCatalogUrl() {
+  try {
+    const gameDefinition = await loadGameDefinitionDocument();
+    const cardCatalogPath = gameDefinition?.cardCatalog;
+    return typeof cardCatalogPath === "string" && cardCatalogPath.length > 0
+      ? `${RULESET_BASE_URL}/${cardCatalogPath}`
+      : FALLBACK_CARD_CATALOG_URL;
+  } catch {
+    return FALLBACK_CARD_CATALOG_URL;
+  }
+}
+
+function renderCardStudio() {
+  if (!dom.cardStudio) {
+    return;
+  }
+
+  const templates = cardTemplates();
+  const visibleTemplates = filteredCardTemplates();
+  const selected = visibleTemplates.find((template) => template.templateId === selectedCardTemplateId) ?? visibleTemplates[0] ?? null;
+  selectedCardTemplateId = selected?.templateId ?? "";
+
+  renderCardTemplateFilters(templates);
+  if (dom.cardTemplateCount) {
+    dom.cardTemplateCount.textContent = cardCatalog ? `${visibleTemplates.length}/${templates.length} templates` : "Loading";
+  }
+  if (dom.cardTemplateList) {
+    dom.cardTemplateList.innerHTML = visibleTemplates.length > 0
+      ? visibleTemplates.map((template) => renderCardTemplateRow(template, template.templateId === selectedCardTemplateId)).join("")
+      : `<div class="asset-empty">No templates</div>`;
+  }
+  if (dom.cardTemplateDetail) {
+    dom.cardTemplateDetail.innerHTML = selected ? renderCardTemplateDetail(selected) : `<div class="asset-empty">No selection</div>`;
+  }
+}
+
+function renderCardTemplateFilters(templates) {
+  if (!dom.cardTemplateFilter) {
+    return;
+  }
+
+  const types = ["all", ...Array.from(new Set(templates.map((template) => template.objectType).filter(Boolean))).sort()];
+  if (!types.includes(cardTemplateFilter)) {
+    cardTemplateFilter = "all";
+  }
+
+  dom.cardTemplateFilter.innerHTML = types.map((type) => {
+    const count = type === "all" ? templates.length : templates.filter((template) => template.objectType === type).length;
+    return `
+      <button
+        class="ghost ${cardTemplateFilter === type ? "selected" : ""}"
+        type="button"
+        role="tab"
+        aria-selected="${cardTemplateFilter === type ? "true" : "false"}"
+        data-card-filter="${escapeAttr(type)}"
+      >${escapeHtml(type === "all" ? "All" : labelFromId(type))} ${count}</button>
+    `;
+  }).join("");
+}
+
+function renderCardTemplateRow(template, selected) {
+  const summary = [
+    labelFromId(template.objectType),
+    template.tags?.slice(0, 2).map(labelFromId).join(", "),
+    `${(template.behaviorIds ?? []).length} behaviors`
+  ].filter(Boolean).join(" · ");
+  const validation = cardTemplateValidation(template);
+  return `
+    <button
+      class="card-template-row ${selected ? "selected" : ""}"
+      type="button"
+      role="option"
+      aria-selected="${selected ? "true" : "false"}"
+      data-card-template-id="${escapeAttr(template.templateId)}"
+    >
+      <span class="card-type-chip">${escapeHtml(labelFromId(template.objectType))}</span>
+      <span class="asset-row-copy">
+        <strong>${escapeHtml(cardTemplateDisplayName(template))}</strong>
+        <span>${escapeHtml(summary)}</span>
+      </span>
+      <span class="card-validation-dot ${validation.errors.length > 0 ? "error" : validation.warnings.length > 0 ? "warning" : "ok"}" aria-hidden="true"></span>
+    </button>
+  `;
+}
+
+function renderCardTemplateDetail(template) {
+  const hasDraft = Boolean(localStorage.getItem(CARD_CATALOG_STORAGE_KEY));
+  const preview = renderCardTemplatePreview(template);
+  const validation = cardTemplateValidation(template);
+  return `
+    ${preview}
+    <div class="card-template-summary">
+      <h3>${escapeHtml(cardTemplateDisplayName(template))}</h3>
+      <dl class="asset-meta">
+        ${renderTemplateMetaRows(template)}
+      </dl>
+      ${renderTemplateChips("Tags", template.tags)}
+      ${renderTemplateChips("Behaviors", template.behaviorIds, (id) => behaviorAvailable(id))}
+      ${renderTemplateChips("Assets", template.assetRefs, (id) => assetAvailable(id))}
+      ${renderCardTemplateValidation(validation)}
+    </div>
+    <div class="card-template-editor">
+      <div class="asset-editor-head">
+        <strong>Template JSON</strong>
+        <span>${hasDraft ? "Local draft active" : "Ruleset source"}</span>
+      </div>
+      <textarea class="card-template-json" spellcheck="false" aria-label="Card template JSON">${escapeHtml(JSON.stringify(template, null, 2))}</textarea>
+      <div class="card-template-actions">
+        <button type="button" data-card-action="apply">Apply Template</button>
+        <button class="ghost" type="button" data-card-action="copy">Copy Catalog</button>
+        <button class="ghost" type="button" data-card-action="reset">Reset</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCardTemplatePreview(template) {
+  const info = cardTemplatePreviewInfo(template);
+  const object = {
+    id: `preview_${template.templateId}`,
+    templateId: template.templateId,
+    objectType: template.objectType,
+    stats: template.stats,
+    counters: template.stats
+  };
+  const detail = cardDetail(info, object);
+  const art = info.art ? ` style="--card-art: url('${escapeHtml(info.art)}')"` : "";
+  return `
+    <div class="card-template-preview">
+      <article
+        class="card disabled-card"
+        data-template="${escapeAttr(template.templateId)}"
+        data-tooltip-title="${escapeAttr(info.name)}"
+        data-tooltip-body="${escapeAttr(cardTemplateTooltip(info, template))}"
+        draggable="false"
+        tabindex="0"
+        aria-label="${escapeAttr(`${info.name}. ${detail}. ${info.text}`)}"
+      >
+        ${renderDisplayProperties(info, object)}
+        <div class="card-art"${art} aria-hidden="true"></div>
+        <div>
+          <div class="name">${escapeHtml(info.name)}</div>
+          <div class="meta">${escapeHtml(detail)}</div>
+        </div>
+        <div class="text">${renderRulesText(info.text)}</div>
+        <button class="card-action" type="button" disabled>${escapeHtml(info.action || "Preview")}</button>
+      </article>
+    </div>
+  `;
+}
+
+function cardTemplatePreviewInfo(template) {
+  const presentation = presentationEntryForTemplate(template.templateId);
+  const display = template.display?.properties ?? presentation?.properties?.display ?? [];
+  return {
+    name: presentation?.name ?? cardTemplateDisplayName(template),
+    manaCost: template.manaCost ?? presentation?.properties?.manaCost,
+    stats: template.stats ?? presentation?.properties?.stats,
+    metadata: template.metadata,
+    text: presentation?.text ?? labelFromId(template.descriptionKey ?? template.nameKey),
+    action: presentation?.action ?? labelFromId(template.behaviorIds?.[0] ?? "Preview"),
+    art: presentation?.assets?.art,
+    display
+  };
+}
+
+function cardTemplateTooltip(info, template) {
+  return [
+    info.text,
+    `Template: ${template.templateId}`,
+    `Type: ${labelFromId(template.objectType)}`,
+    template.behaviorIds?.length ? `Behaviors: ${template.behaviorIds.join(", ")}` : "",
+    template.assetRefs?.length ? `Assets: ${template.assetRefs.join(", ")}` : ""
+  ].filter(Boolean).join("\n");
+}
+
+function renderTemplateMetaRows(template) {
+  const rows = [
+    ["ID", template.templateId],
+    ["Version", template.version],
+    ["Type", labelFromId(template.objectType)],
+    ["Name key", template.nameKey],
+    ["Cost", template.manaCost],
+    ["Stats", template.stats ? Object.entries(template.stats).map(([key, value]) => `${labelFromId(key)} ${value}`).join(", ") : ""],
+    ["Display", template.display?.layout]
+  ].filter(([, value]) => value !== undefined && value !== "");
+
+  return rows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
+}
+
+function renderTemplateChips(label, values, availability = null) {
+  const items = Array.isArray(values) ? values : [];
+  return `
+    <div class="card-template-chip-group" aria-label="${escapeAttr(label)}">
+      <strong>${escapeHtml(label)}</strong>
+      <div>
+        ${items.length > 0
+          ? items.map((value) => {
+              const state = availability ? availability(value) : "ok";
+              return `<span class="${state === "missing" ? "missing" : ""}">${escapeHtml(value)}</span>`;
+            }).join("")
+          : `<span class="muted">none</span>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderCardTemplateValidation(validation) {
+  const rows = [
+    ...validation.errors.map((message) => ({ severity: "error", message })),
+    ...validation.warnings.map((message) => ({ severity: "warning", message }))
+  ];
+  return `
+    <div class="card-template-validation ${validation.errors.length > 0 ? "error" : validation.warnings.length > 0 ? "warning" : "ok"}">
+      <strong>${validation.errors.length > 0 ? "Needs Fix" : validation.warnings.length > 0 ? "Warnings" : "Looks Valid"}</strong>
+      ${rows.length > 0
+        ? rows.map((row) => `<span class="${escapeAttr(row.severity)}">${escapeHtml(row.message)}</span>`).join("")
+        : `<span>Template shape and declared dependencies look valid.</span>`}
+    </div>
+  `;
+}
+
+function handleCardTemplateAction(action) {
+  if (action === "apply") {
+    applyCardTemplateDraft();
+  } else if (action === "copy") {
+    copyCardCatalogDraft();
+  } else if (action === "reset") {
+    resetCardCatalogDraft();
+  }
+}
+
+function applyCardTemplateDraft() {
+  const selected = currentSelectedCardTemplate();
+  const textarea = dom.cardTemplateDetail?.querySelector(".card-template-json");
+  if (!selected || !cardCatalog || !textarea) {
+    setCardStudioStatus("No card template selected.");
+    return;
+  }
+
+  try {
+    const draftTemplate = JSON.parse(textarea.value);
+    validateCardTemplateDraft(selected, draftTemplate);
+    const nextCatalog = replaceCardTemplate(cardCatalog, selected.templateId, draftTemplate);
+    validateCardCatalogDraft(nextCatalog);
+    localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(nextCatalog));
+    cardCatalog = nextCatalog;
+    selectedCardTemplateId = draftTemplate.templateId;
+    renderCardStudio();
+    setCardStudioStatus(`Applied local card template draft for ${draftTemplate.templateId}.`);
+  } catch (error) {
+    setCardStudioStatus(error instanceof Error ? error.message : "Invalid card template JSON.");
+  }
+}
+
+async function copyCardCatalogDraft() {
+  if (!cardCatalog) {
+    setCardStudioStatus("No card catalog loaded.");
+    return;
+  }
+
+  const text = JSON.stringify(cardCatalog, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    setCardStudioStatus("Copied card catalog JSON.");
+  } catch {
+    const textarea = dom.cardTemplateDetail?.querySelector(".card-template-json");
+    if (textarea) {
+      textarea.value = text;
+      textarea.select();
+    }
+    setCardStudioStatus("Select the JSON field to copy the catalog.");
+  }
+}
+
+function resetCardCatalogDraft() {
+  if (!authoredCardCatalog) {
+    setCardStudioStatus("No authored card catalog loaded.");
+    return;
+  }
+
+  localStorage.removeItem(CARD_CATALOG_STORAGE_KEY);
+  cardCatalog = cloneJson(authoredCardCatalog);
+  selectedCardTemplateId = currentSelectedCardTemplate()?.templateId ?? firstVisibleCardTemplate()?.templateId ?? "";
+  renderCardStudio();
+  setCardStudioStatus("Reset to authored card catalog.");
+}
+
+function loadCardCatalogDraft() {
+  try {
+    const stored = localStorage.getItem(CARD_CATALOG_STORAGE_KEY);
+    if (!stored) {
+      return null;
+    }
+    const draft = JSON.parse(stored);
+    validateCardCatalogDraft(draft);
+    return draft;
+  } catch {
+    localStorage.removeItem(CARD_CATALOG_STORAGE_KEY);
+    return null;
+  }
+}
+
+function validateCardCatalogDraft(catalog) {
+  if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) {
+    throw new Error("Card catalog must be a JSON object.");
+  }
+  if (typeof catalog.id !== "string" || catalog.id.length === 0) {
+    throw new Error("Card catalog requires a non-empty id.");
+  }
+  if (typeof catalog.version !== "string" || catalog.version.length === 0) {
+    throw new Error("Card catalog requires a non-empty version.");
+  }
+  if (!Array.isArray(catalog.templates) || catalog.templates.length === 0) {
+    throw new Error("Card catalog requires at least one template.");
+  }
+
+  const ids = new Set();
+  catalog.templates.forEach((template, index) => {
+    validateCardTemplateShape(template, `Template ${index + 1}`);
+    if (ids.has(template.templateId)) {
+      throw new Error(`Duplicate card template id ${template.templateId}.`);
+    }
+    ids.add(template.templateId);
+  });
+}
+
+function validateCardTemplateDraft(selected, draftTemplate) {
+  validateCardTemplateShape(draftTemplate, "Card template");
+  if (draftTemplate.templateId !== selected.templateId) {
+    throw new Error(`Keep templateId as ${selected.templateId}.`);
+  }
+}
+
+function validateCardTemplateShape(template, label) {
+  if (!template || typeof template !== "object" || Array.isArray(template)) {
+    throw new Error(`${label} must be a JSON object.`);
+  }
+
+  Object.keys(template).forEach((key) => {
+    if (!CARD_TEMPLATE_ALLOWED_FIELDS.has(key)) {
+      throw new Error(`${label} has unsupported field ${key}.`);
+    }
+  });
+
+  CARD_TEMPLATE_REQUIRED_FIELDS.forEach((field) => {
+    if (typeof template[field] !== "string" || template[field].length === 0) {
+      throw new Error(`${label} requires non-empty ${field}.`);
+    }
+  });
+
+  ["descriptionKey"].forEach((field) => {
+    if (template[field] !== undefined && (typeof template[field] !== "string" || template[field].length === 0)) {
+      throw new Error(`${label} ${field} must be a non-empty string.`);
+    }
+  });
+  ["tags", "behaviorIds", "assetRefs"].forEach((field) => {
+    if (template[field] !== undefined && (!Array.isArray(template[field]) || template[field].some((value) => typeof value !== "string" || value.length === 0))) {
+      throw new Error(`${label} ${field} must be an array of non-empty strings.`);
+    }
+  });
+  if (template.manaCost !== undefined && (!Number.isInteger(template.manaCost) || template.manaCost < 0)) {
+    throw new Error(`${label} manaCost must be a non-negative integer.`);
+  }
+  if (template.stats !== undefined && (!template.stats || typeof template.stats !== "object" || Array.isArray(template.stats) || Object.values(template.stats).some((value) => typeof value !== "number"))) {
+    throw new Error(`${label} stats must be an object of numeric values.`);
+  }
+  if (template.metadata !== undefined && (!template.metadata || typeof template.metadata !== "object" || Array.isArray(template.metadata))) {
+    throw new Error(`${label} metadata must be a JSON object.`);
+  }
+  validateCardDisplayShape(template.display, label);
+}
+
+function validateCardDisplayShape(display, label) {
+  if (display === undefined) {
+    return;
+  }
+  if (!display || typeof display !== "object" || Array.isArray(display)) {
+    throw new Error(`${label} display must be a JSON object.`);
+  }
+  if (display.layout !== undefined && (typeof display.layout !== "string" || display.layout.length === 0)) {
+    throw new Error(`${label} display.layout must be a non-empty string.`);
+  }
+  if (display.properties !== undefined && !Array.isArray(display.properties)) {
+    throw new Error(`${label} display.properties must be an array.`);
+  }
+  (display.properties ?? []).forEach((property, index) => {
+    if (!property || typeof property !== "object" || Array.isArray(property)) {
+      throw new Error(`${label} display property ${index + 1} must be a JSON object.`);
+    }
+    Object.keys(property).forEach((key) => {
+      if (!["property", "source", "slot", "icon", "label", "priority"].includes(key)) {
+        throw new Error(`${label} display property ${index + 1} has unsupported field ${key}.`);
+      }
+    });
+    if (typeof property.property !== "string" || property.property.length === 0) {
+      throw new Error(`${label} display property ${index + 1} requires property.`);
+    }
+    if (typeof property.slot !== "string" || property.slot.length === 0) {
+      throw new Error(`${label} display property ${index + 1} requires slot.`);
+    }
+    if (property.source !== undefined && !PROPERTY_DISPLAY_SOURCES.includes(property.source)) {
+      throw new Error(`${label} display property ${index + 1} has unsupported source ${property.source}.`);
+    }
+    ["icon", "label"].forEach((field) => {
+      if (property[field] !== undefined && (typeof property[field] !== "string" || property[field].length === 0)) {
+        throw new Error(`${label} display property ${index + 1} ${field} must be a non-empty string.`);
+      }
+    });
+    if (property.priority !== undefined && !Number.isInteger(property.priority)) {
+      throw new Error(`${label} display property ${index + 1} priority must be an integer.`);
+    }
+  });
+}
+
+function replaceCardTemplate(catalog, templateId, draftTemplate) {
+  const nextCatalog = cloneJson(catalog);
+  const templates = Array.isArray(nextCatalog.templates) ? nextCatalog.templates : [];
+  const index = templates.findIndex((template) => template?.templateId === templateId);
+  if (index === -1) {
+    throw new Error(`Could not find card template ${templateId}.`);
+  }
+  templates[index] = draftTemplate;
+  nextCatalog.templates = templates;
+  return nextCatalog;
+}
+
+function cardTemplates() {
+  return Array.isArray(cardCatalog?.templates)
+    ? cardCatalog.templates.filter((template) => template && typeof template === "object")
+    : [];
+}
+
+function filteredCardTemplates() {
+  const templates = cardTemplates();
+  return cardTemplateFilter === "all" ? templates : templates.filter((template) => template.objectType === cardTemplateFilter);
+}
+
+function firstVisibleCardTemplate() {
+  return filteredCardTemplates()[0] ?? null;
+}
+
+function currentSelectedCardTemplate() {
+  return cardTemplates().find((template) => template.templateId === selectedCardTemplateId) ?? null;
+}
+
+function cardTemplateDisplayName(template) {
+  return presentationEntryForTemplate(template.templateId)?.name
+    ?? localizationString(template.nameKey)
+    ?? labelFromId(template.templateId);
+}
+
+function localizationString(key) {
+  return typeof key === "string" ? localizationBundle?.strings?.[key] : undefined;
+}
+
+function presentationEntryForTemplate(templateId) {
+  if (!presentationCatalog || typeof templateId !== "string") {
+    return null;
+  }
+  for (const section of ["cards", "equipment", "minions"]) {
+    const found = (presentationCatalog[section] ?? []).find((entry) => entry?.templateId === templateId);
+    if (found) {
+      return found;
+    }
+  }
+  return null;
+}
+
+function cardTemplateValidation(template) {
+  const errors = [];
+  const warnings = [];
+  try {
+    validateCardTemplateShape(template, `Template ${template.templateId ?? "unknown"}`);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : "Template shape is invalid.");
+  }
+
+  (template.behaviorIds ?? []).forEach((behaviorId) => {
+    if (behaviorAvailable(behaviorId) === "missing") {
+      warnings.push(`Unknown behavior ${behaviorId}.`);
+    }
+  });
+  (template.assetRefs ?? []).forEach((assetId) => {
+    if (assetAvailable(assetId) === "missing") {
+      warnings.push(`Unknown asset ${assetId}.`);
+    }
+  });
+
+  return { errors, warnings };
+}
+
+function behaviorAvailable(behaviorId) {
+  const behaviors = Array.isArray(gameDefinitionDocument?.behaviors) ? gameDefinitionDocument.behaviors : [];
+  return behaviors.length === 0 || behaviors.includes(behaviorId) ? "ok" : "missing";
+}
+
+function assetAvailable(assetId) {
+  const assets = Array.isArray(assetManifest?.assets) ? assetManifest.assets : [];
+  return assets.length === 0 || assets.some((asset) => asset?.assetId === assetId) ? "ok" : "missing";
+}
+
+function setCardStudioStatus(message) {
+  if (dom.cardStudioStatus) {
+    dom.cardStudioStatus.textContent = message;
+  }
+}
+
 async function loadAssetManifest() {
   try {
     const response = await fetch(ASSET_MANIFEST_URL);
@@ -969,6 +1611,7 @@ async function loadAssetManifest() {
     assetUsageIndex = buildAssetUsageIndex();
     selectedAssetId = selectedAssetId || firstVisibleAsset()?.assetId || "";
     renderAssetLibrary();
+    renderCardStudio();
     setAssetLibraryStatus(draft ? "Loaded local asset manifest draft." : `Loaded ${assetManifest.assets?.length ?? 0} assets.`);
   } catch (error) {
     setAssetLibraryStatus(error instanceof Error ? error.message : "Could not load asset manifest.");
@@ -2356,6 +2999,9 @@ function toggleLayoutEditor(open = !layoutEditorOpen) {
   if (layoutEditorOpen && assetLibraryOpen) {
     toggleAssetLibrary(false);
   }
+  if (layoutEditorOpen && cardStudioOpen) {
+    toggleCardStudio(false);
+  }
   if (layoutEditorOpen && previewPanelOpen) {
     togglePreviewPanel(false);
   }
@@ -2712,6 +3358,7 @@ function applyPresentationCatalog(catalog) {
     assetUsageIndex = buildAssetUsageIndex();
     renderAssetLibrary();
   }
+  renderCardStudio();
 }
 
 function loadPresentationCatalogDraft() {

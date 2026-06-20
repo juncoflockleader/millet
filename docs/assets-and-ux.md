@@ -68,6 +68,20 @@ The card UI maps card templates and behavior ids to:
 
 In the demo this mapping lives in `packages/demo-basic-duel/public/app.js`. In a production client, this should come from ruleset content, localization, asset manifests, and generated UX hints.
 
+## Card Template Studio
+
+The `Cards` panel is the first browser-facing slice of the card template studio. It loads `card-catalog.json` through the same ruleset content endpoint as layouts and preview fixtures, then lists templates by object type for both `sample-duel` and `sample-identity`.
+
+Selecting a template shows:
+
+- a card preview rendered from card catalog data plus any matching presentation catalog entry
+- template metadata such as id, version, object type, name key, cost, stats, and display layout
+- tags, behavior ids, and asset refs as compact dependency chips
+- validation status for template shape plus missing declared behaviors or assets
+- the selected template JSON editor
+
+Local edits are stored under `ember-duel.cards.<rulesetId>.v1` in browser `localStorage`. Applying a draft validates required template fields, display property shape, duplicate ids in the active catalog, and preserves the selected `templateId`. Designers can copy the active catalog JSON or reset back to the authored ruleset source. This slice intentionally does not write the card catalog back to disk yet; it establishes the same safe draft workflow used by the layout, asset, and presentation panels before adding publish/promote controls.
+
 ## UI Preview Fixtures
 
 Preview fixtures are schema-backed projected states for authoring and QA. They let a designer inspect card, hero, equipment, minion, or full-board rendering without creating a live match.
