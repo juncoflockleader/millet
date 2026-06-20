@@ -1066,6 +1066,7 @@ function renderAssetDetail(asset) {
           <input class="asset-file-input" type="file" accept="image/*" aria-label="Import image file for selected asset">
           <span>Import File</span>
         </label>
+        <button class="ghost" type="button" data-asset-action="promote">Promote</button>
         <button class="ghost" type="button" data-asset-action="copy">Copy Manifest</button>
         <button class="ghost" type="button" data-asset-action="reset">Reset</button>
       </div>
@@ -1076,6 +1077,8 @@ function renderAssetDetail(asset) {
 function handleAssetDetailAction(action) {
   if (action === "apply") {
     applyAssetEntryDraft();
+  } else if (action === "promote") {
+    promoteAssetEntryDraft();
   } else if (action === "copy") {
     copyAssetManifestDraft();
   } else if (action === "reset") {
@@ -1143,6 +1146,43 @@ async function importAssetFileDraft(file) {
     applyAssetEntryValue(selected, draftEntry, `Imported ${file.name} into local asset draft.`);
   } catch (error) {
     setAssetLibraryStatus(error instanceof Error ? error.message : "Could not import asset file.");
+  }
+}
+
+async function promoteAssetEntryDraft() {
+  const selected = currentSelectedAsset();
+  const textarea = dom.assetDetail?.querySelector(".asset-entry-json");
+  if (!selected || !textarea) {
+    setAssetLibraryStatus("No asset entry selected.");
+    return;
+  }
+
+  try {
+    const draftEntry = JSON.parse(textarea.value);
+    validateAssetEntryDraft(selected, draftEntry);
+    if (typeof draftEntry.publicPath !== "string" || !draftEntry.publicPath.startsWith("data:")) {
+      throw new Error("Promote requires an imported data URL draft.");
+    }
+
+    const response = await fetch("/authoring/assets/promote", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rulesetId: RULESET_ID, entry: draftEntry })
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message ?? result.error ?? "Asset promotion failed.");
+    }
+
+    authoredAssetManifest = result.manifest;
+    assetManifest = cloneJson(result.manifest);
+    localStorage.removeItem(ASSET_STORAGE_KEY);
+    assetUsageIndex = buildAssetUsageIndex();
+    selectedAssetId = result.asset?.assetId ?? selected.assetId;
+    renderAssetLibrary();
+    setAssetLibraryStatus(`Promoted ${selectedAssetId} to ${result.publicPath}.`);
+  } catch (error) {
+    setAssetLibraryStatus(error instanceof Error ? error.message : "Could not promote asset draft.");
   }
 }
 

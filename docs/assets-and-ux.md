@@ -37,7 +37,9 @@ For browser-facing assets, `publicPath` must start with `/`. The current image c
 
 The same panel now includes a local asset manifest entry editor. Selecting an asset shows its JSON entry, validates required manifest fields, preserves `assetId`, applies the edited entry to a browser `localStorage` draft, and rebuilds usage metadata immediately. Designers can copy the active manifest JSON or reset the draft back to the authored ruleset source.
 
-The editor also has an image import affordance for local drafts. Importing an image file calculates its SHA-256 content hash, reads its dimensions, records the browser media type, stores `sourceUri` as a local-file marker, and uses a data URL as the draft `publicPath` so the preview updates immediately. This is still browser-local: promoting the imported file into the repo, assigning a durable public path, and writing the manifest file remain a follow-up workflow.
+The editor also has an image import affordance for local drafts. Importing an image file calculates its SHA-256 content hash, reads its dimensions, records the browser media type, stores `sourceUri` as a local-file marker, and uses a data URL as the draft `publicPath` so the preview updates immediately.
+
+For the local demo authoring server, the same entry can be promoted into the workspace. `Promote` posts the selected draft to `/authoring/assets/promote`, which accepts image data URLs for existing manifest entries, writes the decoded file under `packages/demo-basic-duel/public/assets/imported/<rulesetId>/`, recalculates the committed hash, assigns a durable `/assets/imported/...` public path, and writes the ruleset `asset-manifest.json`. This endpoint is intentionally guarded and development-oriented; production authoring should add conflict handling, review diffs, and explicit publishing controls.
 
 ## Demo Asset Notes
 

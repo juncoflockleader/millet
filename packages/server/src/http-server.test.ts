@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
@@ -109,6 +111,119 @@ test("HTTP server can serve the basic duel demo shell and assets", async () => {
   assert.equal(presentation.statusCode, 200);
   assert.equal(presentation.headers["content-type"], "application/json");
   assert.equal(presentation.json.kind, "presentation_catalog");
+});
+
+test("HTTP asset promotion writes imported draft files and updates manifest", async () => {
+  const root = mkdtempSync(join(tmpdir(), "millet-asset-promotion-"));
+  try {
+    const staticRoot = join(root, "public");
+    const rulesetRoot = join(root, "rulesets");
+    mkdirSync(join(rulesetRoot, "sample-duel"), { recursive: true });
+    mkdirSync(staticRoot, { recursive: true });
+    writeFileSync(join(rulesetRoot, "sample-duel", "asset-manifest.json"), JSON.stringify({
+      id: "sample-duel-assets",
+      version: "0.2.0",
+      assets: [
+        {
+          assetId: "card-art-firebolt",
+          version: "0.1.0",
+          kind: "card_art",
+          contentHash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          sourceUri: "memory://sample-duel/generated/card-art-firebolt",
+          publicPath: "/assets/cards/firebolt.png",
+          license: "first-party-dev",
+          owner: "millet",
+          mediaType: "image/png",
+          width: 1070,
+          height: 1470,
+          usage: ["card firebolt art"]
+        }
+      ]
+    }, null, 2));
+
+    const dataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR4nGP8z8DAwMDAxMDAwAAABQABDQottAAAAABJRU5ErkJggg==";
+    const server = createMilletHttpServer(new InMemoryMatchService(), { staticRoot, rulesetRoot });
+    const response = await dispatch(server, {
+      method: "POST",
+      url: "/authoring/assets/promote",
+      body: {
+        rulesetId: "sample-duel",
+        entry: {
+          assetId: "card-art-firebolt",
+          version: "0.1.0",
+          kind: "card_art",
+          contentHash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          sourceUri: "local-file://firebolt.png",
+          publicPath: dataUrl,
+          license: "first-party-dev",
+          owner: "millet",
+          mediaType: "image/png",
+          width: 2,
+          height: 2,
+          usage: ["card firebolt art", "local imported draft"]
+        }
+      }
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json.publicPath, "/assets/imported/sample-duel/card-art-firebolt.png");
+    assert.equal((response.json.asset as Record<string, unknown>).contentHash, "sha256:7d9dd2bb8ee946f3f00033c887451247d8363e63bd4e13294c870e5506da42d6");
+    assert.equal((response.json.asset as Record<string, unknown>).sourceUri, "file:///assets/imported/sample-duel/card-art-firebolt.png");
+    assert.ok(existsSync(join(staticRoot, "assets", "imported", "sample-duel", "card-art-firebolt.png")));
+
+    const manifest = JSON.parse(readFileSync(join(rulesetRoot, "sample-duel", "asset-manifest.json"), "utf8")) as { assets: Record<string, unknown>[] };
+    assert.equal(manifest.assets[0]?.publicPath, "/assets/imported/sample-duel/card-art-firebolt.png");
+    assert.equal(manifest.assets[0]?.mediaType, "image/png");
+    assert.equal(manifest.assets[0]?.width, 2);
+    assert.equal(manifest.assets[0]?.height, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("HTTP asset promotion rejects non-data-url drafts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "millet-asset-promotion-reject-"));
+  try {
+    const staticRoot = join(root, "public");
+    const rulesetRoot = join(root, "rulesets");
+    mkdirSync(join(rulesetRoot, "sample-duel"), { recursive: true });
+    mkdirSync(staticRoot, { recursive: true });
+    writeFileSync(join(rulesetRoot, "sample-duel", "asset-manifest.json"), JSON.stringify({
+      id: "sample-duel-assets",
+      version: "0.2.0",
+      assets: [
+        {
+          assetId: "card-art-firebolt",
+          version: "0.1.0",
+          kind: "card_art",
+          contentHash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          sourceUri: "memory://sample-duel/generated/card-art-firebolt",
+          license: "first-party-dev",
+          owner: "millet"
+        }
+      ]
+    }, null, 2));
+
+    const server = createMilletHttpServer(new InMemoryMatchService(), { staticRoot, rulesetRoot });
+    const response = await dispatch(server, {
+      method: "POST",
+      url: "/authoring/assets/promote",
+      body: {
+        rulesetId: "sample-duel",
+        entry: {
+          assetId: "card-art-firebolt",
+          publicPath: "/assets/cards/firebolt.png",
+          width: 2,
+          height: 2
+        }
+      }
+    });
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(response.json.error, "bad_request");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("HTTP state endpoint returns viewer-projected match state", async () => {
