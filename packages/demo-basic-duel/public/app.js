@@ -901,6 +901,11 @@ function installCardStudio() {
     handleCardTemplateAction(button.dataset.cardAction);
   });
   dom.cardTemplateDetail?.addEventListener("change", (event) => {
+    const minionInput = event.target.closest("[data-minion-field]");
+    if (minionInput) {
+      updateMinionStudioDraftFromInput(minionInput);
+      return;
+    }
     const equipmentInput = event.target.closest("[data-equipment-field]");
     if (equipmentInput) {
       updateEquipmentStudioDraftFromInput(equipmentInput);
@@ -1606,6 +1611,7 @@ function renderCardTemplateDetail(template) {
       ${renderCardTemplateValidation(validation)}
     </div>
     ${renderCardBehaviorSync(template)}
+    ${renderMinionStudio(template)}
     ${renderEquipmentStudio(template)}
     ${renderCardFrameEditor(template)}
     ${renderCardDisplayEditor(template)}
@@ -2108,6 +2114,138 @@ function replacementModeLabel(value) {
   return "Custom replacement";
 }
 
+function renderMinionStudio(template) {
+  if (template.objectType !== "minion") {
+    return "";
+  }
+
+  const presentation = presentationEntryForTemplate(template.templateId) ?? {};
+  const behavior = presentation.behavior && typeof presentation.behavior === "object" ? presentation.behavior : {};
+  const assets = presentation.assets && typeof presentation.assets === "object" ? presentation.assets : {};
+  const stats = template.stats && typeof template.stats === "object" ? template.stats : {};
+  const kind = minionKindValue(template, presentation);
+  const deathTrigger = minionDeathTriggerBehaviorId(template);
+  const modifierText = typeof template.metadata?.modifierText === "string" ? template.metadata.modifierText : "";
+  const datalistId = `minion-assets-${safeDomId(template.templateId)}`;
+  const behaviorDatalistId = `minion-behaviors-${safeDomId(template.templateId)}`;
+
+  return `
+    <div class="minion-studio">
+      <div class="card-display-head">
+        <div>
+          <strong>Minion Studio</strong>
+          <span>${escapeHtml(labelFromId(kind))} · ${escapeHtml(deathTrigger || "No death trigger")}</span>
+        </div>
+      </div>
+      <div class="minion-studio-grid">
+        <label class="card-frame-field">
+          <span>Kind</span>
+          <select data-minion-field="kind">
+            ${renderSelectOptions(["minion", "token", "summon", "companion", "custom"], kind)}
+          </select>
+        </label>
+        <label class="card-frame-field">
+          <span>Token</span>
+          <input type="text" value="${escapeAttr(template.metadata?.tokenVariant ?? "")}" data-minion-field="metadata.tokenVariant">
+        </label>
+        ${renderMinionNumberField("stats.attack", "Attack", stats.attack ?? "", -20, 20, 1)}
+        ${renderMinionNumberField("stats.health", "Health", stats.health ?? "", 0, 40, 1)}
+        <label class="card-frame-field wide">
+          <span>Modifier badge</span>
+          <input type="text" value="${escapeAttr(modifierText)}" data-minion-field="metadata.modifierText">
+        </label>
+        <label class="card-frame-field wide">
+          <span>Frame path</span>
+          <input type="text" list="${escapeAttr(datalistId)}" value="${escapeAttr(assets.frame ?? "")}" data-minion-field="presentation.assets.frame">
+        </label>
+        <label class="card-frame-field wide">
+          <span>Icon path</span>
+          <input type="text" list="${escapeAttr(datalistId)}" value="${escapeAttr(assets.icon ?? "")}" data-minion-field="presentation.assets.icon">
+        </label>
+      </div>
+      <div class="minion-action-editor">
+        <div class="card-display-head">
+          <div>
+            <strong>Combat & Triggers</strong>
+            <span>${escapeHtml(behavior.behaviorId ?? template.behaviorIds?.[0] ?? "No behavior")}</span>
+          </div>
+        </div>
+        <div class="minion-studio-grid">
+          <label class="card-frame-field">
+            <span>Action</span>
+            <input type="text" value="${escapeAttr(presentation.action ?? "")}" data-minion-field="presentation.action">
+          </label>
+          <label class="card-frame-field">
+            <span>Attack Behavior</span>
+            <input type="text" list="${escapeAttr(behaviorDatalistId)}" value="${escapeAttr(behavior.behaviorId ?? template.behaviorIds?.[0] ?? "")}" data-minion-field="behavior.behaviorId">
+          </label>
+          <label class="card-frame-field">
+            <span>Target</span>
+            <select data-minion-field="behavior.targetMode">
+              ${renderSelectOptions(["enemyHero", "selfHero", "battlefield", "targeted"], behavior.targetMode ?? "enemyHero")}
+            </select>
+          </label>
+          <label class="card-frame-field">
+            <span>Selector</span>
+            <input type="text" value="${escapeAttr(behavior.targetSelector ?? "target")}" data-minion-field="behavior.targetSelector">
+          </label>
+          <label class="card-frame-field wide">
+            <span>Death Trigger</span>
+            <input type="text" list="${escapeAttr(behaviorDatalistId)}" value="${escapeAttr(deathTrigger)}" data-minion-field="deathTriggerBehaviorId">
+          </label>
+          <label class="card-frame-field wide">
+            <span>Text</span>
+            <textarea data-minion-field="presentation.text" rows="3">${escapeHtml(presentation.text ?? "")}</textarea>
+          </label>
+        </div>
+      </div>
+      ${renderAssetPathDatalist(datalistId)}
+      ${renderMinionBehaviorDatalist(behaviorDatalistId)}
+    </div>
+  `;
+}
+
+function renderMinionNumberField(field, label, value, min, max, step) {
+  return `
+    <label class="card-frame-field">
+      <span>${escapeHtml(label)}</span>
+      <input
+        type="number"
+        min="${escapeAttr(min)}"
+        max="${escapeAttr(max)}"
+        step="${escapeAttr(step)}"
+        value="${escapeAttr(value)}"
+        data-minion-field="${escapeAttr(field)}"
+      >
+    </label>
+  `;
+}
+
+function renderMinionBehaviorDatalist(datalistId) {
+  const behaviorIds = Object.keys(behaviorSummaryDocument?.behaviors ?? {}).sort();
+  return `
+    <datalist id="${escapeAttr(datalistId)}">
+      ${behaviorIds.map((behaviorId) => `<option value="${escapeAttr(behaviorId)}"></option>`).join("")}
+    </datalist>
+  `;
+}
+
+function minionKindValue(template, presentation = {}) {
+  const metadataKind = typeof template.metadata?.minionKind === "string" ? template.metadata.minionKind : "";
+  const tagKind = (template.tags ?? []).find((tag) => ["minion", "token", "summon", "companion", "custom"].includes(tag));
+  const variant = typeof presentation.layout?.variant === "string" ? presentation.layout.variant : "";
+  return metadataKind || tagKind || variant || "minion";
+}
+
+function minionDeathTriggerBehaviorId(template) {
+  const metadataTrigger = typeof template.metadata?.deathTriggerBehaviorId === "string" ? template.metadata.deathTriggerBehaviorId : "";
+  if (metadataTrigger) {
+    return metadataTrigger;
+  }
+  const behaviorIds = Array.isArray(template.behaviorIds) ? template.behaviorIds : [];
+  return behaviorIds.find((behaviorId) => /death/i.test(behaviorId)) ?? "";
+}
+
 function renderCardDisplayRow(property, index, slots, icons) {
   return `
     <div class="card-display-row" data-card-display-index="${index}">
@@ -2606,6 +2744,141 @@ function updateEquipmentStudioDraftFromInput(input) {
   setCardStudioStatus(`Updated equipment studio field for ${draftTemplate.templateId}.`);
 }
 
+function updateMinionStudioDraftFromInput(input) {
+  const selected = currentSelectedCardTemplate();
+  if (!selected || selected.objectType !== "minion" || !cardCatalog) {
+    setCardStudioStatus("No minion template selected.");
+    return;
+  }
+
+  const field = input.dataset.minionField;
+  const value = minionStudioInputValue(input);
+  const draftTemplate = cloneJson(selected);
+  const nextCatalog = cloneJson(cardCatalog);
+  const nextPresentationCatalog = presentationCatalog ? cloneJson(presentationCatalog) : null;
+  const presentationEntry = nextPresentationCatalog ? findPresentationEntryRecord(nextPresentationCatalog, selected.templateId) : null;
+
+  if (field === "kind") {
+    setMinionKindDraft(draftTemplate, value || "minion");
+    if (presentationEntry) {
+      setNestedPresentationValue(presentationEntry, "layout.variant", value || "minion");
+    }
+  } else if (field === "metadata.tokenVariant") {
+    setTemplateMetadataValue(draftTemplate, "tokenVariant", value);
+  } else if (field === "metadata.modifierText") {
+    setTemplateMetadataValue(draftTemplate, "modifierText", value);
+    syncMinionModifierDisplay(draftTemplate, value);
+    if (presentationEntry) {
+      setNestedPresentationValue(presentationEntry, "properties.metadata.modifierText", value);
+      syncPresentationModifierDisplay(presentationEntry, value);
+    }
+  } else if (field === "deathTriggerBehaviorId") {
+    setTemplateMetadataValue(draftTemplate, "deathTriggerBehaviorId", value);
+    setMinionDeathTriggerDraft(draftTemplate, value);
+  } else if (field?.startsWith("stats.")) {
+    setTemplateStatDraft(draftTemplate, field.slice("stats.".length), value);
+    if (presentationEntry) {
+      setNestedPresentationValue(presentationEntry, `properties.stats.${field.slice("stats.".length)}`, value);
+    }
+  } else if (field?.startsWith("presentation.")) {
+    if (!presentationEntry) {
+      setCardStudioStatus("No presentation entry available for this minion.");
+      return;
+    }
+    setNestedPresentationValue(presentationEntry, field.slice("presentation.".length), value);
+  } else if (field?.startsWith("behavior.")) {
+    if (!presentationEntry) {
+      setCardStudioStatus("No presentation entry available for this minion behavior.");
+      return;
+    }
+    const behaviorField = field.slice("behavior.".length);
+    setNestedPresentationValue(presentationEntry, `behavior.${behaviorField}`, value);
+    if (behaviorField === "behaviorId") {
+      setPrimaryBehaviorIdDraft(draftTemplate, value);
+    }
+  } else {
+    return;
+  }
+
+  cleanupCardTemplateDraft(draftTemplate);
+  validateCardTemplateDraft(selected, draftTemplate);
+  const replacedCatalog = replaceCardTemplate(nextCatalog, selected.templateId, draftTemplate);
+  validateCardCatalogDraft(replacedCatalog);
+  cardCatalog = replacedCatalog;
+  localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(replacedCatalog));
+  selectedCardTemplateId = draftTemplate.templateId;
+
+  if (presentationEntry && nextPresentationCatalog) {
+    cleanupPresentationEntry(presentationEntry);
+    localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextPresentationCatalog));
+    applyPresentationCatalog(nextPresentationCatalog);
+  }
+
+  renderCardStudio();
+  renderPresentationEditor();
+  render();
+  setCardStudioStatus(`Updated minion studio field for ${draftTemplate.templateId}.`);
+}
+
+function minionStudioInputValue(input) {
+  if (input.type === "number") {
+    if (input.value === "") {
+      return undefined;
+    }
+    const value = Number(input.value);
+    return Number.isFinite(value) ? value : undefined;
+  }
+  const value = input.value.trim();
+  if (input.dataset.minionField === "presentation.text") {
+    return input.value;
+  }
+  return value ? value : undefined;
+}
+
+function setMinionKindDraft(template, kind) {
+  const normalizedKind = kind || "minion";
+  const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !["minion", "token", "summon", "companion", "custom"].includes(tag)) : [];
+  template.tags = uniqueValues([normalizedKind, ...tags]);
+  setTemplateMetadataValue(template, "minionKind", normalizedKind);
+}
+
+function syncMinionModifierDisplay(template, value) {
+  const display = ensureCardTemplateDisplay(template);
+  display.properties = display.properties.filter((property) => !(property?.source === "metadata" && property?.property === "modifierText"));
+  if (value) {
+    display.properties.push({
+      property: "modifierText",
+      source: "metadata",
+      slot: "top-right",
+      label: "Modifier",
+      priority: 15
+    });
+  }
+}
+
+function syncPresentationModifierDisplay(entry, value) {
+  entry.properties = entry.properties && typeof entry.properties === "object" && !Array.isArray(entry.properties)
+    ? entry.properties
+    : {};
+  const display = Array.isArray(entry.properties.display) ? entry.properties.display : [];
+  entry.properties.display = display.filter((property) => !(property?.source === "metadata" && property?.property === "modifierText"));
+  if (value) {
+    entry.properties.display.push({
+      property: "modifierText",
+      source: "metadata",
+      slot: "top-right",
+      label: "Modifier"
+    });
+  }
+}
+
+function setMinionDeathTriggerDraft(template, behaviorId) {
+  const existing = Array.isArray(template.behaviorIds) ? template.behaviorIds.filter((id) => id && id !== behaviorId) : [];
+  const primary = existing.find((id) => !/death/i.test(id)) ?? "minion_attack";
+  const rest = existing.filter((id) => id !== primary && !/death/i.test(id));
+  template.behaviorIds = behaviorId ? uniqueValues([primary, behaviorId, ...rest]) : uniqueValues([primary, ...rest]);
+}
+
 function equipmentStudioInputValue(input) {
   if (input.type === "number") {
     if (input.value === "") {
@@ -2625,10 +2898,14 @@ function setEquipmentSlotDraft(template, slot) {
   const normalizedSlot = slot || "weapon";
   const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !["weapon", "armor", "mount", "treasure", "custom"].includes(tag)) : [];
   template.tags = uniqueValues([normalizedSlot, ...tags]);
-  setEquipmentMetadataValue(template, "slotId", normalizedSlot);
+  setTemplateMetadataValue(template, "slotId", normalizedSlot);
 }
 
 function setEquipmentMetadataValue(template, key, value) {
+  setTemplateMetadataValue(template, key, value);
+}
+
+function setTemplateMetadataValue(template, key, value) {
   if (value === undefined || value === "") {
     if (template.metadata && typeof template.metadata === "object" && !Array.isArray(template.metadata)) {
       delete template.metadata[key];
@@ -2642,6 +2919,10 @@ function setEquipmentMetadataValue(template, key, value) {
 }
 
 function setEquipmentStatDraft(template, stat, value) {
+  setTemplateStatDraft(template, stat, value);
+}
+
+function setTemplateStatDraft(template, stat, value) {
   template.stats = template.stats && typeof template.stats === "object" && !Array.isArray(template.stats) ? template.stats : {};
   if (value === undefined) {
     delete template.stats[stat];
@@ -2651,6 +2932,10 @@ function setEquipmentStatDraft(template, stat, value) {
 }
 
 function setEquipmentBehaviorIdDraft(template, behaviorId) {
+  setPrimaryBehaviorIdDraft(template, behaviorId);
+}
+
+function setPrimaryBehaviorIdDraft(template, behaviorId) {
   if (!behaviorId) {
     delete template.behaviorIds;
     return;
@@ -5231,6 +5516,9 @@ function presentationObjectToCardDef(entry) {
     name: entry.name ?? entry.templateId,
     manaCost: entry.properties?.manaCost,
     stats: entry.properties?.stats,
+    metadata: entry.properties?.metadata && typeof entry.properties.metadata === "object" && !Array.isArray(entry.properties.metadata)
+      ? entry.properties.metadata
+      : undefined,
     text: entry.text ?? "",
     action: entry.action ?? "",
     art: entry.assets?.art,
