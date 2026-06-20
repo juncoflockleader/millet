@@ -17,6 +17,7 @@ Current implemented slice:
 - ruleset validation for unsupported default property display slots/icons in card catalogs, presentation catalogs, hero displays, and hero ability displays.
 - `UiPreviewFixtureJson` schema for projected card, hero, equipment, minion, and full-board preview states.
 - `sample-duel` UI preview fixtures at `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
+- `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
 - ruleset validation for preview fixture refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown card templates, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - demo content endpoint at `/content/rulesets/:rulesetId/*.json`.
 - Ember Duel layout editor consumes the ruleset board layout tokens as its authored default, keeps local editor overrides in `localStorage`, and renders authored board regions/widgets as an overlay guide.

@@ -25,7 +25,9 @@
   "cardCatalog": "card-catalog.json",
   "ui": {
     "defaultBoardLayout": "ui/sanguosha-eight-player-board-layout.json",
-    "boardLayouts": ["ui/sanguosha-eight-player-board-layout.json"]
+    "boardLayouts": ["ui/sanguosha-eight-player-board-layout.json"],
+    "defaultPreviewFixture": "ui/sanguosha-identity-preview-fixtures.json",
+    "previewFixtures": ["ui/sanguosha-identity-preview-fixtures.json"]
   },
   "behaviors": [
     "attack",

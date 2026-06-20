@@ -45,6 +45,7 @@ Latest local result:
 - The next hidden-rendering slice made UI preview fixtures projection-safe for hidden objects and added a generic hidden-card renderer for redacted projected cards.
 - The next identity-layout slice added a schema-backed Sanguosha-like eight-seat board layout for `sample-identity`, including seat ring, role summary, shared deck/discard, active hand, judgment, equipment, action/response, and history regions.
 - The next prompt-control slice upgraded `ActionPanel` from summary chips to prompt-specific controls for response mode, responder progress, pass answers, main actions, allowed response behaviors, and a read-only prompt preview fixture.
+- The next identity-preview slice added a projection-safe eight-player preview fixture for `sample-identity`, covering public lord role, viewer-owned role, redacted hidden roles, hidden hands/deck, equipment, judgment, discard, and a nullification response prompt. Local content smoke confirmed the server serves it as one full-board fixture with 8 players, 20 hidden objects, and a `nullification_stack` priority-loop prompt.
 
 CLI smoke checks:
 

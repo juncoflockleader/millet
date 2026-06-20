@@ -1,0 +1,199 @@
+{
+  "id": "sanguosha-identity-preview-fixtures",
+  "version": "0.1.0",
+  "kind": "ui_preview_fixture",
+  "metadata": {
+    "name": "Sanguosha Identity Preview Fixtures",
+    "description": "Projection-safe eight-seat identity table fixtures for validating hidden roles, shared piles, equipment, judgment, hand, and response prompt widgets."
+  },
+  "fixtures": [
+    {
+      "id": "eight-seat-identity-table",
+      "label": "Eight Seat Identity Table",
+      "description": "Viewer p2 sees the public lord role, their own loyalist role, hidden opposing roles, active hand, equipment, judgment, and a nullification response stack.",
+      "focus": "full-board",
+      "viewerId": "p2",
+      "selectedPlayerId": "p2",
+      "state": {
+        "status": "active",
+        "lastSequence": 88,
+        "turn": { "activePlayerId": "p2", "phaseId": "play" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "roleRef": "role_p1",
+            "resources": {
+              "health": { "current": 4, "max": 4 },
+              "hand_size": { "current": 3, "max": 5 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "roleRef": "role_p2",
+            "resources": {
+              "health": { "current": 2, "max": 3 },
+              "hand_size": { "current": 3, "max": 5 },
+              "nullification_parity": { "current": 1, "max": 1 }
+            }
+          },
+          "p3": {
+            "id": "p3",
+            "status": "alive",
+            "roleRef": "role_hidden_p3",
+            "resources": {
+              "health": { "current": 3, "max": 3 },
+              "hand_size": { "current": 2, "max": 5 }
+            }
+          },
+          "p4": {
+            "id": "p4",
+            "status": "dying",
+            "roleRef": "role_hidden_p4",
+            "resources": {
+              "health": { "current": 0, "max": 3 },
+              "hand_size": { "current": 1, "max": 5 }
+            }
+          },
+          "p5": {
+            "id": "p5",
+            "status": "alive",
+            "roleRef": "role_hidden_p5",
+            "resources": {
+              "health": { "current": 1, "max": 3 },
+              "hand_size": { "current": 2, "max": 5 }
+            }
+          },
+          "p6": {
+            "id": "p6",
+            "status": "alive",
+            "roleRef": "role_hidden_p6",
+            "resources": {
+              "health": { "current": 3, "max": 3 },
+              "hand_size": { "current": 2, "max": 5 }
+            }
+          },
+          "p7": {
+            "id": "p7",
+            "status": "dead",
+            "roleRef": "role_hidden_p7",
+            "resources": {
+              "health": { "current": 0, "max": 3 },
+              "hand_size": { "current": 0, "max": 5 }
+            }
+          },
+          "p8": {
+            "id": "p8",
+            "status": "alive",
+            "roleRef": "role_hidden_p8",
+            "resources": {
+              "health": { "current": 2, "max": 3 },
+              "hand_size": { "current": 1, "max": 5 }
+            }
+          }
+        },
+        "zones": {
+          "zone_roles": {
+            "id": "zone_roles",
+            "objectIds": ["role_p1", "role_p2", "role_hidden_p3", "role_hidden_p4", "role_hidden_p5", "role_hidden_p6", "role_hidden_p7", "role_hidden_p8"]
+          },
+          "zone_shared_deck": {
+            "id": "zone_shared_deck",
+            "objectIds": ["hidden_deck_1", "hidden_deck_2", "hidden_deck_3"]
+          },
+          "zone_discard": {
+            "id": "zone_discard",
+            "objectIds": ["discard_judgment_heart"]
+          },
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": ["hidden_hand_p1_1", "hidden_hand_p1_2", "hidden_hand_p1_3"] },
+          "zone_judgment_p1": { "id": "zone_judgment_p1", "objectIds": [] },
+          "zone_equipment_p1": { "id": "zone_equipment_p1", "objectIds": ["spear_p1"] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": ["attack_p2", "nullification_p2", "scout_horse_p2"] },
+          "zone_judgment_p2": { "id": "zone_judgment_p2", "objectIds": ["lightning_p2"] },
+          "zone_equipment_p2": { "id": "zone_equipment_p2", "objectIds": ["armor_p2", "guard_horse_p2"] },
+          "zone_hand_p3": { "id": "zone_hand_p3", "objectIds": ["hidden_hand_p3_1", "hidden_hand_p3_2"] },
+          "zone_judgment_p3": { "id": "zone_judgment_p3", "objectIds": [] },
+          "zone_equipment_p3": { "id": "zone_equipment_p3", "objectIds": [] },
+          "zone_hand_p4": { "id": "zone_hand_p4", "objectIds": ["hidden_hand_p4_1"] },
+          "zone_judgment_p4": { "id": "zone_judgment_p4", "objectIds": [] },
+          "zone_equipment_p4": { "id": "zone_equipment_p4", "objectIds": [] },
+          "zone_hand_p5": { "id": "zone_hand_p5", "objectIds": ["hidden_hand_p5_1", "hidden_hand_p5_2"] },
+          "zone_judgment_p5": { "id": "zone_judgment_p5", "objectIds": ["skip_play_p5"] },
+          "zone_equipment_p5": { "id": "zone_equipment_p5", "objectIds": [] },
+          "zone_hand_p6": { "id": "zone_hand_p6", "objectIds": ["hidden_hand_p6_1", "hidden_hand_p6_2"] },
+          "zone_judgment_p6": { "id": "zone_judgment_p6", "objectIds": [] },
+          "zone_equipment_p6": { "id": "zone_equipment_p6", "objectIds": ["dagger_p6"] },
+          "zone_hand_p7": { "id": "zone_hand_p7", "objectIds": [] },
+          "zone_judgment_p7": { "id": "zone_judgment_p7", "objectIds": [] },
+          "zone_equipment_p7": { "id": "zone_equipment_p7", "objectIds": [] },
+          "zone_hand_p8": { "id": "zone_hand_p8", "objectIds": ["hidden_hand_p8_1"] },
+          "zone_judgment_p8": { "id": "zone_judgment_p8", "objectIds": [] },
+          "zone_equipment_p8": { "id": "zone_equipment_p8", "objectIds": [] }
+        },
+        "objects": {
+          "role_p1": { "id": "role_p1", "objectType": "identity", "templateId": "lord", "ownerId": "p1" },
+          "role_p2": { "id": "role_p2", "objectType": "identity", "templateId": "loyalist", "ownerId": "p2" },
+          "role_hidden_p3": { "id": "role_hidden_p3", "objectType": "hidden" },
+          "role_hidden_p4": { "id": "role_hidden_p4", "objectType": "hidden" },
+          "role_hidden_p5": { "id": "role_hidden_p5", "objectType": "hidden" },
+          "role_hidden_p6": { "id": "role_hidden_p6", "objectType": "hidden" },
+          "role_hidden_p7": { "id": "role_hidden_p7", "objectType": "hidden" },
+          "role_hidden_p8": { "id": "role_hidden_p8", "objectType": "hidden" },
+          "hidden_deck_1": { "id": "hidden_deck_1", "objectType": "hidden" },
+          "hidden_deck_2": { "id": "hidden_deck_2", "objectType": "hidden" },
+          "hidden_deck_3": { "id": "hidden_deck_3", "objectType": "hidden" },
+          "hidden_hand_p1_1": { "id": "hidden_hand_p1_1", "objectType": "hidden" },
+          "hidden_hand_p1_2": { "id": "hidden_hand_p1_2", "objectType": "hidden" },
+          "hidden_hand_p1_3": { "id": "hidden_hand_p1_3", "objectType": "hidden" },
+          "hidden_hand_p3_1": { "id": "hidden_hand_p3_1", "objectType": "hidden" },
+          "hidden_hand_p3_2": { "id": "hidden_hand_p3_2", "objectType": "hidden" },
+          "hidden_hand_p4_1": { "id": "hidden_hand_p4_1", "objectType": "hidden" },
+          "hidden_hand_p5_1": { "id": "hidden_hand_p5_1", "objectType": "hidden" },
+          "hidden_hand_p5_2": { "id": "hidden_hand_p5_2", "objectType": "hidden" },
+          "hidden_hand_p6_1": { "id": "hidden_hand_p6_1", "objectType": "hidden" },
+          "hidden_hand_p6_2": { "id": "hidden_hand_p6_2", "objectType": "hidden" },
+          "hidden_hand_p8_1": { "id": "hidden_hand_p8_1", "objectType": "hidden" },
+          "attack_p2": { "id": "attack_p2", "objectType": "card", "templateId": "sample_basic", "ownerId": "p2" },
+          "nullification_p2": { "id": "nullification_p2", "objectType": "card", "templateId": "nullification", "ownerId": "p2" },
+          "scout_horse_p2": { "id": "scout_horse_p2", "objectType": "equipment", "templateId": "scout_horse", "ownerId": "p2", "stats": { "outgoingDistanceModifier": -1 } },
+          "lightning_p2": { "id": "lightning_p2", "objectType": "card", "templateId": "delayed_lightning", "ownerId": "p2" },
+          "armor_p2": { "id": "armor_p2", "objectType": "equipment", "templateId": "training_armor", "ownerId": "p2", "stats": { "damageReduction": 1 } },
+          "guard_horse_p2": { "id": "guard_horse_p2", "objectType": "equipment", "templateId": "guard_horse", "ownerId": "p2", "stats": { "incomingDistanceModifier": 1 } },
+          "spear_p1": { "id": "spear_p1", "objectType": "equipment", "templateId": "training_spear", "ownerId": "p1", "stats": { "attackRangeModifier": 2 } },
+          "skip_play_p5": { "id": "skip_play_p5", "objectType": "card", "templateId": "delayed_skip_play", "ownerId": "p5" },
+          "dagger_p6": { "id": "dagger_p6", "objectType": "equipment", "templateId": "training_dagger", "ownerId": "p6" },
+          "discard_judgment_heart": { "id": "discard_judgment_heart", "objectType": "card", "templateId": "judgment_heart_10" }
+        },
+        "prompts": {
+          "identity_prompt_nullification": {
+            "id": "identity_prompt_nullification",
+            "status": "open",
+            "responderIds": ["p2", "p3", "p4", "p5", "p6", "p8", "p1"],
+            "currentResponderId": "p2",
+            "answeredResponderIds": [],
+            "passedResponderIds": [],
+            "promptType": "nullification_stack",
+            "responseMode": "priority_loop",
+            "payload": {
+              "allowedResponseBehaviors": ["nullification_response"],
+              "onPassBehavior": "settle_nullification_stack",
+              "defaultSelections": {
+                "stack_owner": ["p1"],
+                "target": ["p4"]
+              }
+            },
+            "responses": {},
+            "openedAtSequence": 88
+          }
+        },
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 86, "type": "card_moved", "payload": { "objectId": "lightning_p2", "toZoneId": "zone_judgment_p2" } },
+        { "sequence": 87, "type": "player_status_changed", "payload": { "playerId": "p4", "status": "dying", "reason": "damage" } },
+        { "sequence": 88, "type": "prompt_opened", "payload": { "promptId": "identity_prompt_nullification", "promptType": "nullification_stack" } }
+      ]
+    }
+  ]
+}

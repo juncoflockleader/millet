@@ -133,7 +133,7 @@ Use this when changing cards, behaviors, localization, or assets. It helps catch
 | --- | --- |
 | Demo UI | `packages/demo-basic-duel/public/` |
 | Two-player ruleset | `packages/rulesets/sample-duel/` |
-| Six/eight-player ruleset | `packages/rulesets/sample-identity/`, including `ui/sanguosha-eight-player-board-layout.json` |
+| Six/eight-player ruleset | `packages/rulesets/sample-identity/`, including `ui/sanguosha-eight-player-board-layout.json` and `ui/sanguosha-identity-preview-fixtures.json` |
 | Engine reducer and behavior runtime | `packages/engine-core/src/` |
 | HTTP/SSE/WebSocket server | `packages/server/src/` |
 | Content validation and bundle tools | `packages/content-build/src/` |
