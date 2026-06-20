@@ -27,7 +27,7 @@ Current implemented slice:
 - Ember Duel `ActionPanel` renders live open prompt controls from projected match state, including prompt type, response mode, responder progress, pass controls, main-action chips, and allowed response behavior buttons.
 - Ember Duel runtime consumes the ruleset presentation catalog for card, hero, equipment, and minion art/text/action/property display definitions.
 - `sample-duel` asset manifest now covers the demo board background, card portraits, VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
-- Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, shows manifest/presentation/effect usage references, and supports local manifest entry JSON drafts with apply/copy/reset.
+- Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, shows manifest/presentation/effect usage references, supports local manifest entry JSON drafts with apply/copy/reset, and can import image files into local drafts with computed content hash, dimensions, media type, data URL preview/publicPath, and local generated usage metadata.
 - Ember Duel `Presentation` panel lets designers inspect, locally edit, copy, apply, and reset presentation catalog entries while live previews re-render from the draft catalog.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
@@ -502,7 +502,7 @@ Validation should cover:
 - Build asset browser, metadata editor, previewers, and dependency panel.
 - Support generated asset draft metadata.
 - Acceptance: a card portrait and VFX sheet can be imported, validated, previewed, and referenced by a card.
-- Current slice: manifest-backed browser panel with previews, kind filters, generated metadata, usage/dependency labels, and local asset entry JSON drafts that can be applied, copied as a manifest, or reset to ruleset source.
+- Current slice: manifest-backed browser panel with previews, kind filters, generated metadata, usage/dependency labels, local asset entry JSON drafts, and image file import that computes hash/dimensions/media type and writes the imported file as a browser-local data URL draft.
 
 ### UI-M2: Board Layout Editor
 
@@ -538,6 +538,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add import/write workflows for the asset library; the current panel edits local manifest drafts only.
-2. Add asset file picker/import affordances for draft `publicPath`, content hash, dimensions, and generated asset metadata.
+1. Add server-side/write-to-workspace workflows for promoted asset library drafts; the current panel imports and edits browser-local manifest drafts only.
+2. Add asset draft promotion controls for replacing ruleset files, recalculating committed `publicPath`, and writing durable manifest updates.
 3. Add projection-safe hidden role/player widgets for identity-game previews.

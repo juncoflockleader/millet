@@ -214,6 +214,7 @@ const ASSET_OPTIONAL_FIELDS = [
   "usage"
 ];
 const ASSET_ALLOWED_FIELDS = new Set([...ASSET_REQUIRED_FIELDS, ...ASSET_OPTIONAL_FIELDS]);
+const ASSET_IMPORT_MAX_BYTES = 2 * 1024 * 1024;
 
 const KEYWORDS = {
   attack: {
@@ -596,6 +597,16 @@ function installAssetLibrary() {
       return;
     }
     handleAssetDetailAction(button.dataset.assetAction);
+  });
+  dom.assetDetail?.addEventListener("change", (event) => {
+    const input = event.target.closest(".asset-file-input");
+    if (!input) {
+      return;
+    }
+    const file = input.files?.[0];
+    if (file) {
+      importAssetFileDraft(file);
+    }
   });
 }
 
@@ -1051,6 +1062,10 @@ function renderAssetDetail(asset) {
       <textarea class="asset-entry-json" spellcheck="false" aria-label="Asset manifest entry JSON">${escapeHtml(JSON.stringify(asset, null, 2))}</textarea>
       <div class="asset-editor-actions">
         <button type="button" data-asset-action="apply">Apply Entry</button>
+        <label class="asset-import-button">
+          <input class="asset-file-input" type="file" accept="image/*" aria-label="Import image file for selected asset">
+          <span>Import File</span>
+        </label>
         <button class="ghost" type="button" data-asset-action="copy">Copy Manifest</button>
         <button class="ghost" type="button" data-asset-action="reset">Reset</button>
       </div>
@@ -1078,18 +1093,80 @@ function applyAssetEntryDraft() {
 
   try {
     const draftEntry = JSON.parse(textarea.value);
-    validateAssetEntryDraft(selected, draftEntry);
-    const nextManifest = replaceAssetEntry(assetManifest, selected.assetId, draftEntry);
-    validateAssetManifestDraft(nextManifest);
-    localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(nextManifest));
-    assetManifest = nextManifest;
-    assetUsageIndex = buildAssetUsageIndex();
-    selectedAssetId = draftEntry.assetId;
-    renderAssetLibrary();
-    setAssetLibraryStatus(`Applied local asset draft for ${draftEntry.assetId}.`);
+    applyAssetEntryValue(selected, draftEntry, `Applied local asset draft for ${draftEntry.assetId}.`);
   } catch (error) {
     setAssetLibraryStatus(error instanceof Error ? error.message : "Invalid asset entry JSON.");
   }
+}
+
+function applyAssetEntryValue(selected, draftEntry, message) {
+  validateAssetEntryDraft(selected, draftEntry);
+  const nextManifest = replaceAssetEntry(assetManifest, selected.assetId, draftEntry);
+  validateAssetManifestDraft(nextManifest);
+  localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(nextManifest));
+  assetManifest = nextManifest;
+  assetUsageIndex = buildAssetUsageIndex();
+  selectedAssetId = draftEntry.assetId;
+  renderAssetLibrary();
+  setAssetLibraryStatus(message);
+}
+
+async function importAssetFileDraft(file) {
+  const selected = currentSelectedAsset();
+  const textarea = dom.assetDetail?.querySelector(".asset-entry-json");
+  if (!selected || !assetManifest || !textarea) {
+    setAssetLibraryStatus("No asset entry selected.");
+    return;
+  }
+
+  if (file.size > ASSET_IMPORT_MAX_BYTES) {
+    setAssetLibraryStatus(`Import draft is limited to ${Math.round(ASSET_IMPORT_MAX_BYTES / 1024 / 1024)} MB.`);
+    return;
+  }
+
+  try {
+    const [arrayBuffer, dataUrl] = await Promise.all([
+      file.arrayBuffer(),
+      readFileAsDataUrl(file)
+    ]);
+    const dimensions = await readImageDimensions(dataUrl);
+    const draftEntry = JSON.parse(textarea.value);
+    draftEntry.sourceUri = `local-file://${encodeURIComponent(file.name)}`;
+    draftEntry.publicPath = dataUrl;
+    draftEntry.mediaType = file.type || "application/octet-stream";
+    draftEntry.contentHash = await sha256Hex(arrayBuffer);
+    if (dimensions) {
+      draftEntry.width = dimensions.width;
+      draftEntry.height = dimensions.height;
+    }
+    draftEntry.usage = Array.from(new Set([...(Array.isArray(draftEntry.usage) ? draftEntry.usage : []), "local imported draft"]));
+    applyAssetEntryValue(selected, draftEntry, `Imported ${file.name} into local asset draft.`);
+  } catch (error) {
+    setAssetLibraryStatus(error instanceof Error ? error.message : "Could not import asset file.");
+  }
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
+    reader.addEventListener("error", () => reject(new Error("Could not read asset file.")));
+    reader.readAsDataURL(file);
+  });
+}
+
+function readImageDimensions(dataUrl) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve({ width: image.naturalWidth, height: image.naturalHeight }));
+    image.addEventListener("error", () => resolve(null));
+    image.src = dataUrl;
+  });
+}
+
+async function sha256Hex(arrayBuffer) {
+  const hash = await crypto.subtle.digest("SHA-256", arrayBuffer);
+  return `sha256:${Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
 }
 
 async function copyAssetManifestDraft() {

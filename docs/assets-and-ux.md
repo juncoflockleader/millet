@@ -35,7 +35,9 @@ For browser-facing assets, `publicPath` must start with `/`. The current image c
 
 `Ember Duel` exposes this metadata through the `Assets` panel. The panel reads `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, renders image previews from `publicPath`, filters by kind, and combines manifest usage labels with presentation catalog and runtime effect references.
 
-The same panel now includes a local asset manifest entry editor. Selecting an asset shows its JSON entry, validates required manifest fields, preserves `assetId`, applies the edited entry to a browser `localStorage` draft, and rebuilds usage metadata immediately. Designers can copy the active manifest JSON or reset the draft back to the authored ruleset source. This is still a local authoring draft; importing binary files, recalculating hashes, and writing ruleset files remain a follow-up workflow.
+The same panel now includes a local asset manifest entry editor. Selecting an asset shows its JSON entry, validates required manifest fields, preserves `assetId`, applies the edited entry to a browser `localStorage` draft, and rebuilds usage metadata immediately. Designers can copy the active manifest JSON or reset the draft back to the authored ruleset source.
+
+The editor also has an image import affordance for local drafts. Importing an image file calculates its SHA-256 content hash, reads its dimensions, records the browser media type, stores `sourceUri` as a local-file marker, and uses a data URL as the draft `publicPath` so the preview updates immediately. This is still browser-local: promoting the imported file into the repo, assigning a durable public path, and writing the manifest file remain a follow-up workflow.
 
 ## Demo Asset Notes
 

@@ -1946,14 +1946,39 @@ p,
 
 .asset-editor-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
-.asset-editor-actions button {
+.asset-editor-actions button,
+.asset-import-button {
   min-height: 30px;
   padding: 0 8px;
   font-size: 12px;
+}
+
+.asset-import-button {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 222, 171, 0.22);
+  border-radius: 7px;
+  color: #fff2cf;
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.asset-import-button:hover {
+  border-color: rgba(255, 220, 165, 0.48);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.asset-import-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .asset-empty {
@@ -2022,6 +2047,10 @@ p,
   .asset-library-body {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(118px, 0.92fr) minmax(180px, 1fr);
+  }
+
+  .asset-editor-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .preview-panel {
