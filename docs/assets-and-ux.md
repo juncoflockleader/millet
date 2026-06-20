@@ -80,7 +80,7 @@ Selecting a template shows:
 - validation status for template shape plus missing declared behaviors or assets
 - behavior sync status comparing current presentation text against generated behavior text, selector/effect UX hints, and behavior template issues
 - a frame/art editor for presentation `assets.art`, `assets.frame`, `layout.variant`, `layout.artFit`, `layout.artPositionX/Y`, and `layout.artHeight`
-- an equipment studio for equipment slot, replacement mode, stats, frame/icon assets, granted action, target mode, and selector
+- an equipment studio for equipment slot, replacement mode, stats, frame/icon assets, granted action, target mode, selector, and validation status
 - a minion studio for board kind, token variant, combat stats, death trigger, runtime modifier badge, frame/icon assets, action, target mode, and selector
 - a property layout editor for the selected template's `display.layout` and `display.properties`
 - the selected template JSON editor
@@ -89,7 +89,7 @@ The demo server exposes `/content/rulesets/:rulesetId/behavior-summaries.json` f
 
 The frame/art editor writes to the browser-local presentation draft rather than the card catalog. The same presentation fields are consumed by the preview and runtime card renderer through CSS variables for art image, optional frame overlay, art fit, art position, and per-card art height. This keeps card templates self-contained in play while preserving the separation between gameplay template data and presentation tuning.
 
-When the selected template is equipment, the Equipment Studio writes slot metadata/tags, replacement mode metadata, and numeric stats into the local card catalog draft. Presentation-facing fields such as frame/icon assets, action label, behavior id, target mode, selector, and rules text are written into the local presentation draft. This lets a designer review the equipment card preview and live equipped-card UI while keeping engine-facing template data and presentation data explicit.
+When the selected template is equipment, the Equipment Studio writes slot metadata/tags, replacement mode metadata, and numeric stats into the local card catalog draft. Presentation-facing fields such as frame/icon assets, action label, behavior id, target mode, selector, and rules text are written into the local presentation draft. Equipment-specific validation flags unsupported slot ids, conflicting slot tags, unsafe replacement metadata, missing weapon stats, missing or unknown granted behaviors, and target mode/selector issues. Catalog promotion also rechecks equipment catalog metadata before sending the draft to the authoring endpoint, while presentation-only warnings remain visible for review. This lets a designer review the equipment card preview and live equipped-card UI while keeping engine-facing template data and presentation data explicit.
 
 When the selected template is a minion, the Minion Studio follows the same split. Combat stats, board kind, token variant, modifier text, and death-trigger behavior refs are stored in the local card catalog draft. Action label, attack behavior, target mode, selector, icon/frame assets, rules text, presentation stats, and metadata-backed modifier display are stored in the local presentation draft. The modifier badge is rendered from `source: "metadata"` display data, so the same authored value can be inspected in both preview and live board cards.
 

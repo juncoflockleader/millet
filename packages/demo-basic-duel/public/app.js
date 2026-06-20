@@ -209,6 +209,9 @@ const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "match", "spectato
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "opponent", "admin"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
 const REGION_OVERFLOW_OPTIONS = ["fan", "scroll", "stack", "compact", "hidden"];
+const TARGET_MODE_OPTIONS = ["enemyHero", "selfHero", "battlefield", "targeted"];
+const EQUIPMENT_SLOT_OPTIONS = ["weapon", "armor", "mount", "treasure", "custom"];
+const EQUIPMENT_REPLACEMENT_MODE_OPTIONS = ["replace", "reject", "stack", "custom"];
 const REGION_PRESETS = [
   {
     id: "custom",
@@ -1717,6 +1720,8 @@ function renderCardTemplateDetail(template) {
   const hasDraft = Boolean(localStorage.getItem(CARD_CATALOG_STORAGE_KEY));
   const preview = renderCardTemplatePreview(template);
   const validation = cardTemplateValidation(template);
+  const promotionValidation = cardCatalogPromotionValidation(template);
+  const promotionBlocked = promotionValidation.errors.length > 0;
   return `
     ${preview}
     <div class="card-template-summary">
@@ -1743,7 +1748,13 @@ function renderCardTemplateDetail(template) {
       ${renderCardCatalogPromotionReview(template)}
       <div class="card-template-actions">
         <button type="button" data-card-action="apply">Apply Template</button>
-        <button class="ghost" type="button" data-card-action="promote">Promote Catalog</button>
+        <button
+          class="ghost"
+          type="button"
+          data-card-action="promote"
+          ${promotionBlocked ? "disabled" : ""}
+          title="${promotionBlocked ? escapeAttr(promotionValidation.errors[0]) : "Promote reviewed card catalog draft"}"
+        >Promote Catalog</button>
         <button class="ghost" type="button" data-card-action="copy">Copy Catalog</button>
         <button class="ghost" type="button" data-card-action="reset">Reset</button>
       </div>
@@ -2059,6 +2070,7 @@ function renderCardCatalogPromotionReview(template) {
   const authoredTemplate = authoredCardCatalog?.templates?.find((entry) => entry?.templateId === template.templateId) ?? null;
   const diffRows = cardTemplateDiffRows(authoredTemplate, template);
   const summary = cardCatalogDiffSummary(authoredCardCatalog, cardCatalog);
+  const promotionValidation = cardCatalogPromotionValidation(template);
   const status = authoringStatus ?? { gitAvailable: false, dirty: false, changedFiles: [] };
   const dirtyLabel = status.gitAvailable
     ? (status.dirty ? `${status.changedFiles.length} uncommitted change${status.changedFiles.length === 1 ? "" : "s"}` : "Clean worktree")
@@ -2079,6 +2091,10 @@ function renderCardCatalogPromotionReview(template) {
         <strong>${escapeHtml(cardCatalogDiffLabel(summary))}</strong>
       </div>
       ${status.dirty ? `<p class="asset-review-warning">Promotion will add more workspace changes on top of the current dirty tree.</p>` : ""}
+      ${promotionValidation.errors.map((message) => `<p class="asset-review-warning">Promotion blocked: ${escapeHtml(message)}</p>`).join("")}
+      ${promotionValidation.errors.length === 0
+        ? promotionValidation.warnings.map((message) => `<p class="asset-review-warning">Review before promotion: ${escapeHtml(message)}</p>`).join("")
+        : ""}
       ${diffRows.length > 0 ? `
         <div class="asset-diff-list">
           ${diffRows.map((row) => `
@@ -2092,6 +2108,13 @@ function renderCardCatalogPromotionReview(template) {
       ` : `<p class="asset-review-empty">No selected-template field changes yet.</p>`}
     </div>
   `;
+}
+
+function cardCatalogPromotionValidation(template) {
+  if (template?.objectType !== "equipment") {
+    return { errors: [], warnings: [] };
+  }
+  return equipmentStudioValidation(template, { includePresentation: false });
 }
 
 function cardCatalogDiffSummary(beforeCatalog, afterCatalog) {
@@ -2222,13 +2245,13 @@ function renderEquipmentStudio(template) {
         <label class="card-frame-field">
           <span>Slot</span>
           <select data-equipment-field="slot">
-            ${renderSelectOptions(["weapon", "armor", "mount", "treasure", "custom"], slot)}
+            ${renderSelectOptions(EQUIPMENT_SLOT_OPTIONS, slot)}
           </select>
         </label>
         <label class="card-frame-field">
           <span>Replacement</span>
           <select data-equipment-field="metadata.replacementMode">
-            ${renderSelectOptions(["replace", "reject", "stack", "custom"], replacementMode)}
+            ${renderSelectOptions(EQUIPMENT_REPLACEMENT_MODE_OPTIONS, replacementMode)}
           </select>
         </label>
         ${renderEquipmentNumberField("stats.attack", "Attack", stats.attack ?? "", -20, 20, 1)}
@@ -2261,7 +2284,7 @@ function renderEquipmentStudio(template) {
           <label class="card-frame-field">
             <span>Target</span>
             <select data-equipment-field="behavior.targetMode">
-              ${renderSelectOptions(["enemyHero", "selfHero", "battlefield", "targeted"], behavior.targetMode ?? "enemyHero")}
+              ${renderSelectOptions(TARGET_MODE_OPTIONS, behavior.targetMode ?? "enemyHero")}
             </select>
           </label>
           <label class="card-frame-field">
@@ -2274,8 +2297,25 @@ function renderEquipmentStudio(template) {
           </label>
         </div>
       </div>
+      ${renderEquipmentStudioValidation(template)}
       ${renderAssetPathDatalist(datalistId)}
       ${renderEquipmentBehaviorDatalist(behaviorDatalistId)}
+    </div>
+  `;
+}
+
+function renderEquipmentStudioValidation(template) {
+  const validation = equipmentStudioValidation(template);
+  const items = [
+    ...validation.errors.map((message) => ({ severity: "error", message })),
+    ...validation.warnings.map((message) => ({ severity: "warning", message }))
+  ];
+  return `
+    <div class="card-template-validation equipment-studio-validation ${validation.errors.length > 0 ? "error" : validation.warnings.length > 0 ? "warning" : "ok"}">
+      <strong>${validation.errors.length > 0 ? "Needs Fix" : validation.warnings.length > 0 ? "Warnings" : "Looks Valid"}</strong>
+      ${items.length > 0
+        ? items.map((item) => `<span class="${escapeAttr(item.severity)}">${escapeHtml(item.message)}</span>`).join("")
+        : `<span>Equipment slot, replacement, and granted action metadata are ready.</span>`}
     </div>
   `;
 }
@@ -3116,7 +3156,7 @@ function equipmentStudioInputValue(input) {
 
 function setEquipmentSlotDraft(template, slot) {
   const normalizedSlot = slot || "weapon";
-  const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !["weapon", "armor", "mount", "treasure", "custom"].includes(tag)) : [];
+  const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !EQUIPMENT_SLOT_OPTIONS.includes(tag)) : [];
   template.tags = uniqueValues([normalizedSlot, ...tags]);
   setTemplateMetadataValue(template, "slotId", normalizedSlot);
 }
@@ -3291,6 +3331,7 @@ async function promoteCardCatalogDraft() {
 
   try {
     validateCardCatalogDraft(cardCatalog);
+    validateCardCatalogPromotionDraft(cardCatalog);
     if (!localStorage.getItem(CARD_CATALOG_STORAGE_KEY)) {
       throw new Error("Promote requires a local card catalog draft.");
     }
@@ -3390,6 +3431,21 @@ function validateCardCatalogDraft(catalog) {
     }
     ids.add(template.templateId);
   });
+}
+
+function validateCardCatalogPromotionDraft(catalog) {
+  const templates = Array.isArray(catalog?.templates) ? catalog.templates : [];
+  const errors = [];
+  templates.forEach((template) => {
+    if (template?.objectType !== "equipment") {
+      return;
+    }
+    const validation = equipmentStudioValidation(template, { includePresentation: false });
+    validation.errors.forEach((message) => errors.push(`${template.templateId}: ${message}`));
+  });
+  if (errors.length > 0) {
+    throw new Error(`Card catalog promotion blocked. ${errors[0]}`);
+  }
 }
 
 function validateCardTemplateDraft(selected, draftTemplate) {
@@ -3620,6 +3676,109 @@ function addHeroAbilityDisplayValidationIssues(errors, display) {
   });
 }
 
+function equipmentStudioValidation(template, options = {}) {
+  const includePresentation = options.includePresentation !== false;
+  const errors = [];
+  const warnings = [];
+  if (!template || typeof template !== "object" || Array.isArray(template)) {
+    return { errors: ["Equipment template must be a JSON object."], warnings };
+  }
+
+  const metadata = template.metadata && typeof template.metadata === "object" && !Array.isArray(template.metadata)
+    ? template.metadata
+    : {};
+  const slotTags = equipmentSlotTags(template);
+  const metadataSlot = metadata.slotId;
+  const catalogSlot = typeof metadataSlot === "string" && EQUIPMENT_SLOT_OPTIONS.includes(metadataSlot)
+    ? metadataSlot
+    : slotTags[0] ?? "weapon";
+
+  if (metadataSlot !== undefined && (typeof metadataSlot !== "string" || !EQUIPMENT_SLOT_OPTIONS.includes(metadataSlot))) {
+    errors.push(`Equipment slotId ${String(metadataSlot)} is unsupported.`);
+  }
+  if (slotTags.length === 0 && metadataSlot === undefined) {
+    warnings.push("Equipment should declare a slot tag or metadata.slotId before promotion.");
+  }
+  if (slotTags.length > 1) {
+    errors.push(`Equipment declares multiple slot tags: ${slotTags.join(", ")}.`);
+  }
+  if (typeof metadataSlot === "string" && slotTags.length === 1 && metadataSlot !== slotTags[0]) {
+    warnings.push(`metadata.slotId ${metadataSlot} does not match slot tag ${slotTags[0]}.`);
+  }
+
+  const replacementMode = metadata.replacementMode;
+  if (replacementMode !== undefined && (typeof replacementMode !== "string" || !EQUIPMENT_REPLACEMENT_MODE_OPTIONS.includes(replacementMode))) {
+    errors.push(`Equipment replacementMode ${String(replacementMode)} is unsupported.`);
+  }
+  if (replacementMode === "custom") {
+    warnings.push("Custom replacement mode should be backed by rules or reviewed metadata before promotion.");
+  }
+
+  const stats = template.stats && typeof template.stats === "object" && !Array.isArray(template.stats) ? template.stats : {};
+  if (catalogSlot === "weapon") {
+    if (stats.attack === undefined) {
+      warnings.push("Weapon equipment should declare attack.");
+    }
+    if (stats.durability === undefined) {
+      warnings.push("Weapon equipment should declare durability.");
+    }
+  } else if (stats.attack !== undefined || stats.durability !== undefined) {
+    warnings.push(`${labelFromId(catalogSlot)} equipment has weapon-style attack or durability stats.`);
+  }
+
+  if (!Array.isArray(template.behaviorIds) || template.behaviorIds.length === 0) {
+    warnings.push("Equipment has no catalog behavior id.");
+  }
+
+  if (includePresentation) {
+    addEquipmentPresentationValidationIssues(template, errors, warnings, catalogSlot);
+  }
+
+  return { errors, warnings };
+}
+
+function equipmentSlotTags(template) {
+  const slotTags = EQUIPMENT_SLOT_OPTIONS.filter((slot) => slot !== "custom");
+  return Array.isArray(template.tags)
+    ? template.tags.filter((tag) => slotTags.includes(tag))
+    : [];
+}
+
+function addEquipmentPresentationValidationIssues(template, errors, warnings, catalogSlot) {
+  const presentation = presentationEntryForTemplate(template.templateId);
+  if (!presentation) {
+    warnings.push("No presentation entry available for equipment action and art review.");
+    return;
+  }
+
+  const presentationSlot = typeof presentation.layout?.variant === "string" ? presentation.layout.variant : "";
+  if (presentationSlot && EQUIPMENT_SLOT_OPTIONS.includes(presentationSlot) && presentationSlot !== catalogSlot) {
+    warnings.push(`Presentation variant ${presentationSlot} does not match catalog slot ${catalogSlot}.`);
+  }
+  if (typeof presentation.action !== "string" || presentation.action.length === 0) {
+    warnings.push("Equipment presentation should declare an action label.");
+  }
+  if (typeof presentation.text !== "string" || presentation.text.length === 0) {
+    warnings.push("Equipment presentation should declare rules text.");
+  }
+
+  const behavior = presentation.behavior && typeof presentation.behavior === "object" && !Array.isArray(presentation.behavior)
+    ? presentation.behavior
+    : {};
+  const behaviorId = behavior.behaviorId ?? template.behaviorIds?.[0];
+  if (typeof behaviorId !== "string" || behaviorId.length === 0) {
+    warnings.push("Equipment granted action has no behavior id.");
+  } else if (behaviorAvailable(behaviorId) === "missing") {
+    warnings.push(`Unknown equipment behavior ${behaviorId}.`);
+  }
+  if (behavior.targetMode !== undefined && !TARGET_MODE_OPTIONS.includes(behavior.targetMode)) {
+    errors.push(`Equipment targetMode ${behavior.targetMode} is unsupported.`);
+  }
+  if ((behavior.targetMode ?? "enemyHero") === "targeted" && (typeof behavior.targetSelector !== "string" || behavior.targetSelector.length === 0)) {
+    warnings.push("Targeted equipment action should declare targetSelector.");
+  }
+}
+
 function cardTemplateValidation(template) {
   const errors = [];
   const warnings = [];
@@ -3639,6 +3798,11 @@ function cardTemplateValidation(template) {
       warnings.push(`Unknown asset ${assetId}.`);
     }
   });
+  if (template?.objectType === "equipment") {
+    const equipmentValidation = equipmentStudioValidation(template);
+    errors.push(...equipmentValidation.errors);
+    warnings.push(...equipmentValidation.warnings);
+  }
 
   return { errors, warnings };
 }

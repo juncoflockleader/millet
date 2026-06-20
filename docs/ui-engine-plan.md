@@ -533,7 +533,7 @@ Validation should cover:
 
 - Build equipment editor for slots, stats, replacement, passive modifiers, and granted actions.
 - Acceptance: weapon, armor, and mount-style equipment can be authored and previewed.
-- Current slice: Ember Duel `Cards` panel renders an Equipment Studio for selected equipment templates, writes browser-local card catalog and presentation drafts, mirrors stat edits into presentation stats, previews granted actions, and re-renders live equipped cards from draft presentation actions.
+- Current slice: Ember Duel `Cards` panel renders an Equipment Studio for selected equipment templates, writes browser-local card catalog and presentation drafts, mirrors stat edits into presentation stats, validates slot tags/metadata, replacement modes, weapon stats, behavior availability, and target metadata, blocks catalog promotion on equipment catalog errors, previews granted actions, and re-renders live equipped cards from draft presentation actions.
 
 ### UI-M6: Minion Studio
 
@@ -548,6 +548,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add equipment studio validation/promotion hardening for behavior availability, slot compatibility, and schema-safe replacement metadata.
-2. Add minion studio validation/promotion hardening for death-trigger availability, token variant schema conventions, and modifier badge display rules.
-3. Add integrated playtest debug affordances that connect local authoring drafts to scripted fixture/playtest runs.
+1. Add minion studio validation/promotion hardening for death-trigger availability, token variant schema conventions, and modifier badge display rules.
+2. Add integrated playtest debug affordances that connect local authoring drafts to scripted fixture/playtest runs.
+3. Add broader equipment authoring examples for armor, mount, and treasure slots once their rules modules are ready.
