@@ -365,6 +365,38 @@ const DEFAULT_PROPERTY_DISPLAY_ICONS = [
   { id: "durability", label: "Durability" }
 ];
 
+const RUNTIME_WIDGET_RENDERERS = {
+  HeroCard: (region, context) => renderHeroCard(context.playerId, region.id),
+  CardRow: (region, context) => {
+    if (region.kind === "battlefield") {
+      return renderBattlefieldRegion(context.playerId, region);
+    }
+    if (region.kind === "hand") {
+      return renderHandRegion(context.playerId, region);
+    }
+    return renderRuntimeWidgetFallback(region, `CardRow is not bound for ${labelFromId(region.kind)} regions.`);
+  },
+  EquipmentSlot: (region, context) => renderEquipmentRegion(context.playerId, region),
+  DeckStack: (region, context) => renderDeckRegion(context.playerId, region),
+  CustomWidget: (region) => renderRuntimeWidgetFallback(region, customWidgetText(region))
+};
+
+const ABSOLUTE_WIDGET_RENDERERS = {
+  IdentityPlayerPanel: (region) => renderIdentitySeat(region),
+  HeroCard: (region) => renderIdentitySeat(region),
+  CardRow: (region) => renderIdentityCardStrip(region, zoneIdForAbsoluteCollection(region), labelFromId(region.kind)),
+  EquipmentStrip: (region) => renderIdentityCardStrip(region, `zone_equipment_${selectedPlayerId}`, "Equipment"),
+  EquipmentSlot: (region) => renderIdentityCardStrip(region, `zone_equipment_${selectedPlayerId}`, "Equipment"),
+  JudgmentStrip: (region) => renderIdentityCardStrip(region, `zone_judgment_${selectedPlayerId}`, "Judgment"),
+  DeckStack: (region) => renderIdentityPile(region, region.kind === "deck" ? "zone_shared_deck" : "zone_deck", "Deck"),
+  DiscardPile: (region) => renderIdentityPile(region, "zone_discard", "Discard"),
+  ActionPanel: (region) => renderIdentityPromptWindow(region),
+  RoleSummary: (region) => renderIdentityRoleSummary(region),
+  HistoryLog: (region) => renderIdentityHistory(region),
+  ChatWindow: (region) => renderAbsoluteWidgetFallback(region, customWidgetText(region)),
+  CustomWidget: (region) => renderAbsoluteWidgetFallback(region, customWidgetText(region))
+};
+
 const ASSET_REQUIRED_FIELDS = ["assetId", "version", "kind", "contentHash", "sourceUri", "license", "owner"];
 const ASSET_OPTIONAL_FIELDS = [
   "publicPath",
@@ -4018,6 +4050,8 @@ function layoutRegionMetadata(regionId) {
   const inferred = inferRegionMetadata(regionId);
   const kind = typeof region?.kind === "string" ? region.kind : inferred.kind;
   const component = typeof widget?.component === "string" ? widget.component : componentForRegionKind(kind);
+  const widgetKind = typeof widget?.kind === "string" ? widget.kind : "";
+  const widgetConfig = widget?.config && typeof widget.config === "object" && !Array.isArray(widget.config) ? widget.config : {};
 
   return {
     id: regionId,
@@ -4025,6 +4059,8 @@ function layoutRegionMetadata(regionId) {
     ownerScope: typeof region?.ownerScope === "string" ? region.ownerScope : inferred.ownerScope,
     label: typeof region?.label === "string" ? region.label : labelFromId(regionId),
     widgetId: typeof region?.widgetId === "string" ? region.widgetId : "",
+    widgetKind,
+    widgetConfig,
     component,
     targetable: typeof region?.targetable === "boolean" ? region.targetable : inferred.targetable,
     dropBehavior: typeof region?.dropBehavior === "string" ? region.dropBehavior : "",
@@ -4099,6 +4135,9 @@ function layoutRegionAttributeMap(regionId, options = {}) {
   if (metadata.widgetId) {
     map["data-region-widget"] = metadata.widgetId;
   }
+  if (metadata.widgetKind) {
+    map["data-region-widget-kind"] = metadata.widgetKind;
+  }
   if (metadata.component) {
     map["data-region-component"] = metadata.component;
   }
@@ -4137,6 +4176,7 @@ function applyLayoutRegionAttrs(element, regionId, options = {}) {
     "data-region-label",
     "data-region-targetable",
     "data-region-widget",
+    "data-region-widget-kind",
     "data-region-component",
     "data-region-renderer",
     "data-drop-behavior",
@@ -5330,35 +5370,31 @@ function renderAbsolutePreviewRegion(region) {
 }
 
 function renderAbsoluteRegionContent(region) {
-  if (region.kind === "hero") {
-    return renderIdentitySeat(region);
-  }
+  const renderer = ABSOLUTE_WIDGET_RENDERERS[region.component] ?? ABSOLUTE_WIDGET_RENDERERS.CustomWidget;
+  return renderer(region);
+}
+
+function zoneIdForAbsoluteCollection(region) {
   if (region.kind === "hand") {
-    return renderIdentityCardStrip(region, `zone_hand_${selectedPlayerId}`, "Hand");
+    return `zone_hand_${selectedPlayerId}`;
   }
   if (region.kind === "equipment") {
-    return renderIdentityCardStrip(region, `zone_equipment_${selectedPlayerId}`, "Equipment");
+    return `zone_equipment_${selectedPlayerId}`;
   }
   if (region.kind === "judgment") {
-    return renderIdentityCardStrip(region, `zone_judgment_${selectedPlayerId}`, "Judgment");
+    return `zone_judgment_${selectedPlayerId}`;
   }
-  if (region.kind === "deck") {
-    return renderIdentityPile(region, "zone_shared_deck", "Deck");
-  }
-  if (region.kind === "discard") {
-    return renderIdentityPile(region, "zone_discard", "Discard");
-  }
-  if (region.kind === "action_window") {
-    return renderIdentityPromptWindow(region);
-  }
-  if (region.kind === "opponent_summary") {
-    return renderIdentityRoleSummary(region);
-  }
-  if (region.kind === "history_log") {
-    return renderIdentityHistory(region);
-  }
+  return `zone_${region.kind}_${selectedPlayerId}`;
+}
 
-  return `<strong>${escapeHtml(region.label)}</strong>`;
+function renderAbsoluteWidgetFallback(region, message) {
+  return `
+    <div class="widget-fallback">
+      <strong>${escapeHtml(region.label)}</strong>
+      <span>${escapeHtml(region.component || "CustomWidget")}</span>
+      <small>${escapeHtml(message)}</small>
+    </div>
+  `;
 }
 
 function renderIdentitySeat(region) {
@@ -5567,22 +5603,32 @@ function runtimeRegionIdsForPlayer(playerId) {
 
 function renderRuntimeRegion(regionId, context) {
   const region = layoutRegionMetadata(regionId);
-  if (region.component === "HeroCard") {
-    return renderHeroCard(context.playerId, region.id);
-  }
-  if (region.component === "CardRow" && region.kind === "battlefield") {
-    return renderBattlefieldRegion(context.playerId, region);
-  }
-  if (region.component === "EquipmentSlot" && region.kind === "equipment") {
-    return renderEquipmentRegion(context.playerId, region);
-  }
-  if (region.component === "CardRow" && region.kind === "hand") {
-    return renderHandRegion(context.playerId, region);
-  }
-  if (region.component === "DeckStack" && region.kind === "deck") {
-    return renderDeckRegion(context.playerId, region);
-  }
-  return "";
+  const renderer = RUNTIME_WIDGET_RENDERERS[region.component] ?? RUNTIME_WIDGET_RENDERERS.CustomWidget;
+  return renderer(region, context);
+}
+
+function renderRuntimeWidgetFallback(region, message) {
+  return `
+    <section
+      class="widget-fallback runtime-widget-fallback"
+      ${layoutRegionAttrs(region.id)}
+      tabindex="0"
+      data-tooltip-title="${escapeAttr(region.label)}"
+      data-tooltip-body="${escapeAttr(message)}"
+      aria-label="${escapeAttr(`${region.label}. ${message}`)}"
+    >
+      <strong>${escapeHtml(region.label)}</strong>
+      <span>${escapeHtml(region.component || "CustomWidget")}</span>
+      <small>${escapeHtml(message)}</small>
+    </section>
+  `;
+}
+
+function customWidgetText(region) {
+  const text = region.widgetConfig?.placeholder ?? region.widgetConfig?.description;
+  return typeof text === "string" && text.length > 0
+    ? text
+    : "No renderer registered for this widget component yet.";
 }
 
 function renderBattlefieldRegion(playerId, region) {

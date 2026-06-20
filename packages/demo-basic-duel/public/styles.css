@@ -185,6 +185,40 @@ p,
   min-width: 0;
 }
 
+.widget-fallback {
+  min-width: 0;
+  min-height: 100%;
+  padding: 8px;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  border: 1px dashed rgba(255, 222, 171, 0.24);
+  border-radius: 7px;
+  color: #dacbb9;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), transparent 44%),
+    rgba(0, 0, 0, 0.18);
+  text-align: center;
+}
+
+.widget-fallback strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.widget-fallback span {
+  color: #dffcea;
+  font-size: 10px;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.widget-fallback small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
 .identity-seat,
 .identity-strip,
 .identity-pile,

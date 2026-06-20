@@ -32,6 +32,7 @@ Latest local result:
 - Board layout editor action smoke confirmed the `Layout` panel opens with snap enabled, geometry inputs snap to the 8px grid, region Add/Copy/Flip X/Fill actions update local `BoardLayoutJson`, selected-region summaries show current geometry, and no page errors are emitted.
 - Runtime region smoke confirmed hero, battlefield, equipment, hand, action, and history surfaces carry authored region/widget metadata and battlefield drops bind to battlefield regions.
 - Runtime region renderer smoke confirmed player-side `HeroCard`, `CardRow`, `EquipmentSlot`, and `DeckStack` containers are selected through region/widget dispatch, center-lane system widgets expose `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` surfaces, and `ActionPanel` renders live open prompt summaries.
+- Runtime widget fallback smoke confirmed a local `CustomWidget` draft for `player_hand` renders visible fallback text with `data-region-component="CustomWidget"` and `data-region-widget-kind="custom"` while the scaled play area remains inside the viewport.
 - Asset library smoke confirmed the `Assets` panel opens, reads 12 assets from the ruleset manifest, filters VFX sheets, loads an image preview, reports usage labels, and closes when the `Layout` panel opens.
 - Asset authoring smoke confirmed the `Assets` panel edits a selected manifest entry JSON locally, writes `ember-duel.assets.sample-duel.v1`, rebuilds displayed prompt/usage metadata, resets back to authored manifest source, and rejects attempts to change `assetId`.
 - Asset import smoke confirmed the `Assets` panel file input imports a PNG into the selected entry draft, computes a SHA-256 content hash, records image dimensions and media type, writes a local-file source URI plus data URL `publicPath`, updates the preview image, and resets back to authored manifest source.
@@ -54,6 +55,7 @@ Latest local result:
 - The next layout-editor slice added board layout region geometry bounds validation and a schema-backed region/widget guide overlay in Ember Duel.
 - The next runtime-layout slice threaded schema-backed board region/widget metadata into live Ember Duel DOM surfaces and target validation.
 - The next runtime-region-renderer slice moved player-side hero, battlefield, equipment, hand, and deck surfaces onto a small widget-component dispatch layer, added the disabled ChatWindow center-lane surface, and connected ActionPanel prompt summaries to projected prompt state.
+- The next widget-registry slice added runtime and absolute-preview widget component registries plus visible custom/unknown widget fallbacks driven by widget config placeholder text.
 - The next UI slice added schema-backed presentation catalogs, ruleset `ui.defaultPresentationCatalog` discovery, validation for presentation/template/behavior references, and Ember Duel consumption for card, hero, equipment, and minion presentation.
 - The next authoring slice upgraded Ember Duel `Layout` into a full board layout draft editor with token controls, region list/detail editing, canvas drag/resize, full `BoardLayoutJson` import/export, and a local presentation catalog entry editor.
 - The next layout-editor usability slice added snap-to-grid region editing, selected-region geometry summaries, and region copy/flip/fill controls for faster board blockout.
@@ -78,6 +80,7 @@ Latest local result:
 - The next property-display slice added board-layout-declared slot/icon registries, validation for duplicate registry entries, and Sanguosha-like `suit-point`, `role-corner`, `suit`, `rank`, and `faction` display tokens in `sample-identity`.
 - The next identity-runtime-renderer slice added `?ruleset=sample-identity` demo loading and an authored absolute board renderer for the eight-seat identity preview. Browser smoke confirmed the 1280x720 board fits in a 1280x720 viewport at scale `0.899`, renders 16 authored regions and 8 seat panels, shows the `nullification_stack` prompt, and does not leak hidden role/object ids.
 - The next hidden-role-widget slice added projection-safe identity role badges and player summary rows for public, viewer-owned, and hidden roles without exposing redacted role refs.
+- Absolute widget fallback smoke confirmed a local `CustomWidget` draft for the `sample-identity` `role_summary` region renders through the authored absolute board at scale `0.899` with no page errors.
 
 CLI smoke checks:
 

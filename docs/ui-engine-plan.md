@@ -23,6 +23,7 @@ Current implemented slice:
 - Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports document id/version/name/logical-size/scaling edits, token controls, region presets, region selection, region field editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, local diagnostics, custom token preservation, and renders authored board regions/widgets as an overlay guide.
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
+- Ember Duel runtime and absolute preview boards share widget-component registries with visible `CustomWidget`/unknown-component fallbacks driven by widget config placeholder/description text.
 - Ember Duel center-lane system regions now expose authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` widget surfaces.
 - Ember Duel `ActionPanel` renders live open prompt controls from projected match state, including prompt type, response mode, responder progress, pass controls, main-action chips, and allowed response behavior buttons.
 - Ember Duel runtime consumes the ruleset presentation catalog for card, hero, equipment, and minion art/text/action/property display definitions.
@@ -511,7 +512,7 @@ Validation should cover:
 - Build visual region editor with predefined regions and custom widgets.
 - Preserve viewport-fit scaling.
 - Acceptance: a Hearthstone-like and Sanguosha-like board layout can be authored and exported.
-- Current slice: Ember Duel `Layout` panel edits viewport-fitted tokens plus selected `BoardLayoutJson` regions, supports region geometry fields and canvas drag/resize, and imports/exports full board layout JSON.
+- Current slice: Ember Duel `Layout` panel edits viewport-fitted tokens plus selected `BoardLayoutJson` regions, supports region geometry fields and canvas drag/resize, imports/exports full board layout JSON, and runtime/absolute board renderers resolve authored widget component names through registries with visible custom-widget fallbacks.
 
 ### UI-M3: Card Template Studio
 
@@ -541,6 +542,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add a runtime widget registry layer for custom board widgets beyond the demo's built-in components.
-2. Add specialized hero studio controls for hero art/frame, resources, ability presentation, and behavior refs.
-3. Add equipment studio controls for equipment slot, frame/icon, stats, replacement behavior, and granted actions.
+1. Add specialized hero studio controls for hero art/frame, resources, ability presentation, and behavior refs.
+2. Add equipment studio controls for equipment slot, frame/icon, stats, replacement behavior, and granted actions.
+3. Add minion studio controls for board-entity frame, combat stats, death triggers, token variants, and runtime modifier display.
