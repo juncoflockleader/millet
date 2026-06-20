@@ -107,6 +107,7 @@ let PLAY_AREA = {
 };
 
 const LAYOUT_STORAGE_KEY = `ember-duel.layout.${RULESET_ID}.v1`;
+const LAYOUT_SNAP_STORAGE_KEY = `ember-duel.layout.snap.${RULESET_ID}.v1`;
 const PRESENTATION_STORAGE_KEY = `ember-duel.presentation.${RULESET_ID}.v1`;
 const ASSET_STORAGE_KEY = `ember-duel.assets.${RULESET_ID}.v1`;
 const GAME_DEFINITION_URL = `${RULESET_BASE_URL}/game-definition.json`;
@@ -199,6 +200,7 @@ const REGION_KIND_OPTIONS = [
 const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "seat", "team", "observer"];
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "admin", "hidden"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
+const LAYOUT_SNAP_SIZE = 8;
 
 const ASSET_REQUIRED_FIELDS = ["assetId", "version", "kind", "contentHash", "sourceUri", "license", "owner"];
 const ASSET_OPTIONAL_FIELDS = [
@@ -263,6 +265,7 @@ let layoutEditorOpen = false;
 let activeLayoutDrag = null;
 let activeRegionDrag = null;
 let selectedLayoutRegionId = "";
+let layoutSnapEnabled = loadLayoutSnapEnabled();
 let presentationCatalogId = "fallback";
 let presentationCatalog = null;
 let authoredPresentationCatalog = null;
@@ -299,6 +302,7 @@ const dom = {
   previewPanelStatus: document.querySelector("#previewPanelStatus"),
   assetLibrary: document.querySelector("#assetLibrary"),
   assetLibraryButton: document.querySelector("#assetLibraryButton"),
+  newAssetButton: document.querySelector("#newAssetButton"),
   closeAssetLibraryButton: document.querySelector("#closeAssetLibraryButton"),
   assetFilter: document.querySelector("#assetFilter"),
   assetCount: document.querySelector("#assetCount"),
@@ -329,7 +333,12 @@ const dom = {
   fitLayoutButton: document.querySelector("#fitLayoutButton"),
   resetLayoutButton: document.querySelector("#resetLayoutButton"),
   addLayoutRegionButton: document.querySelector("#addLayoutRegionButton"),
+  duplicateLayoutRegionButton: document.querySelector("#duplicateLayoutRegionButton"),
+  mirrorLayoutRegionXButton: document.querySelector("#mirrorLayoutRegionXButton"),
+  mirrorLayoutRegionYButton: document.querySelector("#mirrorLayoutRegionYButton"),
+  fillLayoutRegionButton: document.querySelector("#fillLayoutRegionButton"),
   deleteLayoutRegionButton: document.querySelector("#deleteLayoutRegionButton"),
+  snapLayoutToggle: document.querySelector("#snapLayoutToggle"),
   copyLayoutButton: document.querySelector("#copyLayoutButton"),
   importLayoutButton: document.querySelector("#importLayoutButton"),
   tooltipLayer: document.querySelector("#tooltipLayer"),
@@ -526,7 +535,17 @@ function installLayoutEditor() {
     }
   });
   dom.addLayoutRegionButton?.addEventListener("click", () => addLayoutRegion());
+  dom.duplicateLayoutRegionButton?.addEventListener("click", () => duplicateSelectedLayoutRegion());
+  dom.mirrorLayoutRegionXButton?.addEventListener("click", () => mirrorSelectedLayoutRegion("x"));
+  dom.mirrorLayoutRegionYButton?.addEventListener("click", () => mirrorSelectedLayoutRegion("y"));
+  dom.fillLayoutRegionButton?.addEventListener("click", () => fillSelectedLayoutRegion());
   dom.deleteLayoutRegionButton?.addEventListener("click", () => deleteSelectedLayoutRegion());
+  dom.snapLayoutToggle?.addEventListener("change", () => {
+    layoutSnapEnabled = Boolean(dom.snapLayoutToggle.checked);
+    localStorage.setItem(LAYOUT_SNAP_STORAGE_KEY, layoutSnapEnabled ? "true" : "false");
+    setLayoutStatus(layoutSnapEnabled ? `Snap enabled (${LAYOUT_SNAP_SIZE}px grid).` : "Snap disabled.");
+    renderLayoutRegionEditor({ preserveDetailFocus: true });
+  });
   dom.layoutControls?.addEventListener("input", (event) => {
     const input = event.target.closest("[data-layout-path]");
     if (!input) {
@@ -576,6 +595,7 @@ function installAssetLibrary() {
   loadAuthoringStatus();
 
   dom.assetLibraryButton?.addEventListener("click", () => toggleAssetLibrary());
+  dom.newAssetButton?.addEventListener("click", () => createNewAssetDraft());
   dom.closeAssetLibraryButton?.addEventListener("click", () => toggleAssetLibrary(false));
   dom.assetFilter?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-asset-filter]");
@@ -999,6 +1019,47 @@ function renderAssetLibrary() {
   }
 }
 
+function createNewAssetDraft() {
+  if (!assetManifest) {
+    setAssetLibraryStatus("No asset manifest loaded.");
+    return;
+  }
+
+  const assetId = uniqueAssetId("new-card-art");
+  const asset = {
+    assetId,
+    version: "0.1.0",
+    kind: "card_art",
+    contentHash: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    sourceUri: `memory://${RULESET_ID}/draft/${assetId}`,
+    license: "first-party-dev",
+    owner: "millet",
+    mediaType: "image/png",
+    usage: ["new asset draft"]
+  };
+  const nextManifest = cloneJson(assetManifest);
+  nextManifest.assets = [...(Array.isArray(nextManifest.assets) ? nextManifest.assets : []), asset];
+  validateAssetManifestDraft(nextManifest);
+  localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(nextManifest));
+  assetManifest = nextManifest;
+  assetUsageIndex = buildAssetUsageIndex();
+  assetFilterKind = "all";
+  selectedAssetId = assetId;
+  renderAssetLibrary();
+  setAssetLibraryStatus(`Created local asset draft ${assetId}. Import a file before promoting.`);
+}
+
+function uniqueAssetId(baseId) {
+  const ids = new Set((assetManifest?.assets ?? []).map((asset) => asset.assetId));
+  let candidate = baseId;
+  let suffix = 2;
+  while (ids.has(candidate)) {
+    candidate = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
 function renderAssetFilters(assets) {
   if (!dom.assetFilter) {
     return;
@@ -1119,7 +1180,7 @@ function renderAssetPromotionReview(asset) {
         <span>Target</span>
         <strong>${escapeHtml(targetPath ?? "Import a file to preview target path")}</strong>
         <span>Mode</span>
-        <strong>${escapeHtml(importedDraft ? "Replace existing asset entry" : "Waiting for imported data URL draft")}</strong>
+        <strong>${escapeHtml(importedDraft ? `${authored ? "Replace existing asset entry" : "Create new asset entry"}` : "Waiting for imported data URL draft")}</strong>
       </div>
       ${status.dirty ? `<p class="asset-review-warning">Promotion will add more workspace changes on top of the current dirty tree.</p>` : ""}
       ${diffRows.length > 0 ? `
@@ -1156,8 +1217,17 @@ function assetExtensionForMediaType(mediaType) {
 }
 
 function assetDiffRows(before, after) {
-  if (!before || !after) {
+  if (!after) {
     return [];
+  }
+  if (!before) {
+    return ["assetId", "kind", "contentHash", "sourceUri", "publicPath", "mediaType", "width", "height", "usage"]
+      .filter((field) => after[field] !== undefined)
+      .map((field) => ({
+        field,
+        before: "-",
+        after: summarizeAssetValue(after[field])
+      }));
   }
 
   return ["contentHash", "sourceUri", "publicPath", "mediaType", "width", "height", "usage"]
@@ -1275,7 +1345,11 @@ async function promoteAssetEntryDraft() {
     const response = await fetch("/authoring/assets/promote", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ rulesetId: RULESET_ID, entry: draftEntry })
+      body: JSON.stringify({
+        rulesetId: RULESET_ID,
+        mode: authoredAssetManifest?.assets?.some((asset) => asset?.assetId === draftEntry.assetId) ? "replace" : "create",
+        entry: draftEntry
+      })
     });
     const result = await response.json();
     if (!response.ok) {
@@ -1653,8 +1727,19 @@ function renderLayoutRegionEditor(options = {}) {
   }
 
   dom.layoutRegionList.innerHTML = regions.map((region) => renderLayoutRegionRow(region)).join("");
-  if (dom.deleteLayoutRegionButton) {
-    dom.deleteLayoutRegionButton.disabled = !selectedLayoutRegionId;
+  [
+    dom.duplicateLayoutRegionButton,
+    dom.mirrorLayoutRegionXButton,
+    dom.mirrorLayoutRegionYButton,
+    dom.fillLayoutRegionButton,
+    dom.deleteLayoutRegionButton
+  ].forEach((button) => {
+    if (button) {
+      button.disabled = !selectedLayoutRegionId;
+    }
+  });
+  if (dom.snapLayoutToggle) {
+    dom.snapLayoutToggle.checked = layoutSnapEnabled;
   }
 
   const preserveDetail = options.preserveDetailFocus && dom.layoutRegionDetail.contains(document.activeElement);
@@ -1695,6 +1780,11 @@ function renderLayoutRegionDetail() {
   const geometry = currentLayoutRegionGeometry(region) ?? { x: 0, y: 0, width: 120, height: 90 };
   const accepts = Array.isArray(region.accepts) ? region.accepts.join(", ") : "";
   return `
+    <div class="layout-selection-summary">
+      <strong>${escapeHtml(metadata.label)}</strong>
+      <span>${escapeHtml([metadata.id, labelFromId(metadata.kind), labelFromId(metadata.ownerScope)].filter(Boolean).join(" · "))}</span>
+      <code>${escapeHtml(`x${Math.round(geometry.x)} y${Math.round(geometry.y)} w${Math.round(geometry.width)} h${Math.round(geometry.height)}`)}</code>
+    </div>
     <label class="layout-field wide">
       <span>Region ID</span>
       <input type="text" value="${escapeAttr(region.id)}" disabled>
@@ -1847,6 +1937,69 @@ function addLayoutRegion() {
   commitBoardLayoutDocumentChange("Added region.");
 }
 
+function duplicateSelectedLayoutRegion() {
+  const region = selectedLayoutRegion();
+  const document = ensureBoardLayoutDocument();
+  if (!region) {
+    setLayoutStatus("Select a region to copy.");
+    return;
+  }
+
+  const geometry = currentLayoutRegionGeometry(region) ?? { x: 0, y: 0, width: 120, height: 90 };
+  const copy = cloneJson(region);
+  copy.id = uniqueRegionId(`${region.id}_copy`);
+  copy.label = `${layoutRegionMetadata(region.id).label} Copy`;
+  copy.geometry = normalizedRegionGeometry({
+    x: geometry.x + LAYOUT_SNAP_SIZE * 2,
+    y: geometry.y + LAYOUT_SNAP_SIZE * 2,
+    width: geometry.width,
+    height: geometry.height
+  });
+  document.regions.push(copy);
+  selectedLayoutRegionId = copy.id;
+  commitBoardLayoutDocumentChange(`Copied region ${region.id}.`);
+}
+
+function mirrorSelectedLayoutRegion(axis) {
+  const region = selectedLayoutRegion();
+  const geometry = currentLayoutRegionGeometry(region);
+  if (!region || !geometry) {
+    setLayoutStatus("Select a region to flip.");
+    return;
+  }
+
+  setLayoutRegionGeometry(region, axis === "x"
+    ? {
+        x: PLAY_AREA.width - geometry.x - geometry.width,
+        y: geometry.y,
+        width: geometry.width,
+        height: geometry.height
+      }
+    : {
+        x: geometry.x,
+        y: PLAY_AREA.height - geometry.y - geometry.height,
+        width: geometry.width,
+        height: geometry.height
+      });
+  commitBoardLayoutDocumentChange(axis === "x" ? "Region flipped horizontally." : "Region flipped vertically.");
+}
+
+function fillSelectedLayoutRegion() {
+  const region = selectedLayoutRegion();
+  if (!region) {
+    setLayoutStatus("Select a region to fill.");
+    return;
+  }
+
+  setLayoutRegionGeometry(region, {
+    x: 0,
+    y: 0,
+    width: PLAY_AREA.width,
+    height: PLAY_AREA.height
+  });
+  commitBoardLayoutDocumentChange("Region filled the logical board.");
+}
+
 function deleteSelectedLayoutRegion() {
   if (!selectedLayoutRegionId || !Array.isArray(boardLayoutDocument?.regions)) {
     return;
@@ -1877,15 +2030,30 @@ function setLayoutRegionGeometry(region, geometry) {
     return;
   }
 
-  const clamped = clampGuideGeometry({
-    x: geometry.x,
-    y: geometry.y,
-    width: Math.max(28, geometry.width),
-    height: Math.max(28, geometry.height)
+  region.geometry = normalizedRegionGeometry(geometry) ?? region.geometry;
+}
+
+function normalizedRegionGeometry(geometry) {
+  const snapped = layoutSnapEnabled ? snapGeometry(geometry) : geometry;
+  return clampGuideGeometry({
+    x: snapped.x,
+    y: snapped.y,
+    width: Math.max(28, snapped.width),
+    height: Math.max(28, snapped.height)
   });
-  if (clamped) {
-    region.geometry = clamped;
-  }
+}
+
+function snapGeometry(geometry) {
+  return {
+    x: snapLayoutValue(geometry.x),
+    y: snapLayoutValue(geometry.y),
+    width: Math.max(LAYOUT_SNAP_SIZE, snapLayoutValue(geometry.width)),
+    height: Math.max(LAYOUT_SNAP_SIZE, snapLayoutValue(geometry.height))
+  };
+}
+
+function snapLayoutValue(value) {
+  return Math.round(Number(value) / LAYOUT_SNAP_SIZE) * LAYOUT_SNAP_SIZE;
 }
 
 function countLayoutRegions() {
@@ -2375,6 +2543,14 @@ function loadBoardLayoutDraft() {
   }
 }
 
+function loadLayoutSnapEnabled() {
+  try {
+    return localStorage.getItem(LAYOUT_SNAP_STORAGE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
 function isBoardLayoutDocument(value) {
   return Boolean(
     value
@@ -2813,7 +2989,7 @@ function startLayoutRegionDrag(event) {
     return;
   }
 
-  const point = arenaPointFromEvent(event);
+  const point = layoutEditorPointFromEvent(event);
   const geometry = currentLayoutRegionGeometry(region);
   if (!point || !geometry) {
     return;
@@ -2850,7 +3026,7 @@ function updateLayoutDrag(event) {
   }
 
   event.preventDefault();
-  const point = arenaPointFromEvent(event);
+  const point = layoutEditorPointFromEvent(event);
   if (!point) {
     return;
   }
@@ -2870,7 +3046,7 @@ function updateLayoutDrag(event) {
 
 function updateLayoutRegionDrag(event) {
   event.preventDefault();
-  const point = arenaPointFromEvent(event);
+  const point = layoutEditorPointFromEvent(event);
   const region = layoutRegionById(activeRegionDrag.regionId);
   if (!point || !region) {
     return;
@@ -2916,6 +3092,17 @@ function arenaPointFromEvent(event) {
   return {
     x: (event.clientX - rect.left) / scale,
     y: (event.clientY - rect.top) / scale
+  };
+}
+
+function layoutEditorPointFromEvent(event) {
+  const point = arenaPointFromEvent(event);
+  if (!point || !layoutSnapEnabled) {
+    return point;
+  }
+  return {
+    x: snapLayoutValue(point.x),
+    y: snapLayoutValue(point.y)
   };
 }
 

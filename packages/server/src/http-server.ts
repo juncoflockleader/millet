@@ -230,7 +230,7 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
           send(res, 400, { error: "authoring_unavailable", message: "Asset promotion requires staticRoot and rulesetRoot." });
           return;
         }
-        const body = (await readJson(req)) as { rulesetId?: string; entry?: Record<string, unknown> };
+        const body = (await readJson(req)) as { rulesetId?: string; mode?: "replace" | "create"; entry?: Record<string, unknown> };
         const result = promoteAssetDraft(options.staticRoot, options.rulesetRoot, body);
         send(res, 200, result);
         return;
@@ -296,7 +296,7 @@ function readAuthoringStatus(): { gitAvailable: boolean; dirty: boolean; changed
 function promoteAssetDraft(
   staticRoot: string,
   rulesetRoot: string,
-  body: { rulesetId?: string; entry?: Record<string, unknown> }
+  body: { rulesetId?: string; mode?: "replace" | "create"; entry?: Record<string, unknown> }
 ): { asset: Record<string, unknown>; manifest: Record<string, unknown>; publicPath: string } {
   const rulesetId = body.rulesetId;
   if (typeof rulesetId !== "string" || !PROMOTABLE_RULESET_IDS.has(rulesetId)) {
@@ -333,9 +333,13 @@ function promoteAssetDraft(
   const manifestPath = join(rulesetRoot, rulesetId, "asset-manifest.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
   const assets = Array.isArray(manifest.assets) ? manifest.assets as Record<string, unknown>[] : [];
+  const mode = body.mode === "create" ? "create" : "replace";
   const index = assets.findIndex((asset) => asset?.assetId === assetId);
-  if (index === -1) {
+  if (mode === "replace" && index === -1) {
     throw new BadRequestError(`Unknown asset ${assetId}.`);
+  }
+  if (mode === "create" && index !== -1) {
+    throw new BadRequestError(`Asset ${assetId} already exists.`);
   }
 
   const publicPath = `/assets/imported/${rulesetId}/${assetId}.${extension}`;
@@ -361,7 +365,11 @@ function promoteAssetDraft(
     width,
     height
   };
-  assets[index] = promotedAsset;
+  if (mode === "create") {
+    assets.push(promotedAsset);
+  } else {
+    assets[index] = promotedAsset;
+  }
   manifest.assets = assets;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   return { asset: promotedAsset, manifest, publicPath };

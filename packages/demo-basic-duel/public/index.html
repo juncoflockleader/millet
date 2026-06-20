@@ -79,8 +79,16 @@
           <section class="layout-editor-section layout-region-editor" aria-label="Board regions">
             <div class="layout-section-head">
               <strong>Regions</strong>
-              <div>
+              <div class="layout-section-actions">
+                <label class="layout-snap-toggle" title="Snap region geometry to an 8px grid">
+                  <input id="snapLayoutToggle" type="checkbox">
+                  <span>Snap</span>
+                </label>
                 <button id="addLayoutRegionButton" class="ghost" type="button">Add</button>
+                <button id="duplicateLayoutRegionButton" class="ghost" type="button">Copy</button>
+                <button id="mirrorLayoutRegionXButton" class="ghost" type="button" title="Mirror selected region horizontally">Flip X</button>
+                <button id="mirrorLayoutRegionYButton" class="ghost" type="button" title="Mirror selected region vertically">Flip Y</button>
+                <button id="fillLayoutRegionButton" class="ghost" type="button">Fill</button>
                 <button id="deleteLayoutRegionButton" class="ghost" type="button">Delete</button>
               </div>
             </div>
@@ -116,7 +124,10 @@
             <strong>Asset Library</strong>
             <span id="assetCount">0 assets</span>
           </div>
-          <button id="closeAssetLibraryButton" class="ghost icon-button" type="button" aria-label="Close asset library">X</button>
+          <div class="panel-head-actions">
+            <button id="newAssetButton" class="ghost" type="button">New Asset</button>
+            <button id="closeAssetLibraryButton" class="ghost icon-button" type="button" aria-label="Close asset library">X</button>
+          </div>
         </div>
         <div class="asset-filter" id="assetFilter" role="tablist" aria-label="Asset filters"></div>
         <div class="asset-library-body">

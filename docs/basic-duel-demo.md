@@ -25,9 +25,9 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Hero cards can be targets and action sources. In the demo, each hero has a `Focus Flame` ability that spends 2 mana to damage the enemy hero.
 - `Preview` opens ruleset UI preview fixtures for read-only card, hero, equipment, and minion states.
 - `?ruleset=sample-identity` loads the Sanguosha-like eight-player ruleset preview and renders authored absolute board regions for seats, projection-safe public/owned/hidden role badges, piles, hand, equipment, judgment, prompt, and history.
-- `Assets` opens the ruleset asset library, local manifest entry editor, browser-local image import draft flow, and demo-server asset promotion control.
+- `Assets` opens the ruleset asset library, local manifest entry editor, browser-local image import draft flow, new asset draft creation, and demo-server asset promotion control.
 - `Presentation` opens a local presentation catalog entry editor.
-- `Layout` opens the board layout editor for token controls, region fields, region drag/resize, and full `BoardLayoutJson` import/export.
+- `Layout` opens the board layout editor for token controls, region fields, snap-to-grid region drag/resize, region copy/flip/fill actions, and full `BoardLayoutJson` import/export.
 - `End Turn` submits the engine-level `end_turn` command.
 - The event log is loaded from `/matches/:id/replay?admin=true`.
 
@@ -41,7 +41,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Keyword tooltips are available inside rules text for terms such as `damage`, `mana`, `durability`, `draw`, and `attack`.
 - The whole card can be hovered or focused to inspect its rules text, owner, zone, and current status.
 - The board layout editor adjusts CSS-driven layout values for row heights, hero column width, board/hand split, center-lane split, card width, card art height, gaps, and padding.
-- The editor overlay also renders authored board layout regions and widget components, including hero, battlefield, equipment, hand, deck, action, history, and chat surfaces. Selecting a guide box or region row exposes region fields, and guide boxes can be dragged or resized on the canvas.
+- The editor overlay also renders authored board layout regions and widget components, including hero, battlefield, equipment, hand, deck, action, history, and chat surfaces. Selecting a guide box or region row exposes region fields and a geometry summary; guide boxes can be snapped, dragged, resized, copied, mirrored, filled to the board, or deleted on the canvas.
 - Runtime hero, battlefield, equipment, hand, action, and history surfaces are annotated with the authored region/widget metadata, and drag/drop battlefield targeting is attached to the battlefield regions.
 - Player-side hero, battlefield, equipment, hand, and deck containers are rendered through a small region dispatch layer keyed by the authored widget component names.
 - Deck stacks render projection-safe counts and discard/graveyard summaries without exposing hidden deck order or top-card identity.
@@ -53,7 +53,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Presentation editor changes are stored in browser `localStorage` under `ember-duel.presentation.<rulesetId>.v1` and can be reset to the authored ruleset catalog.
 - UI preview fixtures are loaded from `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
 - The asset library is loaded from `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, with previews from each asset `publicPath`.
-- Asset editor changes are stored in browser `localStorage` under `ember-duel.assets.<rulesetId>.v1` and can be copied as active manifest JSON or reset to the authored ruleset source. Imported image drafts compute content hash, dimensions, media type, local source URI, and a data URL `publicPath` for immediate preview. The promotion review shows the target path, dirty-worktree status, and manifest field diff before `Promote` writes imported image drafts to `packages/demo-basic-duel/public/assets/imported/<rulesetId>/` and updates the selected ruleset `asset-manifest.json` through the local authoring endpoint.
+- Asset editor changes are stored in browser `localStorage` under `ember-duel.assets.<rulesetId>.v1` and can be copied as active manifest JSON or reset to the authored ruleset source. `New Asset` creates a local manifest entry draft with a unique id; imported image drafts compute content hash, dimensions, media type, local source URI, and a data URL `publicPath` for immediate preview. The promotion review shows the target path, create/replace mode, dirty-worktree status, and manifest field diff before `Promote` writes imported image drafts to `packages/demo-basic-duel/public/assets/imported/<rulesetId>/` and updates the selected ruleset `asset-manifest.json` through the local authoring endpoint.
 
 ## Assets
 

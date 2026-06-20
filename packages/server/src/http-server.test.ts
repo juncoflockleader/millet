@@ -226,6 +226,55 @@ test("HTTP asset promotion rejects non-data-url drafts", async () => {
   }
 });
 
+test("HTTP asset promotion can create a new manifest entry", async () => {
+  const root = mkdtempSync(join(tmpdir(), "millet-asset-promotion-create-"));
+  try {
+    const staticRoot = join(root, "public");
+    const rulesetRoot = join(root, "rulesets");
+    mkdirSync(join(rulesetRoot, "sample-duel"), { recursive: true });
+    mkdirSync(staticRoot, { recursive: true });
+    writeFileSync(join(rulesetRoot, "sample-duel", "asset-manifest.json"), JSON.stringify({
+      id: "sample-duel-assets",
+      version: "0.2.0",
+      assets: []
+    }, null, 2));
+
+    const dataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR4nGP8z8DAwMDAxMDAwAAABQABDQottAAAAABJRU5ErkJggg==";
+    const server = createMilletHttpServer(new InMemoryMatchService(), { staticRoot, rulesetRoot });
+    const response = await dispatch(server, {
+      method: "POST",
+      url: "/authoring/assets/promote",
+      body: {
+        rulesetId: "sample-duel",
+        mode: "create",
+        entry: {
+          assetId: "new-card-art",
+          version: "0.1.0",
+          kind: "card_art",
+          contentHash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          sourceUri: "local-file://new-card-art.png",
+          publicPath: dataUrl,
+          license: "first-party-dev",
+          owner: "millet",
+          mediaType: "image/png",
+          width: 2,
+          height: 2,
+          usage: ["new asset draft"]
+        }
+      }
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json.publicPath, "/assets/imported/sample-duel/new-card-art.png");
+    const manifest = JSON.parse(readFileSync(join(rulesetRoot, "sample-duel", "asset-manifest.json"), "utf8")) as { assets: Record<string, unknown>[] };
+    assert.equal(manifest.assets.length, 1);
+    assert.equal(manifest.assets[0]?.assetId, "new-card-art");
+    assert.equal(manifest.assets[0]?.publicPath, "/assets/imported/sample-duel/new-card-art.png");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("HTTP authoring status reports git dirty-state shape", async () => {
   const server = createMilletHttpServer(new InMemoryMatchService(), {
     staticRoot: join("packages", "demo-basic-duel", "public"),
