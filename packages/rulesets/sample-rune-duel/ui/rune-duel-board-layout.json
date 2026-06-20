@@ -1,0 +1,262 @@
+{
+  "id": "rune-duel-default-board",
+  "version": "0.1.0",
+  "kind": "board_layout",
+  "metadata": {
+    "name": "Rune Duel Default Board",
+    "description": "Compact 2P board layout authored as a separate Studio project."
+  },
+  "logicalSize": {
+    "width": 1040,
+    "height": 590
+  },
+  "scaling": {
+    "mode": "fit_viewport",
+    "minScale": 0.2,
+    "maxScale": 1
+  },
+  "tokens": {
+    "arena": {
+      "padding": 10,
+      "rowGap": 8,
+      "opponentRow": 198,
+      "centerRow": 84,
+      "playerRow": 270
+    },
+    "player": {
+      "heroWidth": 160,
+      "gap": 8
+    },
+    "zones": {
+      "boardWidth": 286,
+      "gap": 8
+    },
+    "center": {
+      "turnWidth": 390,
+      "gap": 8
+    },
+    "card": {
+      "width": 112,
+      "artHeight": 48
+    }
+  },
+  "propertyDisplay": {
+    "slots": [
+      { "id": "top-left", "label": "Cost Corner", "objectTypes": ["card", "hero"] },
+      { "id": "top-right", "label": "Rune Marker", "objectTypes": ["card", "hero", "equipment", "minion"] },
+      { "id": "bottom-left", "label": "Attack Corner", "objectTypes": ["equipment", "minion"] },
+      { "id": "bottom-right", "label": "Health Or Durability Corner", "objectTypes": ["equipment", "minion"] }
+    ],
+    "icons": [
+      { "id": "mana", "label": "Mana" },
+      { "id": "sword", "label": "Attack" },
+      { "id": "heart", "label": "Health" },
+      { "id": "durability", "label": "Durability" }
+    ]
+  },
+  "regions": [
+    {
+      "id": "opponent_hero",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Opponent",
+      "geometry": { "x": 10, "y": 10, "width": 160, "height": 198 },
+      "widgetId": "hero-card",
+      "accepts": ["hero", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_battlefield",
+      "kind": "battlefield",
+      "ownerScope": "opponent",
+      "label": "Opponent Field",
+      "geometry": { "x": 178, "y": 10, "width": 286, "height": 198 },
+      "widgetId": "card-row",
+      "accepts": ["minion"],
+      "targetable": true,
+      "dropBehavior": "select_object_target",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_equipment",
+      "kind": "equipment",
+      "ownerScope": "opponent",
+      "label": "Relic",
+      "geometry": { "x": 472, "y": 10, "width": 84, "height": 198 },
+      "widgetId": "equipment-slot",
+      "accepts": ["weapon", "equipment"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_hand",
+      "kind": "hand",
+      "ownerScope": "opponent",
+      "label": "Opponent Hand",
+      "geometry": { "x": 564, "y": 10, "width": 466, "height": 198 },
+      "widgetId": "card-row",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "admin"
+    },
+    {
+      "id": "opponent_deck",
+      "kind": "deck",
+      "ownerScope": "opponent",
+      "label": "Opponent Deck",
+      "geometry": { "x": 950, "y": 24, "width": 64, "height": 92 },
+      "widgetId": "deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    },
+    {
+      "id": "turn_action_window",
+      "kind": "action_window",
+      "ownerScope": "shared",
+      "label": "Rune Flow",
+      "geometry": { "x": 10, "y": 216, "width": 390, "height": 84 },
+      "widgetId": "action-panel",
+      "accepts": ["command"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "history_log",
+      "kind": "history_log",
+      "ownerScope": "shared",
+      "label": "Runelog",
+      "geometry": { "x": 408, "y": 216, "width": 622, "height": 84 },
+      "widgetId": "history-log",
+      "accepts": ["event"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "scroll",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_hero",
+      "kind": "hero",
+      "ownerScope": "player",
+      "label": "You",
+      "geometry": { "x": 10, "y": 308, "width": 160, "height": 270 },
+      "widgetId": "hero-card",
+      "accepts": ["hero", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_battlefield",
+      "kind": "battlefield",
+      "ownerScope": "player",
+      "label": "Your Field",
+      "geometry": { "x": 178, "y": 308, "width": 286, "height": 270 },
+      "widgetId": "card-row",
+      "accepts": ["minion"],
+      "targetable": true,
+      "dropBehavior": "select_object_target",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_equipment",
+      "kind": "equipment",
+      "ownerScope": "player",
+      "label": "Relic",
+      "geometry": { "x": 472, "y": 308, "width": 84, "height": 270 },
+      "widgetId": "equipment-slot",
+      "accepts": ["weapon", "equipment"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_hand",
+      "kind": "hand",
+      "ownerScope": "player",
+      "label": "Your Hand",
+      "geometry": { "x": 564, "y": 308, "width": 466, "height": 270 },
+      "widgetId": "card-row",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "owner"
+    },
+    {
+      "id": "player_deck",
+      "kind": "deck",
+      "ownerScope": "player",
+      "label": "Your Deck",
+      "geometry": { "x": 950, "y": 466, "width": 64, "height": 92 },
+      "widgetId": "deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "hero-card",
+      "kind": "single_object",
+      "component": "HeroCard",
+      "config": {
+        "supportsSourceActions": true,
+        "supportsTargetHighlight": true
+      }
+    },
+    {
+      "id": "card-row",
+      "kind": "card_collection",
+      "component": "CardRow",
+      "config": {
+        "supportsDragSource": true,
+        "supportsFanOverflow": true
+      }
+    },
+    {
+      "id": "equipment-slot",
+      "kind": "single_object",
+      "component": "EquipmentSlot",
+      "config": {
+        "supportsDragSource": true,
+        "showEmptySlot": true
+      }
+    },
+    {
+      "id": "deck-stack",
+      "kind": "card_collection",
+      "component": "DeckStack",
+      "config": {
+        "showCount": true
+      }
+    },
+    {
+      "id": "action-panel",
+      "kind": "system",
+      "component": "ActionPanel"
+    },
+    {
+      "id": "history-log",
+      "kind": "system",
+      "component": "HistoryLog"
+    }
+  ]
+}

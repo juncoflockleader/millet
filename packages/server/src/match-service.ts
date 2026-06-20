@@ -17,18 +17,15 @@ import {
 } from "../../engine-core/src/index.ts";
 import { buildRulesetBundle, contentLockFromBundle, type BuiltBundle } from "../../content-build/src/build.ts";
 import type { FileBundleStore } from "../../content-build/src/store.ts";
-import { createSampleDuelSetupEvents, sampleDuelBehaviors, sampleDuelPhaseGraph } from "../../rulesets/sample-duel/sample-duel.ts";
 import {
-  createSampleIdentitySetupEvents,
-  evaluateIdentityOutcome,
-  sampleIdentityBehaviors,
-  sampleIdentityPhaseGraph
-} from "../../rulesets/sample-identity/sample-identity.ts";
+  registeredRuleset,
+  type RegisteredRulesetId
+} from "./ruleset-registry.ts";
 import { DeterministicScheduler, type ScheduledAction } from "./scheduler.ts";
 
 export interface StoredMatch {
   id: string;
-  rulesetId: "sample-duel" | "sample-identity";
+  rulesetId: RegisteredRulesetId;
   state: MatchState;
   events: MatchEvent[];
   snapshots: { sequence: number; state: MatchState }[];
@@ -39,11 +36,6 @@ export interface CreateMatchOptions {
   playerCount?: 6 | 8;
   demoDuel?: boolean;
 }
-
-const RULESET_DIRS: Record<StoredMatch["rulesetId"], string> = {
-  "sample-duel": "packages/rulesets/sample-duel",
-  "sample-identity": "packages/rulesets/sample-identity"
-};
 
 const COMMAND_ALLOWED_PLAYER_STATUSES: PlayerStatus[] = ["alive", "dying"];
 
@@ -123,32 +115,19 @@ export class InMemoryMatchService {
     this.scheduler = options.scheduler ?? new DeterministicScheduler(options.scheduledActions);
   }
 
-  createMatch(rulesetId: "sample-duel" | "sample-identity", options: CreateMatchOptions = {}): StoredMatch {
+  createMatch(rulesetId: RegisteredRulesetId, options: CreateMatchOptions = {}): StoredMatch {
+    const ruleset = registeredRuleset(rulesetId);
     const bundle = this.buildAndStoreRulesetBundle(rulesetId);
     const contentLock = contentLockFromBundle(bundle);
-    const setupEvents =
-      rulesetId === "sample-duel"
-        ? createSampleDuelSetupEvents({
-            contentLock,
-            ...(options.demoDuel
-              ? {
-                  p1Health: 10,
-                  p2Health: 10,
-                  p1Mana: 10,
-                  p2Mana: 10,
-                  mirrorP2Hand: true
-                }
-              : {})
-          })
-        : createSampleIdentitySetupEvents({ playerCount: options.playerCount ?? 6, contentLock });
+    const setupEvents = ruleset.createSetupEvents({ ...options, contentLock });
     let state = setupEvents.reduce((current, event) => reduceEvent(current, event), createEmptyMatchState());
     let events = setupEvents;
 
-    if (rulesetId === "sample-duel" && options.demoDuel) {
-      const phaseRun = runPhaseGraph(state, sampleDuelPhaseGraph, {
+    if (ruleset.phaseGraph && ruleset.shouldRunPhaseOnCreate?.({ ...options, contentLock })) {
+      const phaseRun = runPhaseGraph(state, ruleset.phaseGraph, {
         activePlayerId: "p1",
-        behaviorLibrary: sampleDuelBehaviors,
-        outcomeMode: "last_alive"
+        behaviorLibrary: ruleset.behaviorLibrary,
+        ...ruleset.resolution
       });
       state = phaseRun.state;
       events = [...setupEvents, ...phaseRun.events];
@@ -160,7 +139,7 @@ export class InMemoryMatchService {
       state,
       events,
       snapshots: [{ sequence: state.lastSequence, state: structuredClone(state) }],
-      behaviorLibrary: rulesetId === "sample-duel" ? sampleDuelBehaviors : sampleIdentityBehaviors
+      behaviorLibrary: ruleset.behaviorLibrary
     };
 
     this.matches.set(match.id, match);
@@ -168,7 +147,7 @@ export class InMemoryMatchService {
   }
 
   private buildAndStoreRulesetBundle(rulesetId: StoredMatch["rulesetId"]): BuiltBundle {
-    const bundle = buildRulesetBundle(RULESET_DIRS[rulesetId]);
+    const bundle = buildRulesetBundle(registeredRuleset(rulesetId).dir);
     const errors = bundle.issues.filter((issue) => issue.severity === "error");
     if (errors.length > 0) {
       throw new Error(`Ruleset ${rulesetId} has validation errors: ${errors.map((issue) => issue.message).join("; ")}`);
@@ -265,13 +244,14 @@ export class InMemoryMatchService {
       let state = match.state;
       const events: MatchEvent[] = [];
 
-      if (match.rulesetId === "sample-identity" && state.turn.activePlayerId === command.playerId && state.turn.phaseId === "play") {
-        const cleanupRun = runPhaseGraph(state, sampleIdentityPhaseGraph, {
+      const ruleset = registeredRuleset(match.rulesetId);
+      if (ruleset.beforeEndTurnPhase && state.turn.activePlayerId === command.playerId && state.turn.phaseId === "play") {
+        const cleanupRun = runPhaseGraph(state, ruleset.phaseGraph!, {
           activePlayerId: command.playerId,
           behaviorLibrary: match.behaviorLibrary,
-          deathMode: "dying"
+          ...ruleset.resolution
         }, {
-          fromPhaseId: "discard"
+          fromPhaseId: ruleset.beforeEndTurnPhase
         });
         state = cleanupRun.state;
         events.push(...cleanupRun.events);
@@ -281,19 +261,11 @@ export class InMemoryMatchService {
       state = advanced.state;
       events.push(advanced.event);
 
-      if (match.rulesetId === "sample-duel") {
-        const phaseRun = runPhaseGraph(state, sampleDuelPhaseGraph, {
+      if (ruleset.phaseGraph) {
+        const phaseRun = runPhaseGraph(state, ruleset.phaseGraph, {
           activePlayerId: state.turn.activePlayerId!,
           behaviorLibrary: match.behaviorLibrary,
-          outcomeMode: "last_alive"
-        });
-        state = phaseRun.state;
-        events.push(...phaseRun.events);
-      } else if (match.rulesetId === "sample-identity") {
-        const phaseRun = runPhaseGraph(state, sampleIdentityPhaseGraph, {
-          activePlayerId: state.turn.activePlayerId!,
-          behaviorLibrary: match.behaviorLibrary,
-          deathMode: "dying"
+          ...ruleset.resolution
         });
         state = phaseRun.state;
         events.push(...phaseRun.events);
@@ -309,9 +281,7 @@ export class InMemoryMatchService {
 
     const result = resolveCommand(match.state, command, {
       behaviorLibrary: match.behaviorLibrary,
-      outcomeMode: match.rulesetId === "sample-duel" ? "last_alive" : "none",
-      deathMode: match.rulesetId === "sample-identity" ? "dying" : "direct",
-      dyingPrompt: match.rulesetId === "sample-identity" ? { onPassBehavior: "finish_dying" } : undefined
+      ...registeredRuleset(match.rulesetId).resolution
     });
     match.state = result.state;
     match.events.push(...result.events);
@@ -832,11 +802,12 @@ export class InMemoryMatchService {
   }
 
   private appendIdentityOutcomeIfComplete(match: StoredMatch, commandId: string): MatchEvent | undefined {
-    if (match.rulesetId !== "sample-identity" || match.state.status === "completed" || match.state.outcomes.some((outcome) => outcome.status === "completed")) {
+    const ruleset = registeredRuleset(match.rulesetId);
+    if (!ruleset.evaluateOutcome || match.state.status === "completed" || match.state.outcomes.some((outcome) => outcome.status === "completed")) {
       return undefined;
     }
 
-    const outcome = evaluateIdentityOutcome(match.state);
+    const outcome = ruleset.evaluateOutcome(match.state);
     if (!outcome) {
       return undefined;
     }

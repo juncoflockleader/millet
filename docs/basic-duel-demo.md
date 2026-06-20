@@ -16,9 +16,11 @@ http://127.0.0.1:8787/
 
 Millet Studio is the editor shell. Projects are loaded from `packages/demo-basic-duel/public/studio-projects.js`; `Ember Duel` is the default playable project inside that shell. It is a hotseat browser game backed by the real Millet server APIs and the `sample-duel` ruleset. It starts a fair demo variant with both heroes at 10 health, player 1 active, mirrored player 2 attack cards, and an open main action window.
 
+`Rune Duel` is a second playable 1v1 project in the same shell. Open `http://127.0.0.1:8787/?project=rune-duel` or choose it from the project switcher. It uses the `sample-rune-duel` ruleset, different card/template ids, a compact board layout, 12-health heroes, 4-mana turns, and presentation-driven card actions.
+
 ## Controls
 
-- `New Match` creates a `sample-duel` match with `{ "demoDuel": true }`.
+- `New Match` creates a match for the active playable project with `{ "demoDuel": true }`.
 - Select `P1` or `P2` to choose whose actions to send.
 - Card, minion, weapon, and hero ability buttons submit `execute_behavior` commands through `/matches/:id/commands`.
 - Click a usable card, board object, or hero card to select it, then click or drag it onto a highlighted legal target.
@@ -29,7 +31,7 @@ Millet Studio is the editor shell. Projects are loaded from `packages/demo-basic
 - `Cards` opens the ruleset card template studio for local template JSON drafts, type filters, dependency health, card preview, behavior/text sync, generated UX hint review, frame/art crop editing, property badge layout editing, equipment slot/stat/action editing with promotion checks, minion combat/token/trigger editing with promotion checks, and guarded catalog promotion.
 - `Presentation` opens a local presentation catalog entry editor. Selecting a hero entry shows structured Hero Studio controls for hero art/frame/crop, identity text, ability presentation, behavior id, target mode, mana cost, ability display badges, and validation status.
 - `Layout` opens the board layout editor for document fields, board templates, token controls, region presets, region fields, widget kind/component/config fields, snap-to-grid region drag/resize, region copy/flip/fill actions, local diagnostics, and full `BoardLayoutJson` import/export.
-- `Playtest` opens an integrated playtest/debug panel. It reports active browser-local layout/card/presentation/asset drafts, loads the ruleset's authored playtest scripts from `game-definition.ui.defaultPlaytestScript`, lets authors select a script, runs it through the live match APIs, fetches admin state/replay, updates the board to the generated match, summarizes sequence/event/resource metrics, shows a state diff from match creation to final state, and lets authors inspect individual replay event payloads. `Ember Duel` currently ships a `Firebolt Smoke` script.
+- `Playtest` opens an integrated playtest/debug panel. It reports active browser-local layout/card/presentation/asset drafts, loads the ruleset's authored playtest scripts from `game-definition.ui.defaultPlaytestScript`, lets authors select a script, runs it through the live match APIs, fetches admin state/replay, updates the board to the generated match, summarizes sequence/event/resource metrics, shows a state diff from match creation to final state, and lets authors inspect individual replay event payloads. `Ember Duel` ships `Firebolt Smoke`; `Rune Duel` ships `Rune Dart Smoke`.
 - `End Turn` submits the engine-level `end_turn` command.
 - The event log is loaded from `/matches/:id/replay?admin=true`.
 
@@ -108,3 +110,4 @@ The same generated assets are declared in `packages/rulesets/sample-duel/asset-m
 ## Known Follow-Up
 
 - The UI uses an admin projection because it is hotseat and intentionally shows both hands on one screen. A networked two-browser version should use player projections and hide the opponent hand.
+- The current 1v1 runtime still assumes conventional zone ids such as `zone_hand_p1`, `zone_board_p1`, and `zone_weapon_p1`. Rune Duel follows that convention; a later UI-engine slice should bind runtime widgets to zones through layout/data-source metadata.

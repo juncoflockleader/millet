@@ -1,0 +1,85 @@
+{
+  "id": "rune-duel-preview-fixtures",
+  "version": "0.1.0",
+  "kind": "ui_preview_fixture",
+  "metadata": {
+    "name": "Rune Duel Preview Fixtures",
+    "description": "Small Rune Duel fixture states for Studio preview without a live match."
+  },
+  "fixtures": [
+    {
+      "id": "rune-hand-preview",
+      "label": "Rune Hand",
+      "description": "Rune Duel spell, resource, minion, and weapon presentation in the 2P runtime.",
+      "focus": "card",
+      "viewerId": "p1",
+      "selectedPlayerId": "p1",
+      "state": {
+        "status": "active",
+        "lastSequence": 20,
+        "turn": { "activePlayerId": "p1", "phaseId": "main" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 12, "max": 12 },
+              "mana": { "current": 4, "max": 4 },
+              "fatigue": { "current": 0 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 12, "max": 12 },
+              "mana": { "current": 2, "max": 4 },
+              "fatigue": { "current": 0 }
+            }
+          }
+        },
+        "zones": {
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": ["preview_rune_dart", "preview_chain_flash", "preview_focus_crystal"] },
+          "zone_deck_p1": { "id": "zone_deck_p1", "objectIds": ["preview_echo_rune"] },
+          "zone_board_p1": { "id": "zone_board_p1", "objectIds": ["preview_glyph_runner"] },
+          "zone_weapon_p1": { "id": "zone_weapon_p1", "objectIds": ["preview_dueling_staff"] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": ["preview_hidden_opponent_card"] },
+          "zone_deck_p2": { "id": "zone_deck_p2", "objectIds": [] },
+          "zone_board_p2": { "id": "zone_board_p2", "objectIds": [] },
+          "zone_weapon_p2": { "id": "zone_weapon_p2", "objectIds": [] },
+          "zone_discard": { "id": "zone_discard", "objectIds": [] },
+          "zone_graveyard": { "id": "zone_graveyard", "objectIds": [] }
+        },
+        "objects": {
+          "preview_rune_dart": { "id": "preview_rune_dart", "objectType": "card", "templateId": "rune_dart", "ownerId": "p1" },
+          "preview_chain_flash": { "id": "preview_chain_flash", "objectType": "card", "templateId": "chain_flash", "ownerId": "p1" },
+          "preview_focus_crystal": { "id": "preview_focus_crystal", "objectType": "card", "templateId": "focus_crystal", "ownerId": "p1" },
+          "preview_echo_rune": { "id": "preview_echo_rune", "objectType": "card", "templateId": "echo_rune", "ownerId": "p1" },
+          "preview_glyph_runner": {
+            "id": "preview_glyph_runner",
+            "objectType": "minion",
+            "templateId": "glyph_runner",
+            "ownerId": "p1",
+            "stats": { "attack": 1, "health": 2 },
+            "exhausted": false
+          },
+          "preview_dueling_staff": {
+            "id": "preview_dueling_staff",
+            "objectType": "equipment",
+            "templateId": "dueling_staff",
+            "ownerId": "p1",
+            "stats": { "attack": 2, "durability": 1 },
+            "counters": { "durability": 1 }
+          },
+          "preview_hidden_opponent_card": { "id": "preview_hidden_opponent_card", "objectType": "hidden" }
+        },
+        "prompts": {},
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 19, "type": "phase_entered", "payload": { "activePlayerId": "p1", "phaseId": "main" } },
+        { "sequence": 20, "type": "card_moved", "payload": { "objectId": "preview_echo_rune", "toZoneId": "zone_deck_p1" } }
+      ]
+    }
+  ]
+}

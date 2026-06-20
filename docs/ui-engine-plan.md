@@ -7,20 +7,23 @@ Current implemented slice:
 
 - `BoardLayoutJson` schema and generated TypeScript declaration.
 - `sample-duel` default board layout at `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json`.
+- `sample-rune-duel` dogfood board layout at `packages/rulesets/sample-rune-duel/ui/rune-duel-board-layout.json`.
 - `sample-identity` Sanguosha-like eight-seat board layout at `packages/rulesets/sample-identity/ui/sanguosha-eight-player-board-layout.json`.
 - `game-definition.json` `ui.defaultBoardLayout` discovery.
 - ruleset validation for UI board layout schema, missing layout refs, duplicate region/widget ids, bad region widget refs, and region geometry outside logical board bounds.
 - `PresentationCatalogJson` schema for card, hero, equipment, and minion presentation definitions.
 - `sample-duel` presentation catalog at `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`.
+- `sample-rune-duel` presentation catalog at `packages/rulesets/sample-rune-duel/ui/rune-duel-presentation.json`.
 - `game-definition.json` `ui.defaultPresentationCatalog` discovery.
 - ruleset validation for presentation catalog schema, missing presentation refs, duplicate presentation ids, unknown card templates, and unknown behavior refs.
 - ruleset validation for property display slot/icon registries declared by board layouts, including card catalogs, presentation catalogs, hero displays, and hero ability displays.
 - `UiPreviewFixtureJson` schema for projected card, hero, equipment, minion, and full-board preview states.
 - `sample-duel` UI preview fixtures at `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
+- `sample-rune-duel` UI preview fixtures at `packages/rulesets/sample-rune-duel/ui/rune-duel-preview-fixtures.json`.
 - `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
 - ruleset validation for preview fixture refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown card templates, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - demo content endpoint at `/content/rulesets/:rulesetId/*.json`.
-- Millet Studio browser shell now treats `Ember Duel` and `Sanguosha Identity` as selectable projects loaded from a shell-level project registry. `Ember Duel` is the default playable project, while the Sanguosha-like identity ruleset is a preview project reachable through the project switcher, `?project=sanguosha-identity`, or legacy `?ruleset=sample-identity`.
+- Millet Studio browser shell now treats `Ember Duel`, `Rune Duel`, and `Sanguosha Identity` as selectable projects loaded from a shell-level project registry. `Ember Duel` is the default playable project, `Rune Duel` is a second playable 1v1 dogfood project, and the Sanguosha-like identity ruleset is a preview project reachable through the project switcher, `?project=sanguosha-identity`, or legacy `?ruleset=sample-identity`.
 - Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports document id/version/name/logical-size/scaling edits, whole-board template application, token controls, region presets, region selection, region field editing, widget id/kind/component/config editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, local diagnostics, custom token preservation, and renders authored board regions/widgets as an overlay guide.
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
@@ -38,11 +41,20 @@ Current implemented slice:
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - `UiPlaytestScriptJson` schema for authored project playtest scripts with create-match, command, state/replay fetch, and resource assertion steps.
 - `sample-duel` playtest scripts at `packages/rulesets/sample-duel/ui/ember-duel-playtests.json`.
+- `sample-rune-duel` playtest scripts at `packages/rulesets/sample-rune-duel/ui/rune-duel-playtests.json`.
 - `game-definition.json` `ui.defaultPlaytestScript` discovery and ruleset validation for missing script refs, duplicate script ids, duplicate step ids, live-match create-match steps, and unknown behavior refs.
 - Millet Studio `Playtest` panel reports active browser-local layout/card/presentation/asset drafts, lists authored ruleset playtest scripts, runs the selected script through the live match APIs, updates the board to the generated match, summarizes replay/debug output, renders a state diff from baseline to final state, and exposes selectable replay event payloads.
+- Runtime card actions now prefer presentation-catalog behavior metadata instead of hardcoded Ember Duel template ids, which lets Rune Duel use different template ids while keeping the same engine primitives.
+- The server now uses a small ruleset registry for setup events, behavior libraries, phase graphs, resolution modes, and content directories, which lets new playable rulesets register without editing multiple hardcoded unions.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
 - Millet Studio can load `?project=sanguosha-identity` or legacy `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
 - Ember Duel identity preview seats and role summaries render projection-safe role badges for public roles, viewer-owned roles, and hidden roles without exposing redacted role refs or hidden object ids.
+
+Dogfood gaps exposed by `sample-rune-duel`:
+
+- The 1v1 runtime still assumes zone id conventions like `zone_hand_p1`, `zone_board_p1`, and `zone_weapon_p1`; board regions should eventually declare data-source bindings.
+- VFX selection is still keyed by behavior id groups in the demo runtime; presentation or behavior UX hints should eventually declare visual effect intent.
+- The current behavior authoring path can express Rune Duel by writing TypeScript behavior definitions, but a no-code behavior DSL/editor is still future work.
 
 ## North Star
 

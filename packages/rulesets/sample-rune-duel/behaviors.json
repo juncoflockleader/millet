@@ -1,0 +1,16 @@
+{
+  "id": "sample-rune-duel-behaviors",
+  "version": "0.1.0",
+  "behaviors": [
+    "rune_dart",
+    "echo_rune",
+    "chain_flash",
+    "focus_crystal",
+    "glyph_runner_attack",
+    "dueling_staff_attack",
+    "sigil_ping",
+    "rune_draw_or_fatigue",
+    "refresh_rune_mana",
+    "open_rune_main_prompt"
+  ]
+}

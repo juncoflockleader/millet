@@ -1,0 +1,116 @@
+{
+  "id": "sample-rune-duel-cards",
+  "version": "0.1.0",
+  "templates": [
+    {
+      "templateId": "rune_dart",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.rune_dart.name",
+      "descriptionKey": "card.rune_dart.description",
+      "tags": ["spell"],
+      "behaviorIds": ["rune_dart"],
+      "assetRefs": ["card-frame-default", "card-art-rune-dart"],
+      "manaCost": 1,
+      "display": {
+        "layout": "rune-spell",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
+    },
+    {
+      "templateId": "echo_rune",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.echo_rune.name",
+      "descriptionKey": "card.echo_rune.description",
+      "tags": ["spell"],
+      "behaviorIds": ["echo_rune"],
+      "assetRefs": ["card-frame-default", "card-art-echo-rune"],
+      "manaCost": 1,
+      "display": {
+        "layout": "rune-spell",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
+    },
+    {
+      "templateId": "chain_flash",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.chain_flash.name",
+      "descriptionKey": "card.chain_flash.description",
+      "tags": ["spell"],
+      "behaviorIds": ["chain_flash"],
+      "assetRefs": ["card-frame-default", "card-art-chain-flash"],
+      "manaCost": 3,
+      "display": {
+        "layout": "rune-spell",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
+    },
+    {
+      "templateId": "focus_crystal",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.focus_crystal.name",
+      "descriptionKey": "card.focus_crystal.description",
+      "tags": ["spell", "resource"],
+      "behaviorIds": ["focus_crystal"],
+      "assetRefs": ["card-frame-default", "card-art-focus-crystal"],
+      "manaCost": 0,
+      "display": {
+        "layout": "rune-spell",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
+    },
+    {
+      "templateId": "glyph_runner",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.glyph_runner.name",
+      "descriptionKey": "card.glyph_runner.description",
+      "tags": ["minion"],
+      "behaviorIds": ["glyph_runner_attack"],
+      "assetRefs": ["card-frame-default", "card-art-glyph-runner"],
+      "stats": {
+        "attack": 1,
+        "health": 2
+      },
+      "display": {
+        "layout": "rune-minion",
+        "properties": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Attack", "priority": 20 },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Health", "priority": 30 }
+        ]
+      }
+    },
+    {
+      "templateId": "dueling_staff",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.dueling_staff.name",
+      "descriptionKey": "card.dueling_staff.description",
+      "tags": ["weapon"],
+      "behaviorIds": ["dueling_staff_attack"],
+      "assetRefs": ["card-frame-default", "card-art-dueling-staff"],
+      "stats": {
+        "attack": 2,
+        "durability": 1
+      },
+      "display": {
+        "layout": "rune-weapon",
+        "properties": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Attack", "priority": 20 },
+          { "property": "durability", "source": "counter", "slot": "bottom-right", "icon": "durability", "label": "Durability", "priority": 30 }
+        ]
+      }
+    }
+  ]
+}

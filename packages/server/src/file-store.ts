@@ -3,23 +3,17 @@ import { join } from "node:path";
 import {
   createEmptyMatchState,
   reduceEvent,
-  type BehaviorLibrary,
   type MatchEvent,
   type MatchState
 } from "../../engine-core/src/index.ts";
 import { verifyMatchContentLock, type BundleStore } from "../../content-build/src/store.ts";
-import { sampleDuelBehaviors } from "../../rulesets/sample-duel/sample-duel.ts";
-import { sampleIdentityBehaviors } from "../../rulesets/sample-identity/sample-identity.ts";
 import type { StoredMatch } from "./match-service.ts";
+import { registeredRuleset } from "./ruleset-registry.ts";
 import type { ScheduledAction } from "./scheduler.ts";
 
 export interface FileMatchStoreOptions {
   bundleStore?: BundleStore;
   maxSnapshots?: number;
-}
-
-function behaviorLibraryFor(rulesetId: StoredMatch["rulesetId"]): BehaviorLibrary {
-  return rulesetId === "sample-duel" ? sampleDuelBehaviors : sampleIdentityBehaviors;
 }
 
 export class FileMatchStore {
@@ -69,7 +63,7 @@ export class FileMatchStore {
       state,
       events,
       snapshots,
-      behaviorLibrary: behaviorLibraryFor(metadata.rulesetId)
+      behaviorLibrary: registeredRuleset(metadata.rulesetId).behaviorLibrary
     };
   }
 

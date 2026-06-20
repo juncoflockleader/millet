@@ -5,7 +5,8 @@ let CARD_DEFS = {
     text: "Deal 3 damage to the enemy hero.",
     action: "Cast",
     art: "/assets/cards/firebolt.png",
-    display: [{ property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost" }]
+    display: [{ property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost" }],
+    behavior: { behaviorId: "firebolt", targetMode: "enemyHero", targetSelector: "target" }
   },
   nova: {
     name: "Nova",
@@ -13,7 +14,8 @@ let CARD_DEFS = {
     text: "Deal 2 damage to both heroes.",
     action: "Cast",
     art: "/assets/cards/nova.png",
-    display: [{ property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost" }]
+    display: [{ property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost" }],
+    behavior: { behaviorId: "nova", targetMode: "battlefield" }
   },
   coin: {
     name: "Coin",
@@ -21,7 +23,8 @@ let CARD_DEFS = {
     text: "Gain 1 mana this turn.",
     action: "Play",
     art: "/assets/cards/coin.png",
-    display: [{ property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost" }]
+    display: [{ property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost" }],
+    behavior: { behaviorId: "coin", targetMode: "selfHero" }
   },
   reward: {
     name: "Reward",
@@ -40,7 +43,8 @@ let CARD_DEFS = {
     display: [
       { property: "attack", source: "stats", slot: "bottom-left", icon: "sword", label: "Attack" },
       { property: "health", source: "stats", slot: "bottom-right", icon: "heart", label: "Health" }
-    ]
+    ],
+    behavior: { behaviorId: "minion_attack", targetMode: "enemyHero", targetSelector: "target" }
   },
   training_axe: {
     name: "Training Axe",
@@ -51,7 +55,8 @@ let CARD_DEFS = {
     display: [
       { property: "attack", source: "stats", slot: "bottom-left", icon: "sword", label: "Attack" },
       { property: "durability", source: "counter", slot: "bottom-right", icon: "durability", label: "Durability" }
-    ]
+    ],
+    behavior: { behaviorId: "weapon_attack", targetMode: "enemyHero", targetSelector: "target" }
   }
 };
 
@@ -398,6 +403,12 @@ const BOARD_LAYOUT_TEMPLATES = [
     label: "8-Seat Identity",
     url: "/content/rulesets/sample-identity/ui/sanguosha-eight-player-board-layout.json",
     layoutId: "sanguosha-eight-player-board"
+  },
+  {
+    id: "rune-2p",
+    label: "Rune Duel",
+    url: "/content/rulesets/sample-rune-duel/ui/rune-duel-board-layout.json",
+    layoutId: "rune-duel-default-board"
   }
 ];
 const LAYOUT_SNAP_SIZE = 8;
@@ -7360,7 +7371,10 @@ function presentationObjectToCardDef(entry) {
     artPositionX: entry.layout?.artPositionX,
     artPositionY: entry.layout?.artPositionY,
     artHeight: entry.layout?.artHeight,
-    display: entry.properties?.display ?? []
+    display: entry.properties?.display ?? [],
+    behavior: entry.behavior && typeof entry.behavior === "object" && !Array.isArray(entry.behavior)
+      ? cloneJson(entry.behavior)
+      : null
   };
 }
 
@@ -8580,60 +8594,18 @@ function actionForObject(playerId, object, context) {
     return null;
   }
 
-  if (context.zoneKind === "hand") {
-    if (object.templateId === "coin") {
-      return {
+  const info = CARD_DEFS[object.templateId] ?? {};
+  const behavior = behaviorForObject(info, context);
+  return behavior
+    ? {
         kind: "card",
         playerId,
-        behaviorId: "coin",
+        behaviorId: behavior.behaviorId,
         sourceObjectId: object.id,
-        targetMode: "selfHero"
-      };
-    }
-    if (object.templateId === "firebolt") {
-      return {
-        kind: "card",
-        playerId,
-        behaviorId: "firebolt",
-        sourceObjectId: object.id,
-        targetMode: "enemyHero",
-        targetSelector: "target"
-      };
-    }
-    if (object.templateId === "nova") {
-      return {
-        kind: "card",
-        playerId,
-        behaviorId: "nova",
-        sourceObjectId: object.id,
-        targetMode: "battlefield"
-      };
-    }
-  }
-
-  if (context.zoneKind === "board") {
-    return {
-      kind: "card",
-      playerId,
-      behaviorId: "minion_attack",
-      sourceObjectId: object.id,
-      targetMode: "enemyHero",
-      targetSelector: "target"
-    };
-  }
-
-  if (context.zoneKind === "weapon") {
-    return {
-      kind: "card",
-      playerId,
-      behaviorId: "weapon_attack",
-      sourceObjectId: object.id,
-      targetMode: "enemyHero",
-      targetSelector: "target"
-    };
-  }
-
-  return null;
+        targetMode: behavior.targetMode ?? "battlefield",
+        targetSelector: behavior.targetSelector
+      }
+    : null;
 }
 
 function canObjectAct(playerId, object, context) {
@@ -8641,19 +8613,37 @@ function canObjectAct(playerId, object, context) {
     return false;
   }
 
+  const info = CARD_DEFS[object.templateId] ?? {};
+  const behavior = behaviorForObject(info, context);
+  if (!behavior?.behaviorId) {
+    return false;
+  }
+
   if (context.zoneKind === "hand") {
-    return ["firebolt", "nova", "coin"].includes(object.templateId);
+    return (state?.players?.[playerId]?.resources?.mana?.current ?? 0) >= (info.manaCost ?? 0);
   }
 
   if (context.zoneKind === "board") {
-    return object.templateId === "loot_minion" && !object.exhausted;
+    return !object.exhausted;
   }
 
   if (context.zoneKind === "weapon") {
-    return object.templateId === "training_axe" && (object.counters?.durability ?? 0) > 0;
+    const durability = object.counters?.durability ?? info.stats?.durability;
+    return durability === undefined || durability > 0;
   }
 
   return false;
+}
+
+function behaviorForObject(info, context) {
+  const behavior = info?.behavior;
+  if (!behavior || typeof behavior.behaviorId !== "string" || behavior.behaviorId.length === 0) {
+    return null;
+  }
+  if (!["hand", "board", "weapon"].includes(context.zoneKind)) {
+    return null;
+  }
+  return behavior;
 }
 
 function canSelectedPlayerAct() {
@@ -8982,13 +8972,25 @@ function effectForCommand(command) {
   if (behaviorId === "firebolt" || behaviorId === "hero_focus") {
     return { ...EFFECTS.firebolt, anchor: opponentOf(command.playerId) };
   }
+  if (behaviorId === "rune_dart" || behaviorId === "echo_rune" || behaviorId === "sigil_ping") {
+    return { ...EFFECTS.firebolt, anchor: opponentOf(command.playerId) };
+  }
   if (behaviorId === "nova") {
+    return { ...EFFECTS.nova, anchor: "center" };
+  }
+  if (behaviorId === "chain_flash") {
     return { ...EFFECTS.nova, anchor: "center" };
   }
   if (behaviorId === "coin") {
     return { ...EFFECTS.coin, anchor: command.playerId };
   }
+  if (behaviorId === "focus_crystal") {
+    return { ...EFFECTS.coin, anchor: command.playerId };
+  }
   if (behaviorId === "minion_attack" || behaviorId === "weapon_attack") {
+    return { ...EFFECTS.attack, anchor: opponentOf(command.playerId) };
+  }
+  if (behaviorId === "glyph_runner_attack" || behaviorId === "dueling_staff_attack") {
     return { ...EFFECTS.attack, anchor: opponentOf(command.playerId) };
   }
 

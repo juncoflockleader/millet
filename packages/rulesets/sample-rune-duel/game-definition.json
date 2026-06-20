@@ -1,0 +1,55 @@
+{
+  "id": "sample-rune-duel",
+  "version": "0.1.0",
+  "metadata": {
+    "name": "Rune Duel",
+    "description": "A second 1v1 card game built from the existing Millet engine capabilities."
+  },
+  "playerConfig": {
+    "minPlayers": 2,
+    "maxPlayers": 2
+  },
+  "zones": [
+    { "id": "hand", "zoneType": "hand", "scope": "player" },
+    { "id": "deck", "zoneType": "deck", "scope": "player" },
+    { "id": "board", "zoneType": "board", "scope": "player", "capacity": 5 },
+    { "id": "weapon", "zoneType": "weapon", "scope": "player", "capacity": 1 },
+    { "id": "discard", "zoneType": "discard", "scope": "match" },
+    { "id": "graveyard", "zoneType": "graveyard", "scope": "match" }
+  ],
+  "resources": [
+    { "id": "health", "defaultMax": 12 },
+    { "id": "mana", "defaultMax": 4 },
+    { "id": "fatigue", "defaultCurrent": 0 }
+  ],
+  "turnGraph": [
+    "turn_start",
+    "resource_refresh",
+    "draw",
+    "main",
+    "turn_end"
+  ],
+  "cardCatalog": "card-catalog.json",
+  "ui": {
+    "defaultBoardLayout": "ui/rune-duel-board-layout.json",
+    "boardLayouts": ["ui/rune-duel-board-layout.json"],
+    "defaultPresentationCatalog": "ui/rune-duel-presentation.json",
+    "presentationCatalogs": ["ui/rune-duel-presentation.json"],
+    "defaultPreviewFixture": "ui/rune-duel-preview-fixtures.json",
+    "previewFixtures": ["ui/rune-duel-preview-fixtures.json"],
+    "defaultPlaytestScript": "ui/rune-duel-playtests.json",
+    "playtestScripts": ["ui/rune-duel-playtests.json"]
+  },
+  "behaviors": [
+    "rune_dart",
+    "echo_rune",
+    "chain_flash",
+    "focus_crystal",
+    "glyph_runner_attack",
+    "dueling_staff_attack",
+    "sigil_ping",
+    "rune_draw_or_fatigue",
+    "refresh_rune_mana",
+    "open_rune_main_prompt"
+  ]
+}

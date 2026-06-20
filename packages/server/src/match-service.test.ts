@@ -190,6 +190,33 @@ test("match service creates a fair demo duel and gates behavior commands by acti
   assert.equal(p2Turn.state.turn.phaseId, "main");
 });
 
+test("match service creates registered Rune Duel matches without sample-duel template ids", () => {
+  const service = new InMemoryMatchService();
+  const match = service.createMatch("sample-rune-duel", { demoDuel: true });
+
+  assert.equal(match.id, "rune_duel_match");
+  assert.equal(match.state.turn.activePlayerId, "p1");
+  assert.equal(match.state.turn.phaseId, "main");
+  assert.equal(match.state.players.p1?.resources.health.max, 12);
+  assert.ok(match.state.zones.zone_hand_p1?.objectIds.includes("card_rune_dart"));
+  assert.ok(match.state.zones.zone_hand_p2?.objectIds.includes("card_rune_dart_p2"));
+
+  const updated = service.submitCommand(match.id, {
+    id: "cmd_rune_dart",
+    matchId: match.id,
+    playerId: "p1",
+    type: "execute_behavior",
+    payload: {
+      behaviorId: "rune_dart",
+      sourceObjectId: "card_rune_dart",
+      selections: { target: ["p2"] }
+    }
+  });
+
+  assert.equal(updated.state.players.p1?.resources.mana.current, 3);
+  assert.equal(updated.state.players.p2?.resources.health.current, 10);
+});
+
 test("match service end_turn runs identity discard/finish and starts next identity turn", () => {
   const service = new InMemoryMatchService();
   const match = service.createMatch("sample-identity");

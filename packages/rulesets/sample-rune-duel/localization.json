@@ -1,0 +1,21 @@
+{
+  "id": "sample-rune-duel-en",
+  "version": "0.1.0",
+  "locale": "en",
+  "strings": {
+    "game.sample_rune_duel.name": "Rune Duel",
+    "card.rune_dart.name": "Rune Dart",
+    "card.rune_dart.description": "Deal 2 damage to the enemy hero.",
+    "card.echo_rune.name": "Echo Rune",
+    "card.echo_rune.description": "Deal 2 damage to the enemy hero.",
+    "card.chain_flash.name": "Chain Flash",
+    "card.chain_flash.description": "Deal 1 damage to both heroes.",
+    "card.focus_crystal.name": "Focus Crystal",
+    "card.focus_crystal.description": "Gain 1 mana this turn.",
+    "card.glyph_runner.name": "Glyph Runner",
+    "card.glyph_runner.description": "Attack for 1 damage.",
+    "card.dueling_staff.name": "Dueling Staff",
+    "card.dueling_staff.description": "Attack for 2 damage, then break.",
+    "prompt.rune_main": "Choose a Rune Duel action."
+  }
+}

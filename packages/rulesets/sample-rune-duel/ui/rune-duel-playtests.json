@@ -1,0 +1,77 @@
+{
+  "id": "rune-duel-playtests",
+  "version": "0.1.0",
+  "kind": "ui_playtest_script",
+  "metadata": {
+    "name": "Rune Duel Playtests",
+    "description": "Scripted local API smoke runs for the Rune Duel dogfood project."
+  },
+  "scripts": [
+    {
+      "id": "rune-dart-smoke",
+      "label": "Rune Dart Smoke",
+      "description": "Create a Rune Duel demo match, cast Rune Dart from Player 1 into Player 2, then verify health and replay output.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-rune-duel",
+        "demoDuel": true
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Rune Duel match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-rune-dart",
+          "label": "P1 casts Rune Dart at P2",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "rune_dart",
+              "sourceObjectId": "card_rune_dart",
+              "selections": {
+                "target": ["p2"]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 10",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 10
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 10
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1
+        }
+      }
+    }
+  ]
+}

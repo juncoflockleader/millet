@@ -5,10 +5,9 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "no
 import { extname, join, normalize, relative } from "node:path";
 import { generateCanonicalText, generateUxHints, validateBehaviorTemplates } from "../../content-build/src/text-sync.ts";
 import { CommandRejectedError, projectEvent, projectState } from "../../engine-core/src/index.ts";
-import { sampleDuelBehaviors } from "../../rulesets/sample-duel/sample-duel.ts";
-import { sampleIdentityBehaviors } from "../../rulesets/sample-identity/sample-identity.ts";
 import { attachMatchEventSseStream, SSE_HEADERS } from "./event-stream.ts";
 import { AuthorizationError, InMemoryMatchService, type UserSession } from "./match-service.ts";
+import { REGISTERED_RULESET_IDS, isRegisteredRulesetId, registeredRuleset, type RegisteredRulesetId } from "./ruleset-registry.ts";
 import { handleMilletWebSocketUpgrade } from "./websocket.ts";
 
 export interface MilletHttpServerOptions {
@@ -16,7 +15,7 @@ export interface MilletHttpServerOptions {
   rulesetRoot?: string;
 }
 
-const PROMOTABLE_RULESET_IDS = new Set(["sample-duel", "sample-identity"]);
+const PROMOTABLE_RULESET_IDS = new Set<string>(REGISTERED_RULESET_IDS);
 const PROMOTABLE_MEDIA_TYPES = new Map([
   ["image/png", "png"],
   ["image/jpeg", "jpg"],
@@ -116,8 +115,12 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
 
       if (req.method === "POST" && url.pathname === "/matches") {
-        const body = (await readJson(req)) as { rulesetId?: "sample-duel" | "sample-identity"; playerCount?: 6 | 8; demoDuel?: boolean };
-        const match = service.createMatch(body.rulesetId ?? "sample-duel", {
+        const body = (await readJson(req)) as { rulesetId?: string; playerCount?: 6 | 8; demoDuel?: boolean };
+        const rulesetId = body.rulesetId ?? "sample-duel";
+        if (!isRegisteredRulesetId(rulesetId)) {
+          throw new BadRequestError(`Unsupported ruleset ${rulesetId}.`);
+        }
+        const match = service.createMatch(rulesetId, {
           playerCount: body.playerCount,
           demoDuel: body.demoDuel
         });
@@ -223,7 +226,7 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
       if (req.method === "GET" && options.rulesetRoot && rulesetContent) {
         const rulesetId = decodeURIComponent(rulesetContent[1]!);
         const contentPath = decodeURIComponent(rulesetContent[2]!);
-        if (contentPath === "behavior-summaries.json" && PROMOTABLE_RULESET_IDS.has(rulesetId)) {
+        if (contentPath === "behavior-summaries.json" && isRegisteredRulesetId(rulesetId)) {
           send(res, 200, behaviorSummaryDocument(rulesetId));
           return;
         }
@@ -311,8 +314,8 @@ function readAuthoringStatus(): { gitAvailable: boolean; dirty: boolean; changed
   }
 }
 
-function behaviorSummaryDocument(rulesetId: string): Record<string, unknown> {
-  const library = rulesetId === "sample-identity" ? sampleIdentityBehaviors : sampleDuelBehaviors;
+function behaviorSummaryDocument(rulesetId: RegisteredRulesetId): Record<string, unknown> {
+  const library = registeredRuleset(rulesetId).behaviorLibrary;
   return {
     id: `${rulesetId}-behavior-summaries`,
     version: "0.1.0",

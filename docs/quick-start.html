@@ -382,7 +382,7 @@
       <header class="topbar">
         <div>
           <h1>Millet Quick Start</h1>
-          <p class="subtle">Run the engine, play the Ember Duel demo, send your first API command, and pick the next doc to read.</p>
+          <p class="subtle">Run the engine, play a Studio project, send your first API command, and pick the next doc to read.</p>
         </div>
         <nav class="top-actions" aria-label="Quick links">
           <a class="link-button" href="quick-start.md">Markdown Guide</a>
@@ -404,7 +404,7 @@
             <label class="check-item"><input type="checkbox" data-check="node"><span><strong>Node is ready</strong><br><span class="meta">Use Node.js 24 or newer.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="tests"><span><strong>Tests pass</strong><br><span class="meta">Run <code>npm test</code>.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="server"><span><strong>Demo server runs</strong><br><span class="meta">Run <code>npm run demo</code>.</span></span></label>
-            <label class="check-item"><input type="checkbox" data-check="match"><span><strong>Created a match</strong><br><span class="meta">Click <code>New Match</code> in Ember Duel.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="match"><span><strong>Created a match</strong><br><span class="meta">Click <code>New Match</code> in Ember Duel or Rune Duel.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="api"><span><strong>Sent an API command</strong><br><span class="meta">Use the command builder below.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="docs"><span><strong>Picked next doc</strong><br><span class="meta">Choose a role in the doc router.</span></span></label>
           </div>
@@ -428,7 +428,7 @@
               </article>
               <article class="step">
                 <strong>2. Start Studio</strong>
-                <p>Run the hotseat server and open Millet Studio. Ember Duel loads as the default playable project.</p>
+                <p>Run the hotseat server and open Millet Studio. Ember Duel loads by default; Rune Duel is available from the Project switcher or <code>?project=rune-duel</code>.</p>
               </article>
               <article class="step">
                 <strong>3. Take an action</strong>
@@ -436,7 +436,7 @@
               </article>
               <article class="step">
                 <strong>4. Inspect UI data</strong>
-                <p>Use the Project switcher to move between Studio projects. Open Preview for fixture states, Assets for manifest previews and import drafts, Cards for template drafts, behavior text sync, frame/art crop, property badges, equipment and minion validation, and catalog promotion, Presentation for hero drafts, ability badges, and validation, Layout for the viewport-fitted board editor with board templates, document fields, region and widget inspectors, diagnostics, snap, copy, flip, fill, and authored region guides, and Playtest for local draft status, authored ruleset script runs, replay payloads, and state diffs.</p>
+                <p>Use the Project switcher to move between Ember Duel, Rune Duel, and Sanguosha Identity. Open Preview for fixture states, Assets for manifest previews and import drafts, Cards for template drafts, behavior text sync, frame/art crop, property badges, equipment and minion validation, and catalog promotion, Presentation for hero drafts, ability badges, and validation, Layout for the viewport-fitted board editor with board templates, document fields, region and widget inspectors, diagnostics, snap, copy, flip, fill, and authored region guides, and Playtest for local draft status, authored ruleset script runs, replay payloads, and state diffs.</p>
               </article>
             </div>
 
@@ -665,6 +665,7 @@ node --experimental-strip-types scripts/millet.mjs diff-state /tmp/left.json /tm
         client: [
           ["Server API Guide", "server-api.md"],
           ["Basic 1v1 Demo", "basic-duel-demo.md"],
+          ["Rune Duel Dogfood", "rune-duel-dogfood.md"],
           ["Assets And UX Guide", "assets-and-ux.md"]
         ],
         server: [

@@ -12,5 +12,12 @@ globalThis.MILLET_STUDIO_PROJECTS = [
     rulesetId: "sample-identity",
     mode: "preview",
     summary: "6-8 player identity ruleset project with projection-safe board previews."
+  },
+  {
+    id: "rune-duel",
+    label: "Rune Duel",
+    rulesetId: "sample-rune-duel",
+    mode: "playable",
+    summary: "Second 1v1 dogfood project using generic presentation-driven card actions."
   }
 ];

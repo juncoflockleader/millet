@@ -14,13 +14,17 @@ import { sampleDuelBehaviors } from "../../rulesets/sample-duel/sample-duel.ts";
 test("validates and hashes sample ruleset bundles", () => {
   const duel = buildRulesetBundle("packages/rulesets/sample-duel");
   const identity = buildRulesetBundle("packages/rulesets/sample-identity");
+  const runeDuel = buildRulesetBundle("packages/rulesets/sample-rune-duel");
 
   assert.equal(duel.id, "sample-duel");
   assert.equal(identity.id, "sample-identity");
+  assert.equal(runeDuel.id, "sample-rune-duel");
   assert.ok(duel.contentHash.startsWith("sha256:"));
   assert.ok(identity.contentHash.startsWith("sha256:"));
+  assert.ok(runeDuel.contentHash.startsWith("sha256:"));
   assert.deepEqual(validateRulesetDir("packages/rulesets/sample-duel").filter((issue) => issue.severity === "error"), []);
   assert.deepEqual(validateRulesetDir("packages/rulesets/sample-identity").filter((issue) => issue.severity === "error"), []);
+  assert.deepEqual(validateRulesetDir("packages/rulesets/sample-rune-duel").filter((issue) => issue.severity === "error"), []);
 });
 
 test("ruleset validation rejects behavior manifest mismatches", () => {
