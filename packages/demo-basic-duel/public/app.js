@@ -542,6 +542,8 @@ let previewFixtureDocument = null;
 let previewPanelOpen = false;
 let activePreviewFixture = null;
 let previewMode = false;
+let playtestPanelOpen = false;
+let playtestRun = null;
 
 const dom = {
   matchLine: document.querySelector("#matchLine"),
@@ -562,6 +564,12 @@ const dom = {
   previewFixtureCount: document.querySelector("#previewFixtureCount"),
   previewFixtureList: document.querySelector("#previewFixtureList"),
   previewPanelStatus: document.querySelector("#previewPanelStatus"),
+  playtestPanel: document.querySelector("#playtestPanel"),
+  playtestPanelButton: document.querySelector("#playtestPanelButton"),
+  closePlaytestPanelButton: document.querySelector("#closePlaytestPanelButton"),
+  playtestProjectLine: document.querySelector("#playtestProjectLine"),
+  playtestPanelBody: document.querySelector("#playtestPanelBody"),
+  playtestPanelStatus: document.querySelector("#playtestPanelStatus"),
   assetLibrary: document.querySelector("#assetLibrary"),
   assetLibraryButton: document.querySelector("#assetLibraryButton"),
   newAssetButton: document.querySelector("#newAssetButton"),
@@ -663,6 +671,7 @@ installAssetLibrary();
 installCardStudio();
 installPresentationEditor();
 installPreviewPanel();
+installPlaytestPanel();
 applyLayout();
 annotateStaticLayoutRegions();
 installViewportFitter();
@@ -1137,6 +1146,20 @@ function installPreviewPanel() {
   });
 }
 
+function installPlaytestPanel() {
+  renderPlaytestPanel();
+
+  dom.playtestPanelButton?.addEventListener("click", () => togglePlaytestPanel());
+  dom.closePlaytestPanelButton?.addEventListener("click", () => togglePlaytestPanel(false));
+  dom.playtestPanelBody?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-playtest-action]");
+    if (!button || button.disabled) {
+      return;
+    }
+    handlePlaytestAction(button.dataset.playtestAction);
+  });
+}
+
 function togglePreviewPanel(open = !previewPanelOpen) {
   previewPanelOpen = open;
   if (previewPanelOpen) {
@@ -1152,12 +1175,41 @@ function togglePreviewPanel(open = !previewPanelOpen) {
     if (presentationEditorOpen) {
       togglePresentationEditor(false);
     }
+    if (playtestPanelOpen) {
+      togglePlaytestPanel(false);
+    }
   }
 
   hideTooltip();
   dom.previewPanel.hidden = !previewPanelOpen;
   dom.previewPanelButton?.classList.toggle("selected", previewPanelOpen || previewMode);
   renderPreviewPanel();
+}
+
+function togglePlaytestPanel(open = !playtestPanelOpen) {
+  playtestPanelOpen = open;
+  if (playtestPanelOpen) {
+    if (layoutEditorOpen) {
+      toggleLayoutEditor(false);
+    }
+    if (previewPanelOpen) {
+      togglePreviewPanel(false);
+    }
+    if (assetLibraryOpen) {
+      toggleAssetLibrary(false);
+    }
+    if (cardStudioOpen) {
+      toggleCardStudio(false);
+    }
+    if (presentationEditorOpen) {
+      togglePresentationEditor(false);
+    }
+  }
+
+  hideTooltip();
+  dom.playtestPanel.hidden = !playtestPanelOpen;
+  dom.playtestPanelButton?.classList.toggle("selected", playtestPanelOpen);
+  renderPlaytestPanel();
 }
 
 function toggleAssetLibrary(open = !assetLibraryOpen) {
@@ -1174,6 +1226,9 @@ function toggleAssetLibrary(open = !assetLibraryOpen) {
     }
     if (presentationEditorOpen) {
       togglePresentationEditor(false);
+    }
+    if (playtestPanelOpen) {
+      togglePlaytestPanel(false);
     }
   }
 
@@ -1202,6 +1257,9 @@ function toggleCardStudio(open = !cardStudioOpen) {
     if (presentationEditorOpen) {
       togglePresentationEditor(false);
     }
+    if (playtestPanelOpen) {
+      togglePlaytestPanel(false);
+    }
   }
 
   hideTooltip();
@@ -1227,6 +1285,9 @@ function togglePresentationEditor(open = !presentationEditorOpen) {
     }
     if (cardStudioOpen) {
       toggleCardStudio(false);
+    }
+    if (playtestPanelOpen) {
+      togglePlaytestPanel(false);
     }
   }
 
@@ -1654,6 +1715,261 @@ function renderPreviewPanel() {
     dom.previewFixtureList.innerHTML = fixtures.length > 0
       ? fixtures.map((fixture) => renderPreviewFixtureRow(fixture)).join("")
       : `<div class="asset-empty">No fixtures</div>`;
+  }
+}
+
+function renderPlaytestPanel() {
+  if (!dom.playtestPanelBody) {
+    return;
+  }
+
+  if (dom.playtestProjectLine) {
+    dom.playtestProjectLine.textContent = `${ACTIVE_PROJECT.label} · ${labelFromId(ACTIVE_PROJECT.mode)}`;
+  }
+
+  const draftStatuses = playtestDraftStatuses();
+  const canRunLiveSmoke = ACTIVE_PROJECT.mode === "playable" && RULESET_ID === "sample-duel";
+  dom.playtestPanelBody.innerHTML = `
+    <section class="playtest-card">
+      <div class="playtest-card-head">
+        <div>
+          <strong>${escapeHtml(ACTIVE_PROJECT.label)}</strong>
+          <span>${escapeHtml(ACTIVE_PROJECT.summary)}</span>
+        </div>
+        <span class="playtest-mode">${escapeHtml(labelFromId(ACTIVE_PROJECT.mode))}</span>
+      </div>
+      <div class="playtest-draft-grid">
+        ${draftStatuses.map((draft) => renderPlaytestDraftStatus(draft)).join("")}
+      </div>
+    </section>
+    <section class="playtest-card">
+      <div class="playtest-card-head">
+        <div>
+          <strong>${canRunLiveSmoke ? "Scripted Smoke" : "Fixture Preview"}</strong>
+          <span>${canRunLiveSmoke
+            ? "Create a demo match, cast Firebolt from P1 into P2, then inspect replay output."
+            : "This project currently uses authored fixtures for UI validation."}</span>
+        </div>
+      </div>
+      <div class="playtest-actions">
+        ${canRunLiveSmoke
+          ? `<button type="button" data-playtest-action="run-ember-duel-smoke" ${playtestRun?.status === "running" ? "disabled" : ""}>Run Firebolt Smoke</button>`
+          : `<button type="button" data-playtest-action="open-preview">Open Preview</button>`}
+        <button class="ghost" type="button" data-playtest-action="refresh-drafts">Refresh Drafts</button>
+      </div>
+    </section>
+    ${renderPlaytestRunResult()}
+  `;
+}
+
+function renderPlaytestDraftStatus(draft) {
+  return `
+    <div class="playtest-draft ${draft.active ? "active" : ""}">
+      <strong>${escapeHtml(draft.label)}</strong>
+      <span>${escapeHtml(draft.active ? "Draft active" : "Authored source")}</span>
+      <small>${escapeHtml(draft.detail)}</small>
+    </div>
+  `;
+}
+
+function renderPlaytestRunResult() {
+  if (!playtestRun) {
+    return `
+      <section class="playtest-card playtest-result idle">
+        <strong>No run yet</strong>
+        <span>Run a script to populate match, replay, and event summaries.</span>
+      </section>
+    `;
+  }
+  if (playtestRun.status === "running") {
+    return `
+      <section class="playtest-card playtest-result running">
+        <strong>Running script</strong>
+        <span>Creating match and replaying the scripted command through the local API.</span>
+      </section>
+    `;
+  }
+  if (playtestRun.status === "error") {
+    return `
+      <section class="playtest-card playtest-result error">
+        <strong>Run failed</strong>
+        <span>${escapeHtml(playtestRun.message)}</span>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="playtest-card playtest-result ok">
+      <div class="playtest-card-head">
+        <div>
+          <strong>${escapeHtml(playtestRun.label)}</strong>
+          <span>${escapeHtml(playtestRun.matchId)} · sequence ${escapeHtml(playtestRun.lastSequence)}</span>
+        </div>
+        <span class="playtest-mode">OK</span>
+      </div>
+      <div class="playtest-metrics">
+        <span><b>${escapeHtml(playtestRun.eventCount)}</b> events</span>
+        <span><b>${escapeHtml(playtestRun.p2Health)}</b> P2 health</span>
+        <span><b>${escapeHtml(playtestRun.damageEvents)}</b> damage</span>
+      </div>
+      <div class="playtest-event-list">
+        ${playtestRun.recentEvents.map((event) => `<span>${escapeHtml(event)}</span>`).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function playtestDraftStatuses() {
+  return [
+    { label: "Layout", key: LAYOUT_STORAGE_KEY, detail: layoutDraftDetail },
+    { label: "Cards", key: CARD_CATALOG_STORAGE_KEY, detail: cardCatalogDraftDetail },
+    { label: "Presentation", key: PRESENTATION_STORAGE_KEY, detail: presentationDraftDetail },
+    { label: "Assets", key: ASSET_STORAGE_KEY, detail: assetDraftDetail }
+  ].map((draft) => {
+    const value = readLocalStorageJson(draft.key);
+    return {
+      label: draft.label,
+      active: value !== null,
+      detail: value === null ? "No browser-local draft." : draft.detail(value)
+    };
+  });
+}
+
+function readLocalStorageJson(key) {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function layoutDraftDetail(value) {
+  const regions = Array.isArray(value?.regions) ? value.regions.length : 0;
+  const widgets = Array.isArray(value?.widgets) ? value.widgets.length : 0;
+  return `${regions} regions · ${widgets} widgets`;
+}
+
+function cardCatalogDraftDetail(value) {
+  const templates = Array.isArray(value?.templates) ? value.templates.length : 0;
+  return `${templates} templates`;
+}
+
+function presentationDraftDetail(value) {
+  const sections = ["cards", "heroes", "equipment", "minions"]
+    .map((section) => Array.isArray(value?.[section]) ? value[section].length : 0);
+  return `${sections.reduce((sum, count) => sum + count, 0)} presentation entries`;
+}
+
+function assetDraftDetail(value) {
+  const assets = Array.isArray(value?.assets) ? value.assets.length : 0;
+  return `${assets} asset entries`;
+}
+
+function handlePlaytestAction(action) {
+  if (action === "run-ember-duel-smoke") {
+    void runEmberDuelSmokePlaytest();
+  } else if (action === "open-preview") {
+    togglePlaytestPanel(false);
+    togglePreviewPanel(true);
+  } else if (action === "refresh-drafts") {
+    renderPlaytestPanel();
+    setPlaytestStatus("Draft status refreshed.");
+  }
+}
+
+async function runEmberDuelSmokePlaytest() {
+  playtestRun = { status: "running" };
+  renderPlaytestPanel();
+  setPlaytestStatus("Running Firebolt smoke through local match APIs.");
+
+  try {
+    const createResponse = await fetch("/matches", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rulesetId: RULESET_ID, demoDuel: true })
+    });
+    const created = await readJson(createResponse);
+    if (!createResponse.ok) {
+      throw new Error(created.message ?? created.error ?? "Could not create playtest match.");
+    }
+
+    const nextMatchId = created.matchId;
+    const command = {
+      id: `cmd_playtest_firebolt_${Date.now()}`,
+      matchId: nextMatchId,
+      playerId: "p1",
+      type: "execute_behavior",
+      payload: {
+        behaviorId: "firebolt",
+        sourceObjectId: "card_firebolt",
+        selections: { target: ["p2"] }
+      }
+    };
+    const commandResponse = await fetch(`/matches/${nextMatchId}/commands`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-millet-user-id": "u1"
+      },
+      body: JSON.stringify({ command })
+    });
+    const commandResult = await readJson(commandResponse);
+    if (!commandResponse.ok) {
+      throw new Error(commandResult.message ?? commandResult.error ?? "Scripted command failed.");
+    }
+
+    const [statePayload, replayPayload] = await Promise.all([
+      fetchJson(`/matches/${nextMatchId}/state?admin=true`, { "x-millet-admin": "true" }),
+      fetchJson(`/matches/${nextMatchId}/replay?admin=true`, { "x-millet-admin": "true" })
+    ]);
+
+    matchId = nextMatchId;
+    state = statePayload.state;
+    events = replayPayload.events ?? [];
+    previewMode = false;
+    activePreviewFixture = null;
+    selectedAction = null;
+    selectedPlayerId = state?.turn?.activePlayerId ?? "p1";
+    render();
+
+    playtestRun = summarizeSmokePlaytest(nextMatchId, statePayload.state, replayPayload.events ?? []);
+    setPlaytestStatus("Firebolt smoke completed. The live board now shows the generated match.");
+  } catch (error) {
+    playtestRun = {
+      status: "error",
+      message: error instanceof Error ? error.message : "Playtest failed."
+    };
+    setPlaytestStatus(playtestRun.message);
+  }
+
+  renderPlaytestPanel();
+}
+
+function summarizeSmokePlaytest(nextMatchId, playtestState, playtestEvents) {
+  const eventTypes = eventTypeCounts(playtestEvents);
+  return {
+    status: "ok",
+    label: "Firebolt Smoke",
+    matchId: nextMatchId,
+    lastSequence: playtestState?.lastSequence ?? 0,
+    eventCount: playtestEvents.length,
+    damageEvents: eventTypes.damage_dealt ?? 0,
+    p2Health: playtestState?.players?.p2?.resources?.health?.current ?? "-",
+    recentEvents: playtestEvents.slice(-5).map((event) => logLine(event))
+  };
+}
+
+function eventTypeCounts(playtestEvents) {
+  return playtestEvents.reduce((counts, event) => {
+    counts[event.type] = (counts[event.type] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function setPlaytestStatus(message) {
+  if (dom.playtestPanelStatus) {
+    dom.playtestPanelStatus.textContent = message;
   }
 }
 
@@ -6184,6 +6500,9 @@ function toggleLayoutEditor(open = !layoutEditorOpen) {
   if (layoutEditorOpen && presentationEditorOpen) {
     togglePresentationEditor(false);
   }
+  if (layoutEditorOpen && playtestPanelOpen) {
+    togglePlaytestPanel(false);
+  }
 
   selectedAction = null;
   hideTooltip();
@@ -7087,6 +7406,9 @@ function render() {
   bindTooltips();
   paintSelectionState();
   renderLog();
+  if (playtestPanelOpen) {
+    renderPlaytestPanel();
+  }
 }
 
 function shouldRenderAbsolutePreviewBoard() {
@@ -7938,7 +8260,7 @@ function bindActionButtons() {
   document.querySelectorAll(".card-action").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
       }
       const source = button.closest("[data-action-behavior]");
@@ -7952,7 +8274,7 @@ function bindActionButtons() {
   document.querySelectorAll(".hero-action").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
       }
       const source = button.closest("[data-action-behavior]");
@@ -7967,7 +8289,7 @@ function bindActionButtons() {
 function bindNaturalActions() {
   document.querySelectorAll("[data-action-behavior]").forEach((source) => {
     source.addEventListener("click", (event) => {
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
       }
       if (event.target.closest("button")) {
@@ -7988,7 +8310,7 @@ function bindNaturalActions() {
     });
 
     source.addEventListener("dragstart", (event) => {
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         event.preventDefault();
         return;
       }
@@ -8007,7 +8329,7 @@ function bindNaturalActions() {
 
   document.querySelectorAll("[data-target-player], [data-target-area]").forEach((target) => {
     target.addEventListener("click", (event) => {
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
       }
       if (!selectedAction || event.target.closest("button")) {
@@ -8017,7 +8339,7 @@ function bindNaturalActions() {
     });
 
     target.addEventListener("dragover", (event) => {
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
       }
       if (selectedAction && isValidTarget(selectedAction, target)) {
@@ -8026,7 +8348,7 @@ function bindNaturalActions() {
     });
 
     target.addEventListener("drop", (event) => {
-      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
       }
       if (!selectedAction) {

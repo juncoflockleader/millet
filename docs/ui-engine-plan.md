@@ -36,6 +36,7 @@ Current implemented slice:
 - Ember Duel `Presentation` panel lets designers inspect, locally edit, copy, apply, and reset presentation catalog entries while live previews re-render from the draft catalog.
 - Ember Duel `Presentation` panel now exposes a Hero Studio view for hero entries, with structured controls for hero name/title, art/frame/crop, layout variant, ability name/action/text, behavior id, target mode, mana cost, and live hero-card preview.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
+- Millet Studio `Playtest` panel reports active browser-local layout/card/presentation/asset drafts, runs an Ember Duel scripted Firebolt smoke through the live match APIs, updates the board to the generated match, and summarizes replay/debug output.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
 - Millet Studio can load `?project=sanguosha-identity` or legacy `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
 - Ember Duel identity preview seats and role summaries render projection-safe role badges for public roles, viewer-owned roles, and hidden roles without exposing redacted role refs or hidden object ids.
@@ -546,9 +547,10 @@ Validation should cover:
 
 - Combine authoring changes with fixture-driven previews, replay, legal target overlays, and state diff.
 - Acceptance: a designer can edit a card/minion/equipment behavior, run a scripted playtest, inspect events, and publish a validated draft bundle.
+- Current slice: Millet Studio `Playtest` panel surfaces local draft status for layout/cards/presentation/assets, runs a scripted Ember Duel Firebolt smoke through `/matches`, `/commands`, `/state`, and `/replay`, updates the live board to the generated match, and summarizes sequence, event count, damage events, Player 2 health, and recent replay lines. Preview-only projects route authors back to fixture previews until scripted identity playtests are added.
 
 ## Immediate Next Steps
 
-1. Add integrated playtest debug affordances that connect local authoring drafts to scripted fixture/playtest runs.
+1. Add authored scripted playtest definitions so projects can declare multiple repeatable smoke runs instead of relying on hardcoded Studio scripts.
 2. Add broader equipment authoring examples for armor, mount, and treasure slots once their rules modules are ready.
 3. Add broader minion authoring examples for token, summon, and companion variants once their rules modules are ready.

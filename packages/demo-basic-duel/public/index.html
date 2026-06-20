@@ -24,6 +24,7 @@
           <button id="cardStudioButton" class="ghost" type="button">Cards</button>
           <button id="presentationEditorButton" class="ghost" type="button">Presentation</button>
           <button id="layoutEditorButton" class="ghost" type="button">Layout</button>
+          <button id="playtestPanelButton" class="ghost" type="button">Playtest</button>
           <button id="newMatchButton" type="button">New Match</button>
           <button id="refreshButton" type="button" disabled>Refresh</button>
         </div>
@@ -130,6 +131,17 @@
         </div>
         <div class="preview-list" id="previewFixtureList" role="listbox" aria-label="Preview fixtures"></div>
         <p class="preview-panel-status" id="previewPanelStatus" aria-live="polite"></p>
+      </aside>
+      <aside class="playtest-panel" id="playtestPanel" aria-label="Integrated playtest and debug" hidden>
+        <div class="panel-head">
+          <div>
+            <strong>Playtest</strong>
+            <span id="playtestProjectLine">No project</span>
+          </div>
+          <button id="closePlaytestPanelButton" class="ghost icon-button" type="button" aria-label="Close playtest panel">X</button>
+        </div>
+        <div class="playtest-panel-body" id="playtestPanelBody"></div>
+        <p class="playtest-panel-status" id="playtestPanelStatus" aria-live="polite"></p>
       </aside>
       <aside class="asset-library" id="assetLibrary" aria-label="Asset library" hidden>
         <div class="panel-head">

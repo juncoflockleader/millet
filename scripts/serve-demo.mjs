@@ -9,5 +9,5 @@ const rulesetRoot = join(process.cwd(), "packages", "rulesets");
 const server = createMilletHttpServer(undefined, { staticRoot, rulesetRoot });
 
 server.listen(port, host, () => {
-  console.log(`Ember Duel demo: http://${host}:${port}/`);
+  console.log(`Millet Studio: http://${host}:${port}/`);
 });

@@ -29,6 +29,7 @@ http://127.0.0.1:8787/
 - `Cards` opens the ruleset card template studio for local template JSON drafts, type filters, dependency health, card preview, behavior/text sync, generated UX hint review, frame/art crop editing, property badge layout editing, equipment slot/stat/action editing with promotion checks, minion combat/token/trigger editing with promotion checks, and guarded catalog promotion.
 - `Presentation` opens a local presentation catalog entry editor. Selecting a hero entry shows structured Hero Studio controls for hero art/frame/crop, identity text, ability presentation, behavior id, target mode, mana cost, ability display badges, and validation status.
 - `Layout` opens the board layout editor for document fields, board templates, token controls, region presets, region fields, widget kind/component/config fields, snap-to-grid region drag/resize, region copy/flip/fill actions, local diagnostics, and full `BoardLayoutJson` import/export.
+- `Playtest` opens an integrated playtest/debug panel. For the playable `Ember Duel` project it reports active browser-local layout/card/presentation/asset drafts, creates a demo match, runs a scripted P1 Firebolt command through `/matches/:id/commands`, fetches admin state/replay, updates the board to the generated match, and summarizes sequence, event count, damage events, and Player 2 health.
 - `End Turn` submits the engine-level `end_turn` command.
 - The event log is loaded from `/matches/:id/replay?admin=true`.
 
