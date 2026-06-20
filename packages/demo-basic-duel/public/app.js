@@ -208,6 +208,18 @@ const CARD_TEMPLATE_REQUIRED_FIELDS = ["templateId", "version", "objectType", "n
 const CARD_TEMPLATE_OPTIONAL_FIELDS = ["descriptionKey", "tags", "behaviorIds", "assetRefs", "manaCost", "stats", "display", "metadata"];
 const CARD_TEMPLATE_ALLOWED_FIELDS = new Set([...CARD_TEMPLATE_REQUIRED_FIELDS, ...CARD_TEMPLATE_OPTIONAL_FIELDS]);
 const PROPERTY_DISPLAY_SOURCES = ["template", "stats", "counter", "resource", "metadata", "computed"];
+const DEFAULT_PROPERTY_DISPLAY_SLOTS = [
+  { id: "top-left", label: "Top Left Corner", objectTypes: ["card", "hero", "equipment", "minion", "identity"] },
+  { id: "top-right", label: "Top Right Corner", objectTypes: ["card", "hero", "equipment", "minion", "identity"] },
+  { id: "bottom-left", label: "Bottom Left Corner", objectTypes: ["equipment", "minion"] },
+  { id: "bottom-right", label: "Bottom Right Corner", objectTypes: ["equipment", "minion"] }
+];
+const DEFAULT_PROPERTY_DISPLAY_ICONS = [
+  { id: "mana", label: "Mana" },
+  { id: "sword", label: "Attack" },
+  { id: "heart", label: "Health" },
+  { id: "durability", label: "Durability" }
+];
 
 const ASSET_REQUIRED_FIELDS = ["assetId", "version", "kind", "contentHash", "sourceUri", "license", "owner"];
 const ASSET_OPTIONAL_FIELDS = [
@@ -679,11 +691,23 @@ function installCardStudio() {
     renderCardStudio();
   });
   dom.cardTemplateDetail?.addEventListener("click", (event) => {
+    const displayButton = event.target.closest("[data-card-display-action]");
+    if (displayButton) {
+      handleCardDisplayAction(displayButton.dataset.cardDisplayAction, displayButton);
+      return;
+    }
     const button = event.target.closest("[data-card-action]");
     if (!button) {
       return;
     }
     handleCardTemplateAction(button.dataset.cardAction);
+  });
+  dom.cardTemplateDetail?.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-card-display-field]");
+    if (!input) {
+      return;
+    }
+    updateCardDisplayDraftFromInput(input);
   });
 }
 
@@ -1191,6 +1215,7 @@ function renderCardTemplateDetail(template) {
       ${renderTemplateChips("Assets", template.assetRefs, (id) => assetAvailable(id))}
       ${renderCardTemplateValidation(validation)}
     </div>
+    ${renderCardDisplayEditor(template)}
     <div class="card-template-editor">
       <div class="asset-editor-head">
         <strong>Template JSON</strong>
@@ -1204,6 +1229,136 @@ function renderCardTemplateDetail(template) {
       </div>
     </div>
   `;
+}
+
+function renderCardDisplayEditor(template) {
+  const display = template.display && typeof template.display === "object" ? template.display : {};
+  const properties = Array.isArray(display.properties) ? display.properties : [];
+  const slots = propertyDisplaySlotsForTemplate(template);
+  const icons = propertyDisplayIcons();
+  return `
+    <div class="card-display-editor">
+      <div class="card-display-head">
+        <div>
+          <strong>Property Layout</strong>
+          <span>${properties.length} badge${properties.length === 1 ? "" : "s"}</span>
+        </div>
+        <button class="ghost" type="button" data-card-display-action="add">Add Badge</button>
+      </div>
+      <label class="card-display-layout-field">
+        <span>Layout id</span>
+        <input
+          type="text"
+          value="${escapeAttr(display.layout ?? "")}"
+          data-card-display-field="layout"
+          aria-label="Card display layout id"
+        >
+      </label>
+      <div class="card-display-rows">
+        ${properties.length > 0
+          ? properties.map((property, index) => renderCardDisplayRow(property, index, slots, icons)).join("")
+          : `<div class="card-display-empty">No property badges. Add one to define a self-contained card display.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderCardDisplayRow(property, index, slots, icons) {
+  return `
+    <div class="card-display-row" data-card-display-index="${index}">
+      <label>
+        <span>Property</span>
+        <input type="text" value="${escapeAttr(property.property ?? "")}" data-card-display-field="property" data-card-display-index="${index}">
+      </label>
+      <label>
+        <span>Source</span>
+        <select data-card-display-field="source" data-card-display-index="${index}">
+          ${renderSelectOptionsWithBlank(PROPERTY_DISPLAY_SOURCES, property.source ?? "", "Auto")}
+        </select>
+      </label>
+      <label>
+        <span>Slot</span>
+        <select data-card-display-field="slot" data-card-display-index="${index}">
+          ${renderDisplayRegistryOptions(slots, property.slot)}
+        </select>
+      </label>
+      <label>
+        <span>Icon</span>
+        <select data-card-display-field="icon" data-card-display-index="${index}">
+          ${renderDisplayRegistryOptions(icons, property.icon, "Auto")}
+        </select>
+      </label>
+      <label>
+        <span>Label</span>
+        <input type="text" value="${escapeAttr(property.label ?? "")}" data-card-display-field="label" data-card-display-index="${index}">
+      </label>
+      <label>
+        <span>Priority</span>
+        <input type="number" step="1" value="${escapeAttr(property.priority ?? "")}" data-card-display-field="priority" data-card-display-index="${index}">
+      </label>
+      <button class="ghost" type="button" data-card-display-action="remove" data-card-display-index="${index}">Remove</button>
+    </div>
+  `;
+}
+
+function renderSelectOptionsWithBlank(options, selectedValue, blankLabel) {
+  const values = selectedValue && !options.includes(selectedValue) ? [selectedValue, ...options] : options;
+  return [
+    `<option value="" ${selectedValue ? "" : "selected"}>${escapeHtml(blankLabel)}</option>`,
+    ...values.map((value) => `<option value="${escapeAttr(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(labelFromId(value))}</option>`)
+  ].join("");
+}
+
+function renderDisplayRegistryOptions(entries, selectedValue, blankLabel = "") {
+  const normalizedEntries = entries.some((entry) => entry.id === selectedValue) || !selectedValue
+    ? entries
+    : [{ id: selectedValue, label: labelFromId(selectedValue), objectTypes: [] }, ...entries];
+  const rendered = normalizedEntries.map((entry) => `
+    <option value="${escapeAttr(entry.id)}" ${entry.id === selectedValue ? "selected" : ""}>${escapeHtml(entry.label ?? labelFromId(entry.id))}</option>
+  `);
+  return blankLabel
+    ? [`<option value="" ${selectedValue ? "" : "selected"}>${escapeHtml(blankLabel)}</option>`, ...rendered].join("")
+    : rendered.join("");
+}
+
+function propertyDisplaySlotsForTemplate(template) {
+  return uniqueDisplayRegistryEntries([
+    ...DEFAULT_PROPERTY_DISPLAY_SLOTS,
+    ...displayRegistryEntries(boardLayoutDocument?.propertyDisplay?.slots)
+  ]).filter((slot) => {
+    const objectTypes = Array.isArray(slot.objectTypes) ? slot.objectTypes : [];
+    return objectTypes.length === 0 || objectTypes.includes(template.objectType);
+  });
+}
+
+function propertyDisplayIcons() {
+  return uniqueDisplayRegistryEntries([
+    ...DEFAULT_PROPERTY_DISPLAY_ICONS,
+    ...displayRegistryEntries(boardLayoutDocument?.propertyDisplay?.icons)
+  ]);
+}
+
+function displayRegistryEntries(entries) {
+  return Array.isArray(entries)
+    ? entries
+        .filter((entry) => entry && typeof entry === "object" && typeof entry.id === "string" && entry.id.length > 0)
+        .map((entry) => ({
+          id: entry.id,
+          label: typeof entry.label === "string" ? entry.label : labelFromId(entry.id),
+          objectTypes: Array.isArray(entry.objectTypes) ? entry.objectTypes.filter((value) => typeof value === "string") : []
+        }))
+    : [];
+}
+
+function uniqueDisplayRegistryEntries(entries) {
+  const seen = new Set();
+  return entries.filter((entry) => {
+    if (!entry?.id || seen.has(entry.id)) {
+      return false;
+    }
+    seen.add(entry.id);
+    return true;
+  });
 }
 
 function renderCardTemplatePreview(template) {
@@ -1248,12 +1403,30 @@ function cardTemplatePreviewInfo(template) {
     name: presentation?.name ?? cardTemplateDisplayName(template),
     manaCost: template.manaCost ?? presentation?.properties?.manaCost,
     stats: template.stats ?? presentation?.properties?.stats,
-    metadata: template.metadata,
+    metadata: { ...metadataFromTemplateTags(template), ...(template.metadata ?? {}) },
     text: presentation?.text ?? labelFromId(template.descriptionKey ?? template.nameKey),
     action: presentation?.action ?? labelFromId(template.behaviorIds?.[0] ?? "Preview"),
     art: presentation?.assets?.art,
     display
   };
+}
+
+function metadataFromTemplateTags(template) {
+  const tags = Array.isArray(template.tags) ? template.tags : [];
+  const metadata = {};
+  const suitTag = tags.find((tag) => tag.startsWith("suit_"));
+  const colorTag = tags.find((tag) => tag.startsWith("color_"));
+  const roleTag = tags.find((tag) => ["lord", "loyalist", "rebel", "spy"].includes(tag));
+  if (suitTag) {
+    metadata.suit = suitTag.slice("suit_".length);
+  }
+  if (colorTag) {
+    metadata.color = colorTag.slice("color_".length);
+  }
+  if (roleTag) {
+    metadata.role = roleTag;
+  }
+  return metadata;
 }
 
 function cardTemplateTooltip(info, template) {
@@ -1322,6 +1495,109 @@ function handleCardTemplateAction(action) {
   }
 }
 
+function handleCardDisplayAction(action, button) {
+  const selected = currentSelectedCardTemplate();
+  if (!selected) {
+    setCardStudioStatus("No card template selected.");
+    return;
+  }
+
+  const draftTemplate = cloneJson(selected);
+  const display = ensureCardTemplateDisplay(draftTemplate);
+  if (action === "add") {
+    display.properties.push(defaultCardDisplayProperty(draftTemplate));
+    applyCardTemplateValue(selected, draftTemplate, `Added display badge to ${draftTemplate.templateId}.`);
+    return;
+  }
+
+  if (action === "remove") {
+    const index = Number(button.dataset.cardDisplayIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= display.properties.length) {
+      setCardStudioStatus("No display badge selected.");
+      return;
+    }
+    display.properties.splice(index, 1);
+    applyCardTemplateValue(selected, draftTemplate, `Removed display badge from ${draftTemplate.templateId}.`);
+  }
+}
+
+function updateCardDisplayDraftFromInput(input) {
+  const selected = currentSelectedCardTemplate();
+  if (!selected) {
+    return;
+  }
+
+  const draftTemplate = cloneJson(selected);
+  const display = ensureCardTemplateDisplay(draftTemplate);
+  const field = input.dataset.cardDisplayField;
+  if (field === "layout") {
+    if (input.value.trim()) {
+      display.layout = input.value.trim();
+    } else {
+      delete display.layout;
+    }
+    applyCardTemplateValue(selected, draftTemplate, `Updated display layout for ${draftTemplate.templateId}.`);
+    return;
+  }
+
+  const index = Number(input.dataset.cardDisplayIndex);
+  if (!Number.isInteger(index) || index < 0 || index >= display.properties.length) {
+    return;
+  }
+  const property = display.properties[index];
+  if (field === "priority") {
+    if (input.value === "") {
+      delete property.priority;
+    } else {
+      property.priority = Number(input.value);
+    }
+  } else if (["source", "icon", "label"].includes(field) && input.value === "") {
+    delete property[field];
+  } else if (field) {
+    property[field] = input.value;
+  }
+
+  applyCardTemplateValue(selected, draftTemplate, `Updated display badge for ${draftTemplate.templateId}.`);
+}
+
+function ensureCardTemplateDisplay(template) {
+  if (!template.display || typeof template.display !== "object" || Array.isArray(template.display)) {
+    template.display = {};
+  }
+  if (!Array.isArray(template.display.properties)) {
+    template.display.properties = [];
+  }
+  return template.display;
+}
+
+function defaultCardDisplayProperty(template) {
+  const slots = propertyDisplaySlotsForTemplate(template);
+  const icons = propertyDisplayIcons();
+  if (template.manaCost !== undefined) {
+    return { property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost", priority: 10 };
+  }
+  if (template.stats?.attack !== undefined) {
+    return { property: "attack", source: "stats", slot: "bottom-left", icon: "sword", label: "Attack", priority: 20 };
+  }
+  if (template.stats?.health !== undefined) {
+    return { property: "health", source: "stats", slot: "bottom-right", icon: "heart", label: "Health", priority: 30 };
+  }
+  if (template.stats?.rank !== undefined) {
+    return { property: "rank", source: "stats", slot: "suit-point", icon: "rank", label: "Point", priority: 10 };
+  }
+  if (template.objectType === "identity") {
+    return { property: "role", source: "metadata", slot: "role-corner", icon: "faction", label: "Role", priority: 10 };
+  }
+  return {
+    property: "manaCost",
+    source: "template",
+    slot: slots[0]?.id ?? "top-left",
+    icon: icons[0]?.id ?? "mana",
+    label: "Property",
+    priority: 10
+  };
+}
+
 function applyCardTemplateDraft() {
   const selected = currentSelectedCardTemplate();
   const textarea = dom.cardTemplateDetail?.querySelector(".card-template-json");
@@ -1332,17 +1608,21 @@ function applyCardTemplateDraft() {
 
   try {
     const draftTemplate = JSON.parse(textarea.value);
-    validateCardTemplateDraft(selected, draftTemplate);
-    const nextCatalog = replaceCardTemplate(cardCatalog, selected.templateId, draftTemplate);
-    validateCardCatalogDraft(nextCatalog);
-    localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(nextCatalog));
-    cardCatalog = nextCatalog;
-    selectedCardTemplateId = draftTemplate.templateId;
-    renderCardStudio();
-    setCardStudioStatus(`Applied local card template draft for ${draftTemplate.templateId}.`);
+    applyCardTemplateValue(selected, draftTemplate, `Applied local card template draft for ${draftTemplate.templateId}.`);
   } catch (error) {
     setCardStudioStatus(error instanceof Error ? error.message : "Invalid card template JSON.");
   }
+}
+
+function applyCardTemplateValue(selected, draftTemplate, message) {
+  validateCardTemplateDraft(selected, draftTemplate);
+  const nextCatalog = replaceCardTemplate(cardCatalog, selected.templateId, draftTemplate);
+  validateCardCatalogDraft(nextCatalog);
+  localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(nextCatalog));
+  cardCatalog = nextCatalog;
+  selectedCardTemplateId = draftTemplate.templateId;
+  renderCardStudio();
+  setCardStudioStatus(message);
 }
 
 async function copyCardCatalogDraft() {
@@ -3064,6 +3344,7 @@ async function loadAuthoredBoardLayout() {
         ? `Loaded ruleset board layout with ${countLayoutRegions()} regions. Local edits are active.`
         : `Loaded ruleset board layout with ${countLayoutRegions()} regions.`
     );
+    renderCardStudio();
     render();
   } catch (error) {
     setLayoutStatus(error instanceof Error ? error.message : "Could not load ruleset board layout.");
@@ -4497,15 +4778,19 @@ function cardDetail(info, object) {
 
 function renderDisplayProperties(info, object, extraClass = "") {
   const properties = info.display ?? [];
+  const slotIndexes = {};
   return properties
     .map((property) => {
       const value = displayPropertyValue(info, object, property);
       if (value === undefined || value === null || value === "") {
         return "";
       }
+      const slotIndex = slotIndexes[property.slot] ?? 0;
+      slotIndexes[property.slot] = slotIndex + 1;
       return `
         <span
           class="property-badge slot-${escapeAttr(property.slot)} icon-${escapeAttr(property.icon ?? property.property)} ${escapeAttr(extraClass)}"
+          style="--badge-stack-index: ${slotIndex};"
           aria-label="${escapeAttr(`${property.label ?? property.property}: ${value}`)}"
           title="${escapeAttr(`${property.label ?? property.property}: ${value}`)}"
         >${escapeHtml(value)}</span>

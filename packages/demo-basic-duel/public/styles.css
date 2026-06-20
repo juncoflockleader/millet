@@ -992,6 +992,7 @@ p,
 .property-badge {
   position: absolute;
   z-index: 2;
+  --badge-stack-offset: calc(var(--badge-stack-index, 0) * 26px);
   width: 24px;
   height: 24px;
   display: grid;
@@ -1006,22 +1007,39 @@ p,
 }
 
 .slot-top-left {
-  top: 5px;
+  top: calc(5px + var(--badge-stack-offset));
   left: 5px;
 }
 
 .slot-top-right {
-  top: 5px;
+  top: calc(5px + var(--badge-stack-offset));
   right: 5px;
 }
 
 .slot-bottom-left {
-  bottom: 33px;
+  bottom: calc(33px + var(--badge-stack-offset));
   left: 5px;
 }
 
 .slot-bottom-right {
-  bottom: 33px;
+  bottom: calc(33px + var(--badge-stack-offset));
+  right: 5px;
+}
+
+.slot-suit-point,
+.slot-role-corner {
+  top: calc(5px + var(--badge-stack-offset));
+  width: auto;
+  min-width: 28px;
+  padding: 0 6px;
+  border-radius: 6px;
+}
+
+.slot-suit-point {
+  left: 5px;
+}
+
+.slot-role-corner {
   right: 5px;
 }
 
@@ -1050,6 +1068,15 @@ p,
 
 .icon-durability {
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #75644a;
+}
+
+.icon-suit,
+.icon-rank {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #3c5d70;
+}
+
+.icon-faction {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #6f455f;
 }
 
 .selected-source {
@@ -2201,6 +2228,102 @@ p,
   font-size: 12px;
 }
 
+.card-display-editor {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(255, 222, 171, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.card-display-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: start;
+}
+
+.card-display-head div {
+  display: grid;
+  gap: 2px;
+}
+
+.card-display-head strong {
+  font-size: 13px;
+}
+
+.card-display-head span,
+.card-display-layout-field span,
+.card-display-row span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.card-display-head button {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.card-display-layout-field {
+  display: grid;
+  gap: 4px;
+}
+
+.card-display-layout-field input,
+.card-display-row input,
+.card-display-row select {
+  min-width: 0;
+  min-height: 30px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.card-display-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.card-display-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 1fr) minmax(82px, 0.9fr) minmax(96px, 1fr);
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.card-display-row label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.card-display-row button {
+  min-height: 30px;
+  align-self: end;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.card-display-empty {
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 12px;
+  text-align: center;
+}
+
 .asset-preview {
   min-height: 118px;
   max-height: 210px;
@@ -2571,6 +2694,10 @@ p,
   }
 
   .card-template-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-display-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
