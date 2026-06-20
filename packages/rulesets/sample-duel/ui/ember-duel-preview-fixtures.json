@@ -220,6 +220,73 @@
         { "sequence": 30, "type": "card_moved", "payload": { "objectId": "preview_loot_minion_ready", "toZoneId": "zone_board_p1" } },
         { "sequence": 31, "type": "phase_entered", "payload": { "activePlayerId": "p1", "phaseId": "main" } }
       ]
+    },
+    {
+      "id": "prompt-response-preview",
+      "label": "Prompt Controls",
+      "description": "Open response prompt with responder progress, response behavior, and pass controls.",
+      "focus": "full-board",
+      "viewerId": "p1",
+      "selectedPlayerId": "p2",
+      "state": {
+        "status": "active",
+        "lastSequence": 42,
+        "turn": { "activePlayerId": "p1", "phaseId": "main" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 8, "max": 10 },
+              "mana": { "current": 1, "max": 6 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 3, "max": 10 },
+              "mana": { "current": 2, "max": 6 }
+            }
+          }
+        },
+        "zones": {
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": ["preview_firebolt_prompt"] },
+          "zone_board_p1": { "id": "zone_board_p1", "objectIds": [] },
+          "zone_weapon_p1": { "id": "zone_weapon_p1", "objectIds": [] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": ["preview_hidden_response_card"] },
+          "zone_board_p2": { "id": "zone_board_p2", "objectIds": [] },
+          "zone_weapon_p2": { "id": "zone_weapon_p2", "objectIds": [] }
+        },
+        "objects": {
+          "preview_firebolt_prompt": { "id": "preview_firebolt_prompt", "objectType": "card", "templateId": "firebolt", "ownerId": "p1" },
+          "preview_hidden_response_card": { "id": "preview_hidden_response_card", "objectType": "hidden" }
+        },
+        "prompts": {
+          "preview_prompt_response": {
+            "id": "preview_prompt_response",
+            "status": "open",
+            "responderIds": ["p2"],
+            "currentResponderId": "p2",
+            "answeredResponderIds": [],
+            "passedResponderIds": [],
+            "promptType": "respond_with_dodge",
+            "responseMode": "single",
+            "payload": {
+              "allowedResponseBehaviors": ["dodge_response"],
+              "onPassBehavior": "attack_damage_after_no_dodge",
+              "defaultTargetFromResponder": true
+            },
+            "responses": {},
+            "openedAtSequence": 42
+          }
+        },
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 41, "type": "resource_changed", "payload": { "playerId": "p2", "resource": "health", "current": 3 } },
+        { "sequence": 42, "type": "prompt_opened", "payload": { "promptId": "preview_prompt_response", "promptType": "respond_with_dodge" } }
+      ]
     }
   ]
 }

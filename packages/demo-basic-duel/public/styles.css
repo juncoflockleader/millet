@@ -818,7 +818,7 @@ p,
   min-width: 0;
   min-height: 26px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
 }
@@ -828,7 +828,8 @@ p,
 }
 
 .prompt-label,
-.prompt-chip {
+.prompt-chip,
+.prompt-responder {
   min-height: 24px;
   padding: 0 7px;
   display: inline-grid;
@@ -842,13 +843,60 @@ p,
   white-space: nowrap;
 }
 
-.prompt-summary strong {
+.prompt-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.prompt-main strong {
   min-width: 0;
   overflow: hidden;
   color: #dacbb9;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.prompt-meta {
+  color: #9ca48e;
+  font-size: 10px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.prompt-responders {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.prompt-responder {
+  min-height: 20px;
+  padding: 0 6px;
+  color: #cbbdaa;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.prompt-responder.current {
+  color: #15100b;
+  background: #69d39a;
+  border-color: rgba(105, 211, 154, 0.65);
+}
+
+.prompt-responder.answered {
+  color: #dffcea;
+  border-color: rgba(105, 211, 154, 0.42);
+}
+
+.prompt-responder.passed,
+.prompt-responder.muted {
+  color: #9ca48e;
 }
 
 .prompt-actions {
@@ -871,6 +919,11 @@ p,
 .prompt-chip.passive {
   color: #dffcea;
   background: rgba(255, 255, 255, 0.07);
+}
+
+.prompt-chip.ghost-chip {
+  color: #dffcea;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .battle-log {

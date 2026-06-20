@@ -23,7 +23,7 @@ Current implemented slice:
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
 - Ember Duel center-lane system regions now expose authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` widget surfaces.
-- Ember Duel `ActionPanel` renders live open prompt summaries and prompt action chips from projected match state.
+- Ember Duel `ActionPanel` renders live open prompt controls from projected match state, including prompt type, response mode, responder progress, pass controls, main-action chips, and allowed response behavior buttons.
 - Ember Duel runtime consumes the ruleset presentation catalog for card, hero, equipment, and minion art/text/action/property display definitions.
 - `sample-duel` asset manifest now covers the demo board background, card portraits, VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
 - Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, and shows manifest/presentation/effect usage references.
@@ -534,9 +534,8 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Extend runtime prompt rendering from summary chips to full prompt-specific controls, then add fixture/runtime preview coverage for the Sanguosha-like multi-player layout.
+1. Add fixture/runtime preview coverage for the Sanguosha-like multi-player layout.
 2. Add layout-specific property slot/icon registries so Sanguosha point/suit badges can be validated per card layout.
 3. Add authoring UI panels for editing asset and presentation catalog entries.
 4. Add import/write workflows for the asset library; the current panel is read-only.
-5. Add fixture-driven preview coverage for Sanguosha-like multi-player layouts.
-6. Add projection-safe hidden role/player widgets for identity-game previews.
+5. Add projection-safe hidden role/player widgets for identity-game previews.

@@ -31,7 +31,8 @@ Latest local result:
 - Runtime region smoke confirmed hero, battlefield, equipment, hand, action, and history surfaces carry authored region/widget metadata and battlefield drops bind to battlefield regions.
 - Runtime region renderer smoke confirmed player-side `HeroCard`, `CardRow`, `EquipmentSlot`, and `DeckStack` containers are selected through region/widget dispatch, center-lane system widgets expose `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` surfaces, and `ActionPanel` renders live open prompt summaries.
 - Asset library smoke confirmed the `Assets` panel opens, reads 12 assets from the ruleset manifest, filters VFX sheets, loads an image preview, reports usage labels, and closes when the `Layout` panel opens.
-- Preview fixture smoke confirmed the `Preview` panel opens, reads 4 ruleset fixtures, renders equipment/minion projected states, disables live refresh/end-turn controls, and reports read-only action attempts in the log.
+- Preview fixture smoke confirmed the `Preview` panel opens, reads 5 ruleset fixtures, renders equipment/minion/projected prompt states, disables live refresh/end-turn controls, and reports read-only action attempts in the log.
+- Prompt-control browser smoke confirmed live main-action `End Turn` advances from Player 1 to Player 2, and the read-only prompt fixture renders responder progress plus disabled response/pass controls with no page errors.
 - Hidden-object preview smoke confirmed projected hidden cards render as generic `Hidden Card` surfaces and do not leak the redacted template or object id in visible UI.
 - UI engine implementation has started with schema-backed board layout content, ruleset `ui.defaultBoardLayout` discovery, read-only ruleset content serving, and Ember Duel consuming ruleset layout tokens as authored defaults.
 - The next layout-editor slice added board layout region geometry bounds validation and a schema-backed region/widget guide overlay in Ember Duel.
@@ -43,6 +44,7 @@ Latest local result:
 - The next preview-fixture slice added schema-backed read-only UI preview states for card, hero, equipment, and minion rendering, plus demo consumption through the `Preview` panel.
 - The next hidden-rendering slice made UI preview fixtures projection-safe for hidden objects and added a generic hidden-card renderer for redacted projected cards.
 - The next identity-layout slice added a schema-backed Sanguosha-like eight-seat board layout for `sample-identity`, including seat ring, role summary, shared deck/discard, active hand, judgment, equipment, action/response, and history regions.
+- The next prompt-control slice upgraded `ActionPanel` from summary chips to prompt-specific controls for response mode, responder progress, pass answers, main actions, allowed response behaviors, and a read-only prompt preview fixture.
 
 CLI smoke checks:
 

@@ -285,8 +285,22 @@ dom.promptSummary?.addEventListener("click", (event) => {
   if (!button || button.disabled) {
     return;
   }
+
   if (button.dataset.promptAction === "end_turn") {
     submitCommand("end_turn", {});
+    return;
+  }
+
+  const promptId = button.dataset.promptId ?? dom.promptSummary?.dataset.promptId;
+  const responderId = button.dataset.promptResponder;
+  if (!promptId || !responderId) {
+    return;
+  }
+
+  if (button.dataset.promptAction === "answer_pass") {
+    answerPrompt(promptId, "pass", responderId);
+  } else if (button.dataset.promptAction === "response_behavior" && button.dataset.behaviorId) {
+    answerPrompt(promptId, { action: "execute_behavior", behaviorId: button.dataset.behaviorId }, responderId);
   }
 });
 dom.selectP1.addEventListener("click", () => selectPlayer("p1"));
@@ -395,6 +409,10 @@ async function submitCommand(type, payload, playerId = selectedPlayerId) {
     selectedPlayerId = activePlayerId;
     render();
   }
+}
+
+function answerPrompt(promptId, answer, responderId) {
+  return submitCommand("answer_prompt", { promptId, answer }, responderId);
 }
 
 function selectPlayer(playerId) {
@@ -1666,15 +1684,26 @@ function renderActionPanel() {
     return;
   }
 
-  const responder = prompt.currentResponderId ?? prompt.responderIds?.[0] ?? state.turn.activePlayerId;
+  const responder = currentPromptResponder(prompt);
   const actions = Array.isArray(prompt.payload?.actions) ? prompt.payload.actions : [];
+  const allowedResponseBehaviors = Array.isArray(prompt.payload?.allowedResponseBehaviors) ? prompt.payload.allowedResponseBehaviors : [];
+  const answeredCount = Array.isArray(prompt.answeredResponderIds) ? prompt.answeredResponderIds.length : 0;
+  const responderCount = Array.isArray(prompt.responderIds) ? prompt.responderIds.length : 0;
   dom.promptSummary.dataset.promptId = prompt.id;
   dom.promptSummary.dataset.promptType = prompt.promptType;
   dom.promptSummary.innerHTML = `
-    <span class="prompt-label">${escapeHtml(labelFromId(prompt.promptType))}</span>
-    <strong>${escapeHtml(PLAYER_NAMES[responder] ?? responder ?? "Responder")}</strong>
+    <div class="prompt-main">
+      <span class="prompt-label">${escapeHtml(labelFromId(prompt.promptType))}</span>
+      <strong>${escapeHtml(PLAYER_NAMES[responder] ?? responder ?? "Responder")}</strong>
+      <span class="prompt-meta">${escapeHtml(promptMeta(prompt, answeredCount, responderCount))}</span>
+    </div>
+    <div class="prompt-responders">
+      ${renderPromptResponders(prompt)}
+    </div>
     <div class="prompt-actions">
       ${actions.map((action) => renderPromptAction(action, responder)).join("")}
+      ${allowedResponseBehaviors.map((behaviorId) => renderPromptResponseBehavior(prompt, behaviorId, responder)).join("")}
+      ${renderPromptPassAction(prompt, responder, actions)}
     </div>
   `;
 }
@@ -1689,6 +1718,40 @@ function openPromptForActionPanel() {
     .sort((left, right) => Number(right.openedAtSequence ?? 0) - Number(left.openedAtSequence ?? 0))[0] ?? null;
 }
 
+function currentPromptResponder(prompt) {
+  return prompt.currentResponderId ?? prompt.responderIds?.find((responderId) => !prompt.answeredResponderIds?.includes(responderId)) ?? prompt.responderIds?.[0] ?? state?.turn?.activePlayerId;
+}
+
+function promptMeta(prompt, answeredCount, responderCount) {
+  const mode = labelFromId(prompt.responseMode ?? "single");
+  if (responderCount > 1) {
+    return `${mode} · ${answeredCount}/${responderCount}`;
+  }
+  return mode;
+}
+
+function renderPromptResponders(prompt) {
+  const responderIds = Array.isArray(prompt.responderIds) ? prompt.responderIds : [];
+  if (responderIds.length === 0) {
+    return `<span class="prompt-responder muted">No responders</span>`;
+  }
+
+  return responderIds.map((responderId) => {
+    const status = prompt.currentResponderId === responderId
+      ? "current"
+      : prompt.passedResponderIds?.includes(responderId)
+        ? "passed"
+        : prompt.answeredResponderIds?.includes(responderId)
+          ? "answered"
+          : "waiting";
+    return `
+      <span class="prompt-responder ${escapeAttr(status)}" data-responder-status="${escapeAttr(status)}">
+        ${escapeHtml(PLAYER_NAMES[responderId] ?? responderId)}
+      </span>
+    `;
+  }).join("");
+}
+
 function renderPromptAction(action, responder) {
   const label = labelFromId(action);
   if (action === "end_turn") {
@@ -1696,6 +1759,58 @@ function renderPromptAction(action, responder) {
     return `<button class="prompt-chip" type="button" data-prompt-action="end_turn" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
   }
   return `<span class="prompt-chip passive">${escapeHtml(label)}</span>`;
+}
+
+function renderPromptResponseBehavior(prompt, behaviorId, responder) {
+  if (typeof behaviorId !== "string" || behaviorId.length === 0) {
+    return "";
+  }
+
+  const disabled = !canAnswerPrompt(prompt, responder);
+  return `
+    <button
+      class="prompt-chip"
+      type="button"
+      data-prompt-action="response_behavior"
+      data-prompt-id="${escapeAttr(prompt.id)}"
+      data-prompt-responder="${escapeAttr(responder ?? "")}"
+      data-behavior-id="${escapeAttr(behaviorId)}"
+      ${disabled ? "disabled" : ""}
+    >${escapeHtml(labelFromId(behaviorId))}</button>
+  `;
+}
+
+function renderPromptPassAction(prompt, responder, actions) {
+  const hasExplicitEndTurn = Array.isArray(actions) && actions.includes("end_turn");
+  const hasResponseBehaviors = Array.isArray(prompt.payload?.allowedResponseBehaviors) && prompt.payload.allowedResponseBehaviors.length > 0;
+  const shouldShowPass = !hasExplicitEndTurn && (hasResponseBehaviors || prompt.promptType !== "main_action" || prompt.responseMode !== "single");
+  if (!shouldShowPass) {
+    return "";
+  }
+
+  const disabled = !canAnswerPrompt(prompt, responder);
+  return `
+    <button
+      class="prompt-chip ghost-chip"
+      type="button"
+      data-prompt-action="answer_pass"
+      data-prompt-id="${escapeAttr(prompt.id)}"
+      data-prompt-responder="${escapeAttr(responder ?? "")}"
+      ${disabled ? "disabled" : ""}
+    >Pass</button>
+  `;
+}
+
+function canAnswerPrompt(prompt, responder) {
+  if (previewMode || !state || !prompt || prompt.status !== "open" || !responder) {
+    return false;
+  }
+
+  if (!prompt.responderIds?.includes(responder)) {
+    return false;
+  }
+
+  return !prompt.currentResponderId || prompt.currentResponderId === responder;
 }
 
 function renderPlayer(playerId) {
