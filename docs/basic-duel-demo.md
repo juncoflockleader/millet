@@ -1,4 +1,4 @@
-# Basic 1v1 Demo: Ember Duel
+# Ember Duel Studio Project
 
 Status: playable prototype.
 
@@ -14,7 +14,7 @@ Then open:
 http://127.0.0.1:8787/
 ```
 
-The demo is a hotseat browser game backed by the real Millet server APIs and the `sample-duel` ruleset. It starts a fair demo variant with both heroes at 10 health, player 1 active, mirrored player 2 attack cards, and an open main action window.
+`Ember Duel` is the default playable project inside the Millet Studio browser shell. It is a hotseat browser game backed by the real Millet server APIs and the `sample-duel` ruleset. It starts a fair demo variant with both heroes at 10 health, player 1 active, mirrored player 2 attack cards, and an open main action window.
 
 ## Controls
 
@@ -24,7 +24,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Click a usable card, board object, or hero card to select it, then click or drag it onto a highlighted legal target.
 - Hero cards can be targets and action sources. In the demo, each hero has a `Focus Flame` ability that spends 2 mana to damage the enemy hero.
 - `Preview` opens ruleset UI preview fixtures for read-only card, hero, equipment, and minion states.
-- `?ruleset=sample-identity` loads the Sanguosha-like eight-player ruleset preview and renders authored absolute board regions for seats, projection-safe public/owned/hidden role badges, piles, hand, equipment, judgment, prompt, and history.
+- The `Project` switcher changes the active Studio project. `?project=sanguosha-identity` or the legacy `?ruleset=sample-identity` loads the Sanguosha-like eight-player preview project and renders authored absolute board regions for seats, projection-safe public/owned/hidden role badges, piles, hand, equipment, judgment, prompt, and history.
 - `Assets` opens the ruleset asset library, local manifest entry editor, browser-local image import draft flow, new asset draft creation, and demo-server asset promotion control.
 - `Cards` opens the ruleset card template studio for local template JSON drafts, type filters, dependency health, card preview, behavior/text sync, generated UX hint review, frame/art crop editing, property badge layout editing, equipment slot/stat/action editing with promotion checks, minion combat/token/trigger editing with promotion checks, and guarded catalog promotion.
 - `Presentation` opens a local presentation catalog entry editor. Selecting a hero entry shows structured Hero Studio controls for hero art/frame/crop, identity text, ability presentation, behavior id, target mode, mana cost, ability display badges, and validation status.

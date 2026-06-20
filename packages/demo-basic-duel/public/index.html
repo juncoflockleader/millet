@@ -3,17 +3,22 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ember Duel</title>
+    <title>Millet Studio</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div>
-          <h1>Ember Duel</h1>
-          <p id="matchLine">Start a match to play a basic 1v1 engine demo.</p>
+        <div class="studio-title">
+          <span class="studio-eyebrow">Millet Studio</span>
+          <h1 id="projectTitle">Project</h1>
+          <p id="matchLine">Select a project to edit or preview.</p>
         </div>
         <div class="topbar-actions">
+          <label class="project-switcher">
+            <span>Project</span>
+            <select id="projectSelect" aria-label="Studio project"></select>
+          </label>
           <button id="previewPanelButton" class="ghost" type="button">Preview</button>
           <button id="assetLibraryButton" class="ghost" type="button">Assets</button>
           <button id="cardStudioButton" class="ghost" type="button">Cards</button>

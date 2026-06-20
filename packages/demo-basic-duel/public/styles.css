@@ -89,6 +89,20 @@ h1 {
   line-height: 1.1;
 }
 
+.studio-title {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.studio-eyebrow {
+  color: var(--accent-strong);
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 p,
 .turn-copy span,
 .meta {
@@ -104,6 +118,35 @@ p,
 
 .topbar-actions button {
   padding: 0 11px;
+}
+
+.project-switcher {
+  min-height: 34px;
+  padding: 0 9px;
+  display: inline-grid;
+  grid-template-columns: auto minmax(130px, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.project-switcher span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.project-switcher select {
+  min-width: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 760;
 }
 
 .topbar-actions button.selected {

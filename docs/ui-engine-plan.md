@@ -20,6 +20,7 @@ Current implemented slice:
 - `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
 - ruleset validation for preview fixture refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown card templates, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - demo content endpoint at `/content/rulesets/:rulesetId/*.json`.
+- Millet Studio browser shell now treats `Ember Duel` and `Sanguosha Identity` as selectable projects. `Ember Duel` is the default playable project, while the Sanguosha-like identity ruleset is a preview project reachable through the project switcher, `?project=sanguosha-identity`, or legacy `?ruleset=sample-identity`.
 - Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports document id/version/name/logical-size/scaling edits, whole-board template application, token controls, region presets, region selection, region field editing, widget id/kind/component/config editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, local diagnostics, custom token preservation, and renders authored board regions/widgets as an overlay guide.
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
@@ -36,7 +37,7 @@ Current implemented slice:
 - Ember Duel `Presentation` panel now exposes a Hero Studio view for hero entries, with structured controls for hero name/title, art/frame/crop, layout variant, ability name/action/text, behavior id, target mode, mana cost, and live hero-card preview.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
-- Ember Duel can load `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
+- Millet Studio can load `?project=sanguosha-identity` or legacy `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
 - Ember Duel identity preview seats and role summaries render projection-safe role badges for public roles, viewer-owned roles, and hidden roles without exposing redacted role refs or hidden object ids.
 
 ## North Star

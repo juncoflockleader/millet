@@ -96,8 +96,26 @@ const EFFECTS = {
   attack: { sheet: "/assets/effects/attack-slash-sheet.png", className: "attack" }
 };
 
+const STUDIO_PROJECTS = [
+  {
+    id: "ember-duel",
+    label: "Ember Duel",
+    rulesetId: "sample-duel",
+    mode: "playable",
+    summary: "2P ruleset project with live hotseat demo and authoring tools."
+  },
+  {
+    id: "sanguosha-identity",
+    label: "Sanguosha Identity",
+    rulesetId: "sample-identity",
+    mode: "preview",
+    summary: "6-8 player identity ruleset project with projection-safe board previews."
+  }
+];
+
 const urlParams = new URLSearchParams(window.location.search);
-const RULESET_ID = urlParams.get("ruleset") === "sample-identity" ? "sample-identity" : "sample-duel";
+const ACTIVE_PROJECT = resolveStudioProject(urlParams);
+const RULESET_ID = ACTIVE_PROJECT.rulesetId;
 const RULESET_BASE_URL = `/content/rulesets/${RULESET_ID}`;
 
 let PLAY_AREA = {
@@ -527,6 +545,8 @@ let previewMode = false;
 
 const dom = {
   matchLine: document.querySelector("#matchLine"),
+  projectTitle: document.querySelector("#projectTitle"),
+  projectSelect: document.querySelector("#projectSelect"),
   playArea: document.querySelector("#playArea"),
   arenaScaleBox: document.querySelector("#arenaScaleBox"),
   arena: document.querySelector("#arena"),
@@ -608,6 +628,7 @@ const dom = {
   battleLog: document.querySelector("#battleLog")
 };
 
+installStudioShell();
 dom.newMatchButton.addEventListener("click", () => startMatch());
 dom.refreshButton.addEventListener("click", () => refresh());
 dom.endTurnButton.addEventListener("click", () => submitCommand("end_turn", {}));
@@ -654,9 +675,70 @@ loadAuthoredPresentationCatalog();
 loadAssetManifest();
 loadPreviewFixtures();
 
+function resolveStudioProject(params) {
+  const projectId = params.get("project");
+  const directProject = STUDIO_PROJECTS.find((project) => project.id === projectId);
+  if (directProject) {
+    return directProject;
+  }
+
+  const rulesetId = params.get("ruleset");
+  const rulesetProject = STUDIO_PROJECTS.find((project) => project.rulesetId === rulesetId);
+  return rulesetProject ?? STUDIO_PROJECTS[0];
+}
+
+function installStudioShell() {
+  document.title = `Millet Studio · ${ACTIVE_PROJECT.label}`;
+  document.body.dataset.projectId = ACTIVE_PROJECT.id;
+  document.body.dataset.rulesetId = ACTIVE_PROJECT.rulesetId;
+  document.body.dataset.projectMode = ACTIVE_PROJECT.mode;
+  if (dom.projectTitle) {
+    dom.projectTitle.textContent = ACTIVE_PROJECT.label;
+  }
+  if (dom.projectSelect) {
+    dom.projectSelect.innerHTML = STUDIO_PROJECTS.map((project) => `
+      <option value="${escapeAttr(project.id)}" ${project.id === ACTIVE_PROJECT.id ? "selected" : ""}>
+        ${escapeHtml(project.label)}
+      </option>
+    `).join("");
+    dom.projectSelect.value = ACTIVE_PROJECT.id;
+    dom.projectSelect.addEventListener("change", () => switchStudioProject(dom.projectSelect.value));
+  }
+  if (dom.newMatchButton) {
+    const playable = ACTIVE_PROJECT.mode === "playable";
+    dom.newMatchButton.disabled = !playable;
+    dom.newMatchButton.title = playable
+      ? "Start this project's live hotseat demo"
+      : "This project currently provides authored preview fixtures.";
+  }
+  if (dom.playArea) {
+    dom.playArea.setAttribute("aria-label", `Scaled ${ACTIVE_PROJECT.label} project play area`);
+  }
+  if (dom.arena) {
+    dom.arena.setAttribute("aria-label", `${ACTIVE_PROJECT.label} project board`);
+  }
+}
+
+function switchStudioProject(projectId) {
+  const project = STUDIO_PROJECTS.find((candidate) => candidate.id === projectId);
+  if (!project || project.id === ACTIVE_PROJECT.id) {
+    return;
+  }
+  const params = new URLSearchParams(window.location.search);
+  params.set("project", project.id);
+  params.delete("ruleset");
+  window.location.search = params.toString();
+}
+
+function studioIdleLine() {
+  return ACTIVE_PROJECT.mode === "playable"
+    ? `${ACTIVE_PROJECT.summary} Start a match, or edit the project's assets, cards, presentation, and layout.`
+    : `${ACTIVE_PROJECT.summary} Open Preview, Layout, Assets, Cards, or Presentation to edit project content.`;
+}
+
 async function startMatch() {
-  if (RULESET_ID !== "sample-duel") {
-    showError("Live demo matches are available for sample-duel. Use Preview for this ruleset.");
+  if (ACTIVE_PROJECT.mode !== "playable") {
+    showError(`${ACTIVE_PROJECT.label} is a preview project right now. Use Preview for fixture states.`);
     return;
   }
   if (previewPanelOpen) {
@@ -6963,9 +7045,7 @@ function render() {
   dom.arena?.classList.toggle("absolute-preview-active", absolutePreview);
 
   if (!state) {
-    dom.matchLine.textContent = RULESET_ID === "sample-duel"
-      ? "Start a match to play a basic 1v1 engine demo."
-      : "Open Preview to inspect this ruleset layout.";
+    dom.matchLine.textContent = studioIdleLine();
     dom.turnText.textContent = "No match";
     dom.statusText.textContent = "Waiting";
     dom.p1Panel.innerHTML = "";
