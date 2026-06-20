@@ -14,6 +14,20 @@ Base URL:
 http://127.0.0.1:8787
 ```
 
+## Ruleset Content
+
+```http
+GET /content/rulesets/:rulesetId/:path
+```
+
+Ruleset UI and content files are served read-only for the demo. Promotable sample rulesets also expose generated behavior summaries:
+
+```http
+GET /content/rulesets/:rulesetId/behavior-summaries.json
+```
+
+The response has `kind: "behavior_summaries"` and maps behavior ids to `canonicalText`, generated `uxHints`, and `templateIssues`. The browser card studio uses this to compare card presentation text against structured behavior definitions.
+
 ## Sessions And Authorization
 
 The prototype uses headers to model sessions:
@@ -179,4 +193,3 @@ The WebSocket upgrade path uses the same match and viewer model as HTTP. It supp
 ## Security Notes
 
 The prototype uses headers for local session modeling. A production deployment needs real authentication, server-managed sessions, and transport security.
-

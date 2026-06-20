@@ -111,6 +111,16 @@ test("HTTP server can serve the basic duel demo shell and assets", async () => {
   assert.equal(presentation.statusCode, 200);
   assert.equal(presentation.headers["content-type"], "application/json");
   assert.equal(presentation.json.kind, "presentation_catalog");
+
+  const behaviorSummaries = await dispatch(server, {
+    method: "GET",
+    url: "/content/rulesets/sample-duel/behavior-summaries.json"
+  });
+  assert.equal(behaviorSummaries.statusCode, 200);
+  assert.equal(behaviorSummaries.headers["content-type"], "application/json");
+  assert.equal(behaviorSummaries.json.kind, "behavior_summaries");
+  assert.equal(((behaviorSummaries.json.behaviors as Record<string, unknown>).firebolt as Record<string, unknown>).canonicalText, "Deal 3 damage. Move this card.");
+  assert.deepEqual((((behaviorSummaries.json.behaviors as Record<string, unknown>).firebolt as Record<string, unknown>).uxHints as Record<string, unknown>).effects, ["deal_damage", "move_card"]);
 });
 
 test("HTTP asset promotion writes imported draft files and updates manifest", async () => {

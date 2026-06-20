@@ -113,6 +113,7 @@ const PRESENTATION_STORAGE_KEY = `ember-duel.presentation.${RULESET_ID}.v1`;
 const ASSET_STORAGE_KEY = `ember-duel.assets.${RULESET_ID}.v1`;
 const GAME_DEFINITION_URL = `${RULESET_BASE_URL}/game-definition.json`;
 const LOCALIZATION_URL = `${RULESET_BASE_URL}/localization.json`;
+const BEHAVIOR_SUMMARY_URL = `${RULESET_BASE_URL}/behavior-summaries.json`;
 const FALLBACK_CARD_CATALOG_URL = "/content/rulesets/sample-duel/card-catalog.json";
 const ASSET_MANIFEST_URL = `${RULESET_BASE_URL}/asset-manifest.json`;
 const FALLBACK_BOARD_LAYOUT_URL = "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json";
@@ -287,6 +288,7 @@ let selectedLayoutRegionId = "";
 let layoutSnapEnabled = loadLayoutSnapEnabled();
 let gameDefinitionDocument = null;
 let localizationBundle = null;
+let behaviorSummaryDocument = null;
 let cardCatalog = null;
 let authoredCardCatalog = null;
 let cardStudioOpen = false;
@@ -428,6 +430,7 @@ installViewportFitter();
 render();
 loadAuthoredBoardLayout();
 loadLocalizationBundle();
+loadBehaviorSummaries();
 loadCardCatalog();
 loadAuthoredPresentationCatalog();
 loadAssetManifest();
@@ -691,6 +694,11 @@ function installCardStudio() {
     renderCardStudio();
   });
   dom.cardTemplateDetail?.addEventListener("click", (event) => {
+    const behaviorButton = event.target.closest("[data-card-behavior-action]");
+    if (behaviorButton) {
+      handleCardBehaviorAction(behaviorButton.dataset.cardBehaviorAction, behaviorButton);
+      return;
+    }
     const displayButton = event.target.closest("[data-card-display-action]");
     if (displayButton) {
       handleCardDisplayAction(displayButton.dataset.cardDisplayAction, displayButton);
@@ -1114,6 +1122,20 @@ async function loadLocalizationBundle() {
   }
 }
 
+async function loadBehaviorSummaries() {
+  try {
+    const response = await fetch(BEHAVIOR_SUMMARY_URL);
+    if (!response.ok) {
+      throw new Error(`Behavior summary request failed: ${response.status}`);
+    }
+    behaviorSummaryDocument = await response.json();
+    renderCardStudio();
+  } catch (error) {
+    behaviorSummaryDocument = null;
+    setCardStudioStatus(error instanceof Error ? error.message : "Could not load behavior summaries.");
+  }
+}
+
 async function resolveCardCatalogUrl() {
   try {
     const gameDefinition = await loadGameDefinitionDocument();
@@ -1215,6 +1237,7 @@ function renderCardTemplateDetail(template) {
       ${renderTemplateChips("Assets", template.assetRefs, (id) => assetAvailable(id))}
       ${renderCardTemplateValidation(validation)}
     </div>
+    ${renderCardBehaviorSync(template)}
     ${renderCardDisplayEditor(template)}
     <div class="card-template-editor">
       <div class="asset-editor-head">
@@ -1483,6 +1506,167 @@ function renderCardTemplateValidation(validation) {
         : `<span>Template shape and declared dependencies look valid.</span>`}
     </div>
   `;
+}
+
+function renderCardBehaviorSync(template) {
+  const behaviorIds = Array.isArray(template.behaviorIds) ? template.behaviorIds : [];
+  const presentation = presentationEntryForTemplate(template.templateId);
+  const currentText = presentation?.text ?? "";
+  const combinedText = combinedBehaviorCanonicalText(behaviorIds);
+  const status = behaviorTextSyncStatus(currentText, combinedText, behaviorIds);
+  return `
+    <div class="card-behavior-sync ${escapeAttr(status.kind)}">
+      <div class="card-behavior-head">
+        <div>
+          <strong>Behavior Sync</strong>
+          <span>${escapeHtml(status.label)}</span>
+        </div>
+        <button
+          class="ghost"
+          type="button"
+          data-card-behavior-action="use-generated-text"
+          ${presentation && combinedText ? "" : "disabled"}
+        >Use Generated Text</button>
+      </div>
+      <div class="card-behavior-text-grid">
+        <span>Card text</span>
+        <p>${currentText ? renderRulesText(currentText) : "No presentation text."}</p>
+        <span>Generated</span>
+        <p>${combinedText ? renderRulesText(combinedText) : "No behavior text available."}</p>
+      </div>
+      <div class="card-behavior-list">
+        ${behaviorIds.length > 0
+          ? behaviorIds.map((behaviorId) => renderBehaviorSyncRow(behaviorId)).join("")
+          : `<div class="card-display-empty">No behavior ids declared on this template.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderBehaviorSyncRow(behaviorId) {
+  const summary = behaviorSummary(behaviorId);
+  if (!summary) {
+    return `
+      <div class="behavior-sync-row missing">
+        <div class="behavior-sync-title">
+          <strong>${escapeHtml(behaviorId)}</strong>
+          <span>Missing behavior summary</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const uxHints = summary.uxHints && typeof summary.uxHints === "object" ? summary.uxHints : {};
+  const selectorEntries = Object.entries(uxHints.selectors ?? {});
+  const effects = Array.isArray(uxHints.effects) ? uxHints.effects : [];
+  const issues = Array.isArray(summary.templateIssues) ? summary.templateIssues : [];
+  return `
+    <div class="behavior-sync-row ${issues.length > 0 ? "warning" : "ok"}">
+      <div class="behavior-sync-title">
+        <strong>${escapeHtml(behaviorId)}</strong>
+        <span>${escapeHtml(labelFromId(summary.kind ?? "behavior"))} · ${escapeHtml(summary.version ?? "0.1.0")}</span>
+      </div>
+      <p>${renderRulesText(summary.canonicalText ?? "")}</p>
+      <div class="behavior-sync-chips">
+        ${effects.map((effect) => `<span>${escapeHtml(labelFromId(effect))}</span>`).join("")}
+        ${selectorEntries.map(([selectorId, selector]) => `<span>${escapeHtml(selectorSummary(selectorId, selector))}</span>`).join("")}
+      </div>
+      ${issues.length > 0 ? `
+        <div class="behavior-sync-issues">
+          ${issues.map((issue) => `<span class="${escapeAttr(issue.severity ?? "warning")}">${escapeHtml(issue.message ?? "Template issue")}</span>`).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function behaviorSummary(behaviorId) {
+  return behaviorSummaryDocument?.behaviors?.[behaviorId] ?? null;
+}
+
+function combinedBehaviorCanonicalText(behaviorIds) {
+  return behaviorIds
+    .map((behaviorId) => behaviorSummary(behaviorId)?.canonicalText)
+    .filter((text) => typeof text === "string" && text.length > 0)
+    .join(" ");
+}
+
+function behaviorTextSyncStatus(currentText, generatedText, behaviorIds) {
+  if (!Array.isArray(behaviorIds) || behaviorIds.length === 0) {
+    return { kind: "idle", label: "No behavior refs" };
+  }
+  if (!generatedText) {
+    return { kind: "missing", label: "Missing behavior summary" };
+  }
+  if (!currentText) {
+    return { kind: "warning", label: "No card text" };
+  }
+  return normalizeTextForSync(currentText) === normalizeTextForSync(generatedText)
+    ? { kind: "ok", label: "Text matches generated behavior text" }
+    : { kind: "warning", label: "Review card text against generated behavior text" };
+}
+
+function normalizeTextForSync(text) {
+  return String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function selectorSummary(selectorId, selector) {
+  const from = selector?.from ? labelFromId(selector.from) : "Target";
+  const count = selector?.count && typeof selector.count === "object" ? selector.count : {};
+  const min = count.min ?? "?";
+  const max = count.max ?? "?";
+  return `${selectorId}: ${from} ${min}-${max}`;
+}
+
+function handleCardBehaviorAction(action) {
+  if (action === "use-generated-text") {
+    applyGeneratedBehaviorTextToPresentation();
+  }
+}
+
+function applyGeneratedBehaviorTextToPresentation() {
+  const selected = currentSelectedCardTemplate();
+  if (!selected) {
+    setCardStudioStatus("No card template selected.");
+    return;
+  }
+
+  const generatedText = combinedBehaviorCanonicalText(selected.behaviorIds ?? []);
+  if (!generatedText) {
+    setCardStudioStatus("No generated behavior text available.");
+    return;
+  }
+
+  const selectedPresentation = presentationEntryForTemplate(selected.templateId);
+  if (!selectedPresentation || !presentationCatalog) {
+    setCardStudioStatus("No presentation entry available for generated text.");
+    return;
+  }
+
+  const nextCatalog = cloneJson(presentationCatalog);
+  const entry = findPresentationEntryRecord(nextCatalog, selected.templateId);
+  if (!entry) {
+    setCardStudioStatus("Could not find presentation entry for generated text.");
+    return;
+  }
+
+  entry.text = generatedText;
+  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  applyPresentationCatalog(nextCatalog);
+  renderPresentationEditor();
+  renderCardStudio();
+  render();
+  setCardStudioStatus(`Applied generated behavior text to ${selected.templateId} presentation draft.`);
+}
+
+function findPresentationEntryRecord(catalog, templateId) {
+  for (const section of ["cards", "equipment", "minions"]) {
+    const entry = (catalog?.[section] ?? []).find((candidate) => candidate?.templateId === templateId);
+    if (entry) {
+      return entry;
+    }
+  }
+  return null;
 }
 
 function handleCardTemplateAction(action) {

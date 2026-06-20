@@ -3,7 +3,10 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, normalize, relative } from "node:path";
+import { generateCanonicalText, generateUxHints, validateBehaviorTemplates } from "../../content-build/src/text-sync.ts";
 import { CommandRejectedError, projectEvent, projectState } from "../../engine-core/src/index.ts";
+import { sampleDuelBehaviors } from "../../rulesets/sample-duel/sample-duel.ts";
+import { sampleIdentityBehaviors } from "../../rulesets/sample-identity/sample-identity.ts";
 import { attachMatchEventSseStream, SSE_HEADERS } from "./event-stream.ts";
 import { AuthorizationError, InMemoryMatchService, type UserSession } from "./match-service.ts";
 import { handleMilletWebSocketUpgrade } from "./websocket.ts";
@@ -220,6 +223,10 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
       if (req.method === "GET" && options.rulesetRoot && rulesetContent) {
         const rulesetId = decodeURIComponent(rulesetContent[1]!);
         const contentPath = decodeURIComponent(rulesetContent[2]!);
+        if (contentPath === "behavior-summaries.json" && PROMOTABLE_RULESET_IDS.has(rulesetId)) {
+          send(res, 200, behaviorSummaryDocument(rulesetId));
+          return;
+        }
         if (tryServeRulesetContent(options.rulesetRoot, rulesetId, contentPath, res)) {
           return;
         }
@@ -291,6 +298,31 @@ function readAuthoringStatus(): { gitAvailable: boolean; dirty: boolean; changed
       message: error instanceof Error ? error.message : String(error)
     };
   }
+}
+
+function behaviorSummaryDocument(rulesetId: string): Record<string, unknown> {
+  const library = rulesetId === "sample-identity" ? sampleIdentityBehaviors : sampleDuelBehaviors;
+  return {
+    id: `${rulesetId}-behavior-summaries`,
+    version: "0.1.0",
+    kind: "behavior_summaries",
+    behaviors: Object.fromEntries(
+      Object.entries(library.behaviors).map(([behaviorId, behavior]) => [
+        behaviorId,
+        {
+          behaviorId,
+          version: behavior.version,
+          kind: behavior.kind,
+          canonicalText: generateCanonicalText(behavior),
+          uxHints: generateUxHints(behavior),
+          templateIssues: validateBehaviorTemplates(behavior).map((issue) => ({
+            severity: issue.severity,
+            message: issue.message
+          }))
+        }
+      ])
+    )
+  };
 }
 
 function promoteAssetDraft(

@@ -78,8 +78,11 @@ Selecting a template shows:
 - template metadata such as id, version, object type, name key, cost, stats, and display layout
 - tags, behavior ids, and asset refs as compact dependency chips
 - validation status for template shape plus missing declared behaviors or assets
+- behavior sync status comparing current presentation text against generated behavior text, selector/effect UX hints, and behavior template issues
 - a property layout editor for the selected template's `display.layout` and `display.properties`
 - the selected template JSON editor
+
+The demo server exposes `/content/rulesets/:rulesetId/behavior-summaries.json` for promotable sample rulesets. Each behavior summary includes canonical generated text, generated UX hints, and prompt/log template validation issues. The card studio consumes that document so structured behavior, human card text, and targeting UX can be reviewed together. When a matching presentation entry exists, designers can apply generated text into the browser-local presentation draft without editing the source catalog.
 
 The property layout editor reads the active board layout's `propertyDisplay.slots` and `propertyDisplay.icons` registry, filtered by the selected template object type. Designers can add/remove badges and edit property, source, slot, icon, label, and priority fields without hand-editing JSON. The preview updates from the same template data. Multiple badges in one slot stack visibly, which supports Sanguosha-like `suit-point` displays where suit and rank share the same corner.
 
