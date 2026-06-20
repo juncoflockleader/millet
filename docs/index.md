@@ -15,6 +15,7 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | Debug and verify behavior | [Testing And Debugging Guide](testing-and-debugging.md) |
 | Play the current 1v1 prototype | [Basic 1v1 Demo: Ember Duel](basic-duel-demo.md) |
 | Inspect the second 1v1 dogfood game | [Rune Duel Dogfood](rune-duel-dogfood.md) |
+| Evaluate the current engine | [Engine Evaluation](engine-evaluation.md) |
 
 ## Product And Planning Docs
 
@@ -25,13 +26,14 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | [Milestones](milestones.md) | Delivery plan from M0 through M8. |
 | [UI Engine Plan](ui-engine-plan.md) | UI plan for assets, board layouts, cards, heroes, equipment, minions, widgets, and authoring/runtime surfaces. |
 | [Implementation Status](implementation-status.md) | Current verification, completed slices, and remaining hardening backlog. |
+| [Engine Evaluation](engine-evaluation.md) | Dogfood verdict, filled gaps, remaining risks, and recommended next milestone. |
 
 ## Current Working Model
 
 The current repo is a tested prototype slice, not a packaged SDK. It includes:
 
 - `sample-duel`, a Hearthstone-like two-player ruleset used by the `Ember Duel` browser demo.
-- `sample-rune-duel`, a second playable two-player ruleset used to dogfood project separation and presentation-driven card actions.
+- `sample-rune-duel`, a second playable two-player ruleset used to dogfood project separation, presentation-driven card actions, layout data-source binding, and behavior-driven VFX hints.
 - `sample-identity`, a six/eight-player hidden-role ruleset inspired by identity and rescue/response games.
 - A deterministic event reducer, behavior executor, phase graph runner, visibility projection layer, HTTP/SSE/WebSocket server, content validation, and replay/debug tools.
 

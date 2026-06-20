@@ -369,6 +369,7 @@ test("ruleset validation rejects invalid UI board layouts", () => {
           id: "off_board",
           kind: "custom",
           ownerScope: "shared",
+          dataSource: { zoneType: "void" },
           geometry: { x: 1110, y: 610, width: 30, height: 20 },
           widgetId: "duplicate-widget"
         }
@@ -394,6 +395,7 @@ test("ruleset validation rejects invalid UI board layouts", () => {
   assert.ok(errors.some((issue) => issue.message.includes("Duplicate board layout widget id duplicate-widget")));
   assert.ok(errors.some((issue) => issue.message.includes("references unknown widget missing-widget")));
   assert.ok(errors.some((issue) => issue.message.includes("Region off_board geometry exceeds logical board bounds 1120x620")));
+  assert.ok(errors.some((issue) => issue.message.includes("Region off_board dataSource references unknown zone type void")));
   assert.ok(errors.some((issue) => issue.message.includes("Board layout ui/missing-layout.json is missing")));
   assert.ok(errors.some((issue) => issue.message.includes("Duplicate property display slot id badge")));
   assert.ok(errors.some((issue) => issue.message.includes("Duplicate property display icon id gem")));
@@ -726,6 +728,7 @@ test("generates behavior text and UX hints from behavior definitions", () => {
   assert.equal(generateCanonicalText(behavior), "Deal 3 damage. Move this card.");
   assert.deepEqual(validateBehaviorText(behavior), []);
   assert.deepEqual(generateUxHints(behavior).effects, ["deal_damage", "move_card"]);
+  assert.deepEqual(generateUxHints(behavior).visualEffect, { key: "firebolt", anchor: "opponent" });
 });
 
 test("validates prompt and log templates against projection-safe placeholders", () => {

@@ -45,6 +45,8 @@ Current implemented slice:
 - `game-definition.json` `ui.defaultPlaytestScript` discovery and ruleset validation for missing script refs, duplicate script ids, duplicate step ids, live-match create-match steps, and unknown behavior refs.
 - Millet Studio `Playtest` panel reports active browser-local layout/card/presentation/asset drafts, lists authored ruleset playtest scripts, runs the selected script through the live match APIs, updates the board to the generated match, summarizes replay/debug output, renders a state diff from baseline to final state, and exposes selectable replay event payloads.
 - Runtime card actions now prefer presentation-catalog behavior metadata instead of hardcoded Ember Duel template ids, which lets Rune Duel use different template ids while keeping the same engine primitives.
+- Board layout regions can declare `dataSource.zoneType`, and the 1v1 runtime resolves player-owned hand, battlefield, weapon, and deck surfaces through that metadata instead of assuming only conventional zone ids. Ruleset validation rejects region data sources that reference unknown zone types.
+- Runtime visual effects now prefer behavior UX `visualEffect` hints and fall back to generic generated UX effects, so new rulesets can choose animation intent without adding behavior-id switches to the client.
 - The server now uses a small ruleset registry for setup events, behavior libraries, phase graphs, resolution modes, and content directories, which lets new playable rulesets register without editing multiple hardcoded unions.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
 - Millet Studio can load `?project=sanguosha-identity` or legacy `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
@@ -52,9 +54,9 @@ Current implemented slice:
 
 Dogfood gaps exposed by `sample-rune-duel`:
 
-- The 1v1 runtime still assumes zone id conventions like `zone_hand_p1`, `zone_board_p1`, and `zone_weapon_p1`; board regions should eventually declare data-source bindings.
-- VFX selection is still keyed by behavior id groups in the demo runtime; presentation or behavior UX hints should eventually declare visual effect intent.
-- The current behavior authoring path can express Rune Duel by writing TypeScript behavior definitions, but a no-code behavior DSL/editor is still future work.
+- Closed: 1v1 runtime zone lookup now uses board region `dataSource.zoneType` with validation against ruleset zone types.
+- Closed: VFX selection now reads behavior UX `visualEffect` hints before generic effect inference.
+- Still open: the current behavior authoring path can express Rune Duel by writing TypeScript behavior definitions, but a no-code behavior DSL/editor is still future work.
 
 ## North Star
 

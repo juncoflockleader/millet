@@ -173,6 +173,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "rune_dart",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "firebolt", anchor: "opponent" } },
       costs: [{ type: "spend_resource", player: "controller", resource: "mana", amount: 1 }],
       selectors: enemyHeroSelector,
       effects: [
@@ -184,6 +185,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "echo_rune",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "firebolt", anchor: "opponent" } },
       costs: [{ type: "spend_resource", player: "controller", resource: "mana", amount: 1 }],
       selectors: enemyHeroSelector,
       effects: [
@@ -195,6 +197,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "chain_flash",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "nova", anchor: "center" } },
       costs: [{ type: "spend_resource", player: "controller", resource: "mana", amount: 3 }],
       effects: [
         { type: "deal_damage_all_players", amount: 1, damageType: "chain" },
@@ -205,6 +208,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "focus_crystal",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "coin", anchor: "player" } },
       effects: [
         { type: "adjust_resource", player: "controller", resource: "mana", delta: 1, reason: "focus_crystal" },
         { type: "move_card", object: "self", toZoneId: "zone_discard" }
@@ -214,6 +218,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "glyph_runner_attack",
       version: "0.1.0",
       kind: "ability",
+      ux: { visualEffect: { key: "attack", anchor: "opponent" } },
       conditions: [{ type: "object_ready", object: "self" }],
       selectors: enemyHeroSelector,
       effects: [
@@ -225,6 +230,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "dueling_staff_attack",
       version: "0.1.0",
       kind: "ability",
+      ux: { visualEffect: { key: "attack", anchor: "opponent" } },
       selectors: enemyHeroSelector,
       effects: [
         { type: "deal_damage", to: { selector: "target" }, amount: 2, damageType: "weapon" },
@@ -236,6 +242,7 @@ export const sampleRuneDuelBehaviors: BehaviorLibrary = {
       id: "sigil_ping",
       version: "0.1.0",
       kind: "ability",
+      ux: { visualEffect: { key: "firebolt", anchor: "opponent" } },
       costs: [{ type: "spend_resource", player: "command_player", resource: "mana", amount: 2 }],
       selectors: enemyHeroSelector,
       effects: [{ type: "deal_damage", to: { selector: "target" }, amount: 1, damageType: "hero_power" }]

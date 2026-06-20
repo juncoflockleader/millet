@@ -110,4 +110,4 @@ The same generated assets are declared in `packages/rulesets/sample-duel/asset-m
 ## Known Follow-Up
 
 - The UI uses an admin projection because it is hotseat and intentionally shows both hands on one screen. A networked two-browser version should use player projections and hide the opponent hand.
-- The current 1v1 runtime still assumes conventional zone ids such as `zone_hand_p1`, `zone_board_p1`, and `zone_weapon_p1`. Rune Duel follows that convention; a later UI-engine slice should bind runtime widgets to zones through layout/data-source metadata.
+- The current 1v1 runtime now resolves core hand, battlefield, weapon, and deck widgets through board region `dataSource.zoneType`. Future generic widgets still need richer data-source selectors for non-zone collections, filtered object sets, and table summaries.

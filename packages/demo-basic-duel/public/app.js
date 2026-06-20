@@ -228,6 +228,7 @@ const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "match", "spectato
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "opponent", "admin"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
 const REGION_OVERFLOW_OPTIONS = ["fan", "scroll", "stack", "compact", "hidden"];
+const REGION_ZONE_TYPE_OPTIONS = ["", "hand", "deck", "board", "weapon", "equipment", "discard", "graveyard", "judgment", "roles", "custom"];
 const WIDGET_KIND_OPTIONS = ["card_collection", "single_object", "system", "debug", "custom"];
 const WIDGET_COMPONENT_OPTIONS = [
   "HeroCard",
@@ -5879,6 +5880,12 @@ function renderLayoutRegionDetail() {
         ${renderSelectOptions(REGION_OVERFLOW_OPTIONS, region.overflow || "compact")}
       </select>
     </label>
+    <label class="layout-field">
+      <span>Zone Type</span>
+      <select data-layout-region-field="dataSource.zoneType">
+        ${renderSelectOptions(REGION_ZONE_TYPE_OPTIONS, metadata.dataSource.zoneType || "")}
+      </select>
+    </label>
     <label class="layout-field checkbox-field">
       <input type="checkbox" ${metadata.targetable ? "checked" : ""} data-layout-region-field="targetable">
       <span>Targetable</span>
@@ -6225,6 +6232,15 @@ function updateSelectedLayoutRegionFromInput(input) {
     const geometry = currentLayoutRegionGeometry(region) ?? { x: 0, y: 0, width: 120, height: 90 };
     geometry[geometryField] = Number(input.value);
     setLayoutRegionGeometry(region, geometry);
+  } else if (field === "dataSource.zoneType") {
+    if (input.value) {
+      region.dataSource = {
+        ...(region.dataSource && typeof region.dataSource === "object" && !Array.isArray(region.dataSource) ? region.dataSource : {}),
+        zoneType: input.value
+      };
+    } else {
+      delete region.dataSource;
+    }
   } else if (field) {
     region[field] = input.value;
   }
@@ -6578,6 +6594,7 @@ function layoutRegionMetadata(regionId) {
   const component = typeof widget?.component === "string" ? widget.component : componentForRegionKind(kind);
   const widgetKind = typeof widget?.kind === "string" ? widget.kind : "";
   const widgetConfig = widget?.config && typeof widget.config === "object" && !Array.isArray(widget.config) ? widget.config : {};
+  const dataSource = normalizeRegionDataSource(region, kind);
 
   return {
     id: regionId,
@@ -6591,8 +6608,32 @@ function layoutRegionMetadata(regionId) {
     targetable: typeof region?.targetable === "boolean" ? region.targetable : inferred.targetable,
     dropBehavior: typeof region?.dropBehavior === "string" ? region.dropBehavior : "",
     accepts: Array.isArray(region?.accepts) ? region.accepts.filter((value) => typeof value === "string") : [],
-    visibleTo: typeof region?.visibleTo === "string" ? region.visibleTo : ""
+    visibleTo: typeof region?.visibleTo === "string" ? region.visibleTo : "",
+    dataSource
   };
+}
+
+function normalizeRegionDataSource(region, kind) {
+  const source = region?.dataSource && typeof region.dataSource === "object" && !Array.isArray(region.dataSource)
+    ? region.dataSource
+    : {};
+  const zoneType = typeof source.zoneType === "string" && source.zoneType
+    ? source.zoneType
+    : defaultZoneTypeForRegionKind(kind);
+  return zoneType ? { zoneType } : {};
+}
+
+function defaultZoneTypeForRegionKind(kind) {
+  if (kind === "battlefield") {
+    return "board";
+  }
+  if (["hand", "deck", "discard", "graveyard", "judgment"].includes(kind)) {
+    return kind;
+  }
+  if (kind === "equipment") {
+    return "equipment";
+  }
+  return "";
 }
 
 function componentForRegionKind(kind) {
@@ -6723,6 +6764,9 @@ function layoutRegionAttributeMap(regionId, options = {}) {
   if (metadata.visibleTo) {
     map["data-region-visible-to"] = metadata.visibleTo;
   }
+  if (metadata.dataSource.zoneType) {
+    map["data-region-zone-type"] = metadata.dataSource.zoneType;
+  }
   if (options.targetArea) {
     map["data-target-area"] = options.targetArea;
   }
@@ -6755,6 +6799,7 @@ function applyLayoutRegionAttrs(element, regionId, options = {}) {
     "data-drop-behavior",
     "data-region-accepts",
     "data-region-visible-to",
+    "data-region-zone-type",
     "data-target-area"
   ];
   managedAttrs.forEach((name) => element.removeAttribute(name));
@@ -8281,8 +8326,9 @@ function customWidgetText(region) {
 
 function renderBattlefieldRegion(playerId, region) {
   const opponentId = opponentOf(playerId);
+  const zoneId = zoneIdForRegion(playerId, region, "board");
   const zones = [
-    { id: `zone_board_${playerId}`, label: "Board", behaviorId: "minion_attack", zoneKind: "board", target: opponentId }
+    { id: zoneId, label: "Board", zoneKind: "board", target: opponentId }
   ];
 
   return `
@@ -8297,7 +8343,8 @@ function renderBattlefieldRegion(playerId, region) {
 
 function renderEquipmentRegion(playerId, region) {
   const opponentId = opponentOf(playerId);
-  const objects = cardsInZone(`zone_weapon_${playerId}`);
+  const zoneId = zoneIdForRegion(playerId, region, "weapon");
+  const objects = cardsInZone(zoneId);
 
   return `
     <div class="equipment-slot" ${layoutRegionAttrs(region.id)}>
@@ -8311,21 +8358,25 @@ function renderEquipmentRegion(playerId, region) {
 
 function renderHandRegion(playerId, region) {
   const opponentId = opponentOf(playerId);
+  const zoneId = zoneIdForRegion(playerId, region, "hand");
 
   return `
     <div class="zone" ${layoutRegionAttrs(region.id)}>
       <h3>${escapeHtml(region.label)}</h3>
       <div class="cards">
-        ${cardsInZone(`zone_hand_${playerId}`).map((object) => renderCard(playerId, object, { zoneKind: "hand", target: opponentId })).join("") || `<div class="empty">No cards</div>`}
+        ${cardsInZone(zoneId).map((object) => renderCard(playerId, object, { zoneKind: "hand", target: opponentId })).join("") || `<div class="empty">No cards</div>`}
       </div>
     </div>
   `;
 }
 
 function renderDeckRegion(playerId, region) {
-  const deckCount = cardsInZone(`zone_deck_${playerId}`).length;
-  const discardCount = cardsInZone("zone_discard").filter((object) => object.ownerId === playerId).length;
-  const graveyardCount = cardsInZone("zone_graveyard").filter((object) => object.ownerId === playerId).length;
+  const deckZoneId = zoneIdForRegion(playerId, region, "deck");
+  const discardZoneId = matchZoneIdForType("discard", "zone_discard");
+  const graveyardZoneId = matchZoneIdForType("graveyard", "zone_graveyard");
+  const deckCount = cardsInZone(deckZoneId).length;
+  const discardCount = cardsInZone(discardZoneId).filter((object) => object.ownerId === playerId).length;
+  const graveyardCount = cardsInZone(graveyardZoneId).filter((object) => object.ownerId === playerId).length;
   const fatigue = state.players[playerId]?.resources?.fatigue?.current ?? 0;
   const tooltip = [
     `${region.label}: ${deckCount} cards remain`,
@@ -8969,32 +9020,61 @@ function effectForCommand(command) {
   }
 
   const behaviorId = command.payload?.behaviorId;
-  if (behaviorId === "firebolt" || behaviorId === "hero_focus") {
-    return { ...EFFECTS.firebolt, anchor: opponentOf(command.playerId) };
-  }
-  if (behaviorId === "rune_dart" || behaviorId === "echo_rune" || behaviorId === "sigil_ping") {
-    return { ...EFFECTS.firebolt, anchor: opponentOf(command.playerId) };
-  }
-  if (behaviorId === "nova") {
-    return { ...EFFECTS.nova, anchor: "center" };
-  }
-  if (behaviorId === "chain_flash") {
-    return { ...EFFECTS.nova, anchor: "center" };
-  }
-  if (behaviorId === "coin") {
-    return { ...EFFECTS.coin, anchor: command.playerId };
-  }
-  if (behaviorId === "focus_crystal") {
-    return { ...EFFECTS.coin, anchor: command.playerId };
-  }
-  if (behaviorId === "minion_attack" || behaviorId === "weapon_attack") {
-    return { ...EFFECTS.attack, anchor: opponentOf(command.playerId) };
-  }
-  if (behaviorId === "glyph_runner_attack" || behaviorId === "dueling_staff_attack") {
-    return { ...EFFECTS.attack, anchor: opponentOf(command.playerId) };
+  const summary = behaviorSummary(behaviorId);
+  const effect = visualEffectFromUx(summary?.uxHints?.visualEffect, command);
+  if (effect) {
+    return effect;
   }
 
+  return inferredVisualEffectFromUxHints(summary?.uxHints, command);
+}
+
+function visualEffectFromUx(visualEffect, command) {
+  if (!visualEffect || typeof visualEffect !== "object" || Array.isArray(visualEffect)) {
+    return null;
+  }
+  const key = typeof visualEffect.key === "string" ? visualEffect.key : "";
+  const effect = EFFECTS[key];
+  if (!effect) {
+    return null;
+  }
+  return {
+    ...effect,
+    anchor: visualEffectAnchor(command, visualEffect.anchor)
+  };
+}
+
+function inferredVisualEffectFromUxHints(uxHints, command) {
+  const effects = Array.isArray(uxHints?.effects) ? uxHints.effects : [];
+  if (effects.includes("deal_damage_all_players")) {
+    return { ...EFFECTS.nova, anchor: "center" };
+  }
+  if (effects.includes("set_object_exhausted") || effects.includes("adjust_object_counter") || effects.includes("destroy_object_if_counter_at_most")) {
+    return { ...EFFECTS.attack, anchor: opponentOf(command.playerId) };
+  }
+  if (effects.includes("adjust_resource")) {
+    return { ...EFFECTS.coin, anchor: command.playerId };
+  }
+  if (effects.includes("deal_damage")) {
+    return { ...EFFECTS.firebolt, anchor: opponentOf(command.playerId) };
+  }
   return null;
+}
+
+function visualEffectAnchor(command, anchor) {
+  if (anchor === "center") {
+    return "center";
+  }
+  if (anchor === "player") {
+    return command.playerId;
+  }
+  if (anchor === "opponent") {
+    return opponentOf(command.playerId);
+  }
+  if (typeof anchor === "string" && anchor.length > 0) {
+    return anchor;
+  }
+  return command.playerId;
 }
 
 function renderOutcome(playerId) {
@@ -9032,6 +9112,41 @@ function logLine(event) {
     return `#${event.sequence} ${payload.activePlayerId} entered ${payload.phaseId}`;
   }
   return `#${event.sequence} ${event.type}`;
+}
+
+function zoneIdForRegion(playerId, region, fallbackZoneType) {
+  const zoneType = region?.dataSource?.zoneType || fallbackZoneType;
+  const ownerId = ownerIdForRegionDataSource(playerId, region);
+  const match = Object.values(state?.zones ?? {})
+    .filter((zone) => zone?.zoneType === zoneType && zone.ownerId === ownerId)
+    .sort((left, right) => left.id.localeCompare(right.id))[0];
+  if (match) {
+    return match.id;
+  }
+  return conventionalZoneId(playerId, zoneType);
+}
+
+function ownerIdForRegionDataSource(playerId, region) {
+  if (!region || region.ownerScope === "match" || region.ownerScope === "shared") {
+    return undefined;
+  }
+  return playerId;
+}
+
+function conventionalZoneId(playerId, zoneType) {
+  if (!zoneType) {
+    return "";
+  }
+  if (zoneType === "discard" || zoneType === "graveyard" || zoneType === "roles") {
+    return `zone_${zoneType}`;
+  }
+  return `zone_${zoneType}_${playerId}`;
+}
+
+function matchZoneIdForType(zoneType, fallbackZoneId) {
+  return Object.values(state?.zones ?? {})
+    .filter((zone) => zone?.zoneType === zoneType && !zone.ownerId)
+    .sort((left, right) => left.id.localeCompare(right.id))[0]?.id ?? fallbackZoneId;
 }
 
 function cardsInZone(zoneId) {

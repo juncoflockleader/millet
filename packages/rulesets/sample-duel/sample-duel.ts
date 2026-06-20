@@ -163,6 +163,7 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
       id: "firebolt",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "firebolt", anchor: "opponent" } },
       costs: [{ type: "spend_resource", player: "controller", resource: "mana", amount: 2 }],
       selectors: [
         {
@@ -181,6 +182,7 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
       id: "minion_attack",
       version: "0.1.0",
       kind: "ability",
+      ux: { visualEffect: { key: "attack", anchor: "opponent" } },
       conditions: [{ type: "object_ready", object: "self" }],
       selectors: [
         {
@@ -199,6 +201,7 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
       id: "weapon_attack",
       version: "0.1.0",
       kind: "ability",
+      ux: { visualEffect: { key: "attack", anchor: "opponent" } },
       selectors: [
         {
           id: "target",
@@ -217,6 +220,7 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
       id: "hero_focus",
       version: "0.1.0",
       kind: "ability",
+      ux: { visualEffect: { key: "firebolt", anchor: "opponent" } },
       costs: [{ type: "spend_resource", player: "command_player", resource: "mana", amount: 2 }],
       selectors: [
         {
@@ -232,6 +236,7 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
       id: "nova",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "nova", anchor: "center" } },
       costs: [{ type: "spend_resource", player: "controller", resource: "mana", amount: 2 }],
       effects: [
         { type: "deal_damage_all_players", amount: 2 },
@@ -242,6 +247,7 @@ export const sampleDuelBehaviors: BehaviorLibrary = {
       id: "coin",
       version: "0.1.0",
       kind: "card",
+      ux: { visualEffect: { key: "coin", anchor: "player" } },
       effects: [
         { type: "adjust_resource", player: "controller", resource: "mana", delta: 1, reason: "coin" },
         { type: "move_card", object: "self", toZoneId: "zone_discard" }

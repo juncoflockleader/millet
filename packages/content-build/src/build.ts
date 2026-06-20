@@ -413,7 +413,7 @@ function addPresentationCatalogIssues(
   }
 }
 
-function addBoardLayoutIssues(issues: ValidationIssue[], file: string, layout: Record<string, unknown>): void {
+function addBoardLayoutIssues(issues: ValidationIssue[], file: string, layout: Record<string, unknown>, zoneTypes: Set<string> = new Set()): void {
   const widgetIds = new Set<string>();
   const regionIds = new Set<string>();
   const logicalSize =
@@ -459,6 +459,14 @@ function addBoardLayoutIssues(issues: ValidationIssue[], file: string, layout: R
       const widgetId = record.widgetId;
       if (typeof widgetId === "string" && widgetIds.size > 0 && !widgetIds.has(widgetId)) {
         issues.push({ severity: "error", file, message: `Region ${regionId} references unknown widget ${widgetId}` });
+      }
+
+      const dataSource = record.dataSource;
+      if (typeof dataSource === "object" && dataSource !== null && !Array.isArray(dataSource)) {
+        const zoneType = (dataSource as Record<string, unknown>).zoneType;
+        if (typeof zoneType === "string" && zoneTypes.size > 0 && !zoneTypes.has(zoneType)) {
+          issues.push({ severity: "error", file, message: `Region ${regionId} dataSource references unknown zone type ${zoneType}` });
+        }
       }
 
       const geometry = record.geometry;
@@ -912,6 +920,17 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
   }
 
   const cardCatalogFile = typeof gameDefinition.cardCatalog === "string" ? gameDefinition.cardCatalog : "card-catalog.json";
+  const zoneTypes = new Set<string>();
+  if (Array.isArray(gameDefinition.zones)) {
+    for (const zone of gameDefinition.zones) {
+      if (typeof zone === "object" && zone !== null && !Array.isArray(zone)) {
+        const zoneType = (zone as Record<string, unknown>).zoneType;
+        if (typeof zoneType === "string" && zoneType.length > 0) {
+          zoneTypes.add(zoneType);
+        }
+      }
+    }
+  }
   for (const uiFile of [...fileNames].filter((fileName) => fileName.startsWith("ui/") && fileName.endsWith(".json")).sort()) {
     const uiDocument = readJson(join(dir, uiFile)) as Record<string, unknown>;
     if (uiDocument.kind === "board_layout") {
@@ -931,7 +950,7 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
     const uiDocument = readJson(uiPath) as Record<string, unknown>;
     if (uiDocument.kind === "board_layout") {
       addSchemaIssues(issues, uiPath, uiDocument, boardLayoutSchema);
-      addBoardLayoutIssues(issues, uiPath, uiDocument);
+      addBoardLayoutIssues(issues, uiPath, uiDocument, zoneTypes);
     } else if (uiDocument.kind === "presentation_catalog") {
       addSchemaIssues(issues, uiPath, uiDocument, presentationCatalogSchema);
       addPresentationCatalogIssues(issues, uiPath, uiDocument, cardTemplateIds, behaviorIds, propertyDisplayRegistry);

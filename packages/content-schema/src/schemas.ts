@@ -330,6 +330,13 @@ export const boardLayoutSchema = {
             ]
           },
           ownerScope: { enum: ["player", "opponent", "shared", "match", "spectator"] },
+          dataSource: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              zoneType: { type: "string", minLength: 1 }
+            }
+          },
           label: { type: "string", minLength: 1 },
           geometry: {
             type: "object",

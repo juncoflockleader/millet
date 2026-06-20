@@ -135,6 +135,9 @@ export interface BoardLayoutJson {
     "id": string;
     "kind": "hero" | "hand" | "deck" | "discard" | "graveyard" | "battlefield" | "equipment" | "judgment" | "prompt" | "action_window" | "chat" | "history_log" | "opponent_summary" | "spectator_overlay" | "debug_overlay" | "custom";
     "ownerScope": "player" | "opponent" | "shared" | "match" | "spectator";
+    "dataSource"?: {
+      "zoneType"?: string;
+    };
     "label"?: string;
     "geometry": {
       "x": number;
