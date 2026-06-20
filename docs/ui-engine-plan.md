@@ -539,7 +539,7 @@ Validation should cover:
 
 - Build minion editor for board entity layout, stats, combat behavior, death triggers, and token variants.
 - Acceptance: vanilla minion and death-trigger minion can be authored and tested.
-- Current slice: Ember Duel `Cards` panel renders a Minion Studio for selected minion templates, writes browser-local card catalog and presentation drafts, mirrors combat stat edits into presentation stats, syncs metadata-backed modifier badges into preview/runtime display, and keeps death-trigger behavior refs visible in template metadata and behavior ids.
+- Current slice: Ember Duel `Cards` panel renders a Minion Studio for selected minion templates, writes browser-local card catalog and presentation drafts, mirrors combat stat edits into presentation stats, validates kind tags/metadata, token variant ids, death-trigger availability, combat stats, target metadata, and modifier display drift, blocks catalog promotion on minion catalog errors, syncs metadata-backed modifier badges into preview/runtime display, and keeps death-trigger behavior refs visible in template metadata and behavior ids.
 
 ### UI-M7: Integrated Playtest And Debug
 
@@ -548,6 +548,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add minion studio validation/promotion hardening for death-trigger availability, token variant schema conventions, and modifier badge display rules.
-2. Add integrated playtest debug affordances that connect local authoring drafts to scripted fixture/playtest runs.
-3. Add broader equipment authoring examples for armor, mount, and treasure slots once their rules modules are ready.
+1. Add integrated playtest debug affordances that connect local authoring drafts to scripted fixture/playtest runs.
+2. Add broader equipment authoring examples for armor, mount, and treasure slots once their rules modules are ready.
+3. Add broader minion authoring examples for token, summon, and companion variants once their rules modules are ready.

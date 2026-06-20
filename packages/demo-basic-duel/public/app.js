@@ -212,6 +212,7 @@ const REGION_OVERFLOW_OPTIONS = ["fan", "scroll", "stack", "compact", "hidden"];
 const TARGET_MODE_OPTIONS = ["enemyHero", "selfHero", "battlefield", "targeted"];
 const EQUIPMENT_SLOT_OPTIONS = ["weapon", "armor", "mount", "treasure", "custom"];
 const EQUIPMENT_REPLACEMENT_MODE_OPTIONS = ["replace", "reject", "stack", "custom"];
+const MINION_KIND_OPTIONS = ["minion", "token", "summon", "companion", "custom"];
 const REGION_PRESETS = [
   {
     id: "custom",
@@ -2111,10 +2112,13 @@ function renderCardCatalogPromotionReview(template) {
 }
 
 function cardCatalogPromotionValidation(template) {
-  if (template?.objectType !== "equipment") {
-    return { errors: [], warnings: [] };
+  if (template?.objectType === "equipment") {
+    return equipmentStudioValidation(template, { includePresentation: false });
   }
-  return equipmentStudioValidation(template, { includePresentation: false });
+  if (template?.objectType === "minion") {
+    return minionStudioValidation(template, { includePresentation: false });
+  }
+  return { errors: [], warnings: [] };
 }
 
 function cardCatalogDiffSummary(beforeCatalog, afterCatalog) {
@@ -2397,7 +2401,7 @@ function renderMinionStudio(template) {
         <label class="card-frame-field">
           <span>Kind</span>
           <select data-minion-field="kind">
-            ${renderSelectOptions(["minion", "token", "summon", "companion", "custom"], kind)}
+            ${renderSelectOptions(MINION_KIND_OPTIONS, kind)}
           </select>
         </label>
         <label class="card-frame-field">
@@ -2438,7 +2442,7 @@ function renderMinionStudio(template) {
           <label class="card-frame-field">
             <span>Target</span>
             <select data-minion-field="behavior.targetMode">
-              ${renderSelectOptions(["enemyHero", "selfHero", "battlefield", "targeted"], behavior.targetMode ?? "enemyHero")}
+              ${renderSelectOptions(TARGET_MODE_OPTIONS, behavior.targetMode ?? "enemyHero")}
             </select>
           </label>
           <label class="card-frame-field">
@@ -2455,8 +2459,25 @@ function renderMinionStudio(template) {
           </label>
         </div>
       </div>
+      ${renderMinionStudioValidation(template)}
       ${renderAssetPathDatalist(datalistId)}
       ${renderMinionBehaviorDatalist(behaviorDatalistId)}
+    </div>
+  `;
+}
+
+function renderMinionStudioValidation(template) {
+  const validation = minionStudioValidation(template);
+  const items = [
+    ...validation.errors.map((message) => ({ severity: "error", message })),
+    ...validation.warnings.map((message) => ({ severity: "warning", message }))
+  ];
+  return `
+    <div class="card-template-validation minion-studio-validation ${validation.errors.length > 0 ? "error" : validation.warnings.length > 0 ? "warning" : "ok"}">
+      <strong>${validation.errors.length > 0 ? "Needs Fix" : validation.warnings.length > 0 ? "Warnings" : "Looks Valid"}</strong>
+      ${items.length > 0
+        ? items.map((item) => `<span class="${escapeAttr(item.severity)}">${escapeHtml(item.message)}</span>`).join("")
+        : `<span>Minion kind, combat, trigger, and modifier metadata are ready.</span>`}
     </div>
   `;
 }
@@ -2488,7 +2509,7 @@ function renderMinionBehaviorDatalist(datalistId) {
 
 function minionKindValue(template, presentation = {}) {
   const metadataKind = typeof template.metadata?.minionKind === "string" ? template.metadata.minionKind : "";
-  const tagKind = (template.tags ?? []).find((tag) => ["minion", "token", "summon", "companion", "custom"].includes(tag));
+  const tagKind = (template.tags ?? []).find((tag) => MINION_KIND_OPTIONS.includes(tag));
   const variant = typeof presentation.layout?.variant === "string" ? presentation.layout.variant : "";
   return metadataKind || tagKind || variant || "minion";
 }
@@ -3097,7 +3118,7 @@ function minionStudioInputValue(input) {
 
 function setMinionKindDraft(template, kind) {
   const normalizedKind = kind || "minion";
-  const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !["minion", "token", "summon", "companion", "custom"].includes(tag)) : [];
+  const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !MINION_KIND_OPTIONS.includes(tag)) : [];
   template.tags = uniqueValues([normalizedKind, ...tags]);
   setTemplateMetadataValue(template, "minionKind", normalizedKind);
 }
@@ -3437,10 +3458,10 @@ function validateCardCatalogPromotionDraft(catalog) {
   const templates = Array.isArray(catalog?.templates) ? catalog.templates : [];
   const errors = [];
   templates.forEach((template) => {
-    if (template?.objectType !== "equipment") {
+    if (!["equipment", "minion"].includes(template?.objectType)) {
       return;
     }
-    const validation = equipmentStudioValidation(template, { includePresentation: false });
+    const validation = cardCatalogPromotionValidation(template);
     validation.errors.forEach((message) => errors.push(`${template.templateId}: ${message}`));
   });
   if (errors.length > 0) {
@@ -3779,6 +3800,142 @@ function addEquipmentPresentationValidationIssues(template, errors, warnings, ca
   }
 }
 
+function minionStudioValidation(template, options = {}) {
+  const includePresentation = options.includePresentation !== false;
+  const errors = [];
+  const warnings = [];
+  if (!template || typeof template !== "object" || Array.isArray(template)) {
+    return { errors: ["Minion template must be a JSON object."], warnings };
+  }
+
+  const metadata = template.metadata && typeof template.metadata === "object" && !Array.isArray(template.metadata)
+    ? template.metadata
+    : {};
+  const kindTags = minionKindTags(template);
+  const metadataKind = metadata.minionKind;
+  const catalogKind = typeof metadataKind === "string" && MINION_KIND_OPTIONS.includes(metadataKind)
+    ? metadataKind
+    : kindTags[0] ?? "minion";
+
+  if (metadataKind !== undefined && (typeof metadataKind !== "string" || !MINION_KIND_OPTIONS.includes(metadataKind))) {
+    errors.push(`Minion kind ${String(metadataKind)} is unsupported.`);
+  }
+  if (kindTags.length === 0 && metadataKind === undefined) {
+    warnings.push("Minion should declare a kind tag or metadata.minionKind before promotion.");
+  }
+  if (kindTags.length > 1) {
+    errors.push(`Minion declares multiple kind tags: ${kindTags.join(", ")}.`);
+  }
+  if (typeof metadataKind === "string" && kindTags.length === 1 && metadataKind !== kindTags[0]) {
+    warnings.push(`metadata.minionKind ${metadataKind} does not match kind tag ${kindTags[0]}.`);
+  }
+
+  const tokenVariant = metadata.tokenVariant;
+  if (tokenVariant !== undefined && (typeof tokenVariant !== "string" || !isAuthoringIdentifier(tokenVariant))) {
+    errors.push("Minion tokenVariant must be a lowercase id using letters, numbers, underscores, or hyphens.");
+  }
+  if (catalogKind === "token" && tokenVariant === undefined) {
+    warnings.push("Token minions should declare metadata.tokenVariant.");
+  }
+
+  const stats = template.stats && typeof template.stats === "object" && !Array.isArray(template.stats) ? template.stats : {};
+  if (stats.attack === undefined) {
+    warnings.push("Minion should declare attack.");
+  }
+  if (stats.health === undefined) {
+    warnings.push("Minion should declare health.");
+  }
+
+  const deathTrigger = metadata.deathTriggerBehaviorId;
+  if (deathTrigger !== undefined && (typeof deathTrigger !== "string" || deathTrigger.length === 0)) {
+    errors.push("Minion deathTriggerBehaviorId must be a non-empty behavior id.");
+  } else if (deathTrigger && behaviorAvailable(deathTrigger) === "missing") {
+    warnings.push(`Unknown death trigger behavior ${deathTrigger}.`);
+  }
+  if (deathTrigger && !Array.isArray(template.behaviorIds)) {
+    warnings.push("Death trigger is set but behaviorIds is missing.");
+  } else if (deathTrigger && !template.behaviorIds.includes(deathTrigger)) {
+    warnings.push(`Death trigger ${deathTrigger} is not listed in behaviorIds.`);
+  }
+
+  addMinionModifierDisplayValidationIssues(template, errors, warnings);
+
+  if (includePresentation) {
+    addMinionPresentationValidationIssues(template, errors, warnings, catalogKind);
+  }
+
+  return { errors, warnings };
+}
+
+function minionKindTags(template) {
+  return Array.isArray(template.tags)
+    ? template.tags.filter((tag) => MINION_KIND_OPTIONS.includes(tag))
+    : [];
+}
+
+function isAuthoringIdentifier(value) {
+  return /^[a-z][a-z0-9_-]*$/.test(value);
+}
+
+function addMinionModifierDisplayValidationIssues(template, errors, warnings) {
+  const modifierText = typeof template.metadata?.modifierText === "string" ? template.metadata.modifierText : "";
+  const display = Array.isArray(template.display?.properties) ? template.display.properties : [];
+  const modifierBadges = display.filter((property) => property?.source === "metadata" && property?.property === "modifierText");
+  const slotIds = new Set(propertyDisplaySlotsForObjectType("minion").map((slot) => slot.id));
+  if (modifierText && modifierBadges.length === 0) {
+    warnings.push("Modifier text is set but no metadata modifierText display badge exists.");
+  }
+  if (!modifierText && modifierBadges.length > 0) {
+    warnings.push("Modifier display badge exists without metadata.modifierText.");
+  }
+  if (modifierBadges.length > 1) {
+    warnings.push("Multiple modifier display badges are configured; one compact badge is expected.");
+  }
+  modifierBadges.forEach((property) => {
+    if (typeof property.slot === "string" && property.slot.length > 0 && !slotIds.has(property.slot)) {
+      errors.push(`Modifier display badge uses unsupported slot ${property.slot}.`);
+    }
+    if (property.slot !== "top-right") {
+      warnings.push(`Modifier display badge uses ${property.slot}; top-right is the default compact slot.`);
+    }
+  });
+}
+
+function addMinionPresentationValidationIssues(template, errors, warnings, catalogKind) {
+  const presentation = presentationEntryForTemplate(template.templateId);
+  if (!presentation) {
+    warnings.push("No presentation entry available for minion action and art review.");
+    return;
+  }
+
+  const presentationKind = typeof presentation.layout?.variant === "string" ? presentation.layout.variant : "";
+  if (presentationKind && MINION_KIND_OPTIONS.includes(presentationKind) && presentationKind !== catalogKind) {
+    warnings.push(`Presentation variant ${presentationKind} does not match catalog kind ${catalogKind}.`);
+  }
+  if (typeof presentation.action !== "string" || presentation.action.length === 0) {
+    warnings.push("Minion presentation should declare an action label.");
+  }
+  if (typeof presentation.text !== "string" || presentation.text.length === 0) {
+    warnings.push("Minion presentation should declare rules text.");
+  }
+
+  const behavior = presentation.behavior && typeof presentation.behavior === "object" && !Array.isArray(presentation.behavior)
+    ? presentation.behavior
+    : {};
+  const behaviorId = behavior.behaviorId ?? template.behaviorIds?.[0];
+  if (typeof behaviorId !== "string" || behaviorId.length === 0) {
+    warnings.push("Minion attack action has no behavior id.");
+  } else if (behaviorAvailable(behaviorId) === "missing") {
+    warnings.push(`Unknown minion behavior ${behaviorId}.`);
+  }
+  if (behavior.targetMode !== undefined && !TARGET_MODE_OPTIONS.includes(behavior.targetMode)) {
+    errors.push(`Minion targetMode ${behavior.targetMode} is unsupported.`);
+  }
+  if ((behavior.targetMode ?? "enemyHero") === "targeted" && (typeof behavior.targetSelector !== "string" || behavior.targetSelector.length === 0)) {
+    warnings.push("Targeted minion action should declare targetSelector.");
+  }
+}
+
 function cardTemplateValidation(template) {
   const errors = [];
   const warnings = [];
@@ -3802,6 +3959,11 @@ function cardTemplateValidation(template) {
     const equipmentValidation = equipmentStudioValidation(template);
     errors.push(...equipmentValidation.errors);
     warnings.push(...equipmentValidation.warnings);
+  }
+  if (template?.objectType === "minion") {
+    const minionValidation = minionStudioValidation(template);
+    errors.push(...minionValidation.errors);
+    warnings.push(...minionValidation.warnings);
   }
 
   return { errors, warnings };
