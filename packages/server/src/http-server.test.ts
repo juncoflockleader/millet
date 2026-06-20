@@ -58,7 +58,7 @@ test("HTTP server can be constructed around the match API handler", () => {
   assert.equal(server.listenerCount("upgrade"), 1);
 });
 
-test("HTTP server can serve the basic duel demo shell and assets", async () => {
+test("HTTP server can serve the Millet Studio shell, project registry, and assets", async () => {
   const server = createMilletHttpServer(new InMemoryMatchService(), {
     staticRoot: join("packages", "demo-basic-duel", "public"),
     rulesetRoot: join("packages", "rulesets")
@@ -70,7 +70,18 @@ test("HTTP server can serve the basic duel demo shell and assets", async () => {
   });
   assert.equal(html.statusCode, 200);
   assert.equal(html.headers["content-type"], "text/html; charset=utf-8");
-  assert.match(html.body, /Ember Duel/);
+  assert.match(html.body, /Millet Studio/);
+  assert.match(html.body, /studio-projects\.js/);
+
+  const projectRegistry = await dispatch(server, {
+    method: "GET",
+    url: "/studio-projects.js"
+  });
+  assert.equal(projectRegistry.statusCode, 200);
+  assert.equal(projectRegistry.headers["content-type"], "text/javascript; charset=utf-8");
+  assert.match(projectRegistry.body, /MILLET_STUDIO_PROJECTS/);
+  assert.match(projectRegistry.body, /ember-duel/);
+  assert.match(projectRegistry.body, /sanguosha-identity/);
 
   const asset = await dispatch(server, {
     method: "GET",

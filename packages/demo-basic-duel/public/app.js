@@ -96,27 +96,17 @@ const EFFECTS = {
   attack: { sheet: "/assets/effects/attack-slash-sheet.png", className: "attack" }
 };
 
-const STUDIO_PROJECTS = [
-  {
-    id: "ember-duel",
-    label: "Ember Duel",
-    rulesetId: "sample-duel",
-    mode: "playable",
-    summary: "2P ruleset project with live hotseat demo and authoring tools."
-  },
-  {
-    id: "sanguosha-identity",
-    label: "Sanguosha Identity",
-    rulesetId: "sample-identity",
-    mode: "preview",
-    summary: "6-8 player identity ruleset project with projection-safe board previews."
-  }
-];
+const STUDIO_PROJECTS = normalizeStudioProjects(globalThis.MILLET_STUDIO_PROJECTS);
+if (STUDIO_PROJECTS.length === 0) {
+  throw new Error("Millet Studio project registry is empty.");
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const ACTIVE_PROJECT = resolveStudioProject(urlParams);
 const RULESET_ID = ACTIVE_PROJECT.rulesetId;
 const RULESET_BASE_URL = `/content/rulesets/${RULESET_ID}`;
+const STORAGE_PREFIX = "millet.studio";
+const LEGACY_STORAGE_PREFIX = "ember-duel";
 
 let PLAY_AREA = {
   width: 1120,
@@ -124,11 +114,16 @@ let PLAY_AREA = {
   minScale: 0.2
 };
 
-const LAYOUT_STORAGE_KEY = `ember-duel.layout.${RULESET_ID}.v1`;
-const LAYOUT_SNAP_STORAGE_KEY = `ember-duel.layout.snap.${RULESET_ID}.v1`;
-const CARD_CATALOG_STORAGE_KEY = `ember-duel.cards.${RULESET_ID}.v1`;
-const PRESENTATION_STORAGE_KEY = `ember-duel.presentation.${RULESET_ID}.v1`;
-const ASSET_STORAGE_KEY = `ember-duel.assets.${RULESET_ID}.v1`;
+const LAYOUT_STORAGE_KEY = studioStorageKey("layout", RULESET_ID);
+const LEGACY_LAYOUT_STORAGE_KEY = legacyStudioStorageKey("layout", RULESET_ID);
+const LAYOUT_SNAP_STORAGE_KEY = studioStorageKey("layout.snap", RULESET_ID);
+const LEGACY_LAYOUT_SNAP_STORAGE_KEY = legacyStudioStorageKey("layout.snap", RULESET_ID);
+const CARD_CATALOG_STORAGE_KEY = studioStorageKey("cards", RULESET_ID);
+const LEGACY_CARD_CATALOG_STORAGE_KEY = legacyStudioStorageKey("cards", RULESET_ID);
+const PRESENTATION_STORAGE_KEY = studioStorageKey("presentation", RULESET_ID);
+const LEGACY_PRESENTATION_STORAGE_KEY = legacyStudioStorageKey("presentation", RULESET_ID);
+const ASSET_STORAGE_KEY = studioStorageKey("assets", RULESET_ID);
+const LEGACY_ASSET_STORAGE_KEY = legacyStudioStorageKey("assets", RULESET_ID);
 const GAME_DEFINITION_URL = `${RULESET_BASE_URL}/game-definition.json`;
 const LOCALIZATION_URL = `${RULESET_BASE_URL}/localization.json`;
 const BEHAVIOR_SUMMARY_URL = `${RULESET_BASE_URL}/behavior-summaries.json`;
@@ -684,6 +679,74 @@ loadAuthoredPresentationCatalog();
 loadAssetManifest();
 loadPreviewFixtures();
 
+function normalizeStudioProjects(projects) {
+  if (!Array.isArray(projects)) {
+    return [];
+  }
+  return projects
+    .map((project, index) => normalizeStudioProject(project, index))
+    .filter((project) => project !== null);
+}
+
+function normalizeStudioProject(project, index) {
+  if (!project || typeof project !== "object" || Array.isArray(project)) {
+    return null;
+  }
+
+  const id = studioProjectText(project.id, `project-${index + 1}`);
+  const label = studioProjectText(project.label, labelFromProjectId(id));
+  const rulesetId = studioProjectText(project.rulesetId, id);
+  const mode = project.mode === "preview" ? "preview" : "playable";
+  return {
+    id,
+    label,
+    rulesetId,
+    mode,
+    summary: studioProjectText(project.summary, `${label} ruleset project.`)
+  };
+}
+
+function studioProjectText(value, fallback) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function labelFromProjectId(value) {
+  return String(value ?? "Project")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function studioStorageKey(kind, rulesetId) {
+  return `${STORAGE_PREFIX}.${kind}.${rulesetId}.v1`;
+}
+
+function legacyStudioStorageKey(kind, rulesetId) {
+  return `${LEGACY_STORAGE_PREFIX}.${kind}.${rulesetId}.v1`;
+}
+
+function readStudioStorage(key, legacyKey = "") {
+  const current = localStorage.getItem(key);
+  return current !== null || !legacyKey ? current : localStorage.getItem(legacyKey);
+}
+
+function hasStudioStorage(key, legacyKey = "") {
+  return readStudioStorage(key, legacyKey) !== null;
+}
+
+function writeStudioStorage(key, value, legacyKey = "") {
+  localStorage.setItem(key, value);
+  if (legacyKey) {
+    localStorage.removeItem(legacyKey);
+  }
+}
+
+function removeStudioStorage(key, legacyKey = "") {
+  localStorage.removeItem(key);
+  if (legacyKey) {
+    localStorage.removeItem(legacyKey);
+  }
+}
+
 function resolveStudioProject(params) {
   const projectId = params.get("project");
   const directProject = STUDIO_PROJECTS.find((project) => project.id === projectId);
@@ -891,7 +954,7 @@ function installLayoutEditor() {
   dom.deleteLayoutRegionButton?.addEventListener("click", () => deleteSelectedLayoutRegion());
   dom.snapLayoutToggle?.addEventListener("change", () => {
     layoutSnapEnabled = Boolean(dom.snapLayoutToggle.checked);
-    localStorage.setItem(LAYOUT_SNAP_STORAGE_KEY, layoutSnapEnabled ? "true" : "false");
+    writeStudioStorage(LAYOUT_SNAP_STORAGE_KEY, layoutSnapEnabled ? "true" : "false", LEGACY_LAYOUT_SNAP_STORAGE_KEY);
     setLayoutStatus(layoutSnapEnabled ? `Snap enabled (${LAYOUT_SNAP_SIZE}px grid).` : "Snap disabled.");
     renderLayoutRegionEditor({ preserveDetailFocus: true });
   });
@@ -1630,7 +1693,7 @@ function applyPresentationEntryDraft() {
     const draft = JSON.parse(dom.presentationEntryJson.value);
     validatePresentationEntryDraft(selected, draft);
     const nextCatalog = replacePresentationEntry(presentationCatalog, selected, draft);
-    localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+    writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
     applyPresentationCatalog(nextCatalog);
     renderPresentationEditor();
     render();
@@ -1673,7 +1736,7 @@ function resetPresentationCatalogDraft() {
     return;
   }
 
-  localStorage.removeItem(PRESENTATION_STORAGE_KEY);
+  removeStudioStorage(PRESENTATION_STORAGE_KEY, LEGACY_PRESENTATION_STORAGE_KEY);
   applyPresentationCatalog(cloneJson(authoredPresentationCatalog));
   renderPresentationEditor();
   render();
@@ -1821,12 +1884,12 @@ function renderPlaytestRunResult() {
 
 function playtestDraftStatuses() {
   return [
-    { label: "Layout", key: LAYOUT_STORAGE_KEY, detail: layoutDraftDetail },
-    { label: "Cards", key: CARD_CATALOG_STORAGE_KEY, detail: cardCatalogDraftDetail },
-    { label: "Presentation", key: PRESENTATION_STORAGE_KEY, detail: presentationDraftDetail },
-    { label: "Assets", key: ASSET_STORAGE_KEY, detail: assetDraftDetail }
+    { label: "Layout", key: LAYOUT_STORAGE_KEY, legacyKey: LEGACY_LAYOUT_STORAGE_KEY, detail: layoutDraftDetail },
+    { label: "Cards", key: CARD_CATALOG_STORAGE_KEY, legacyKey: LEGACY_CARD_CATALOG_STORAGE_KEY, detail: cardCatalogDraftDetail },
+    { label: "Presentation", key: PRESENTATION_STORAGE_KEY, legacyKey: LEGACY_PRESENTATION_STORAGE_KEY, detail: presentationDraftDetail },
+    { label: "Assets", key: ASSET_STORAGE_KEY, legacyKey: LEGACY_ASSET_STORAGE_KEY, detail: assetDraftDetail }
   ].map((draft) => {
-    const value = readLocalStorageJson(draft.key);
+    const value = readLocalStorageJson(draft.key, draft.legacyKey);
     return {
       label: draft.label,
       active: value !== null,
@@ -1835,9 +1898,9 @@ function playtestDraftStatuses() {
   });
 }
 
-function readLocalStorageJson(key) {
+function readLocalStorageJson(key, legacyKey = "") {
   try {
-    const stored = localStorage.getItem(key);
+    const stored = readStudioStorage(key, legacyKey);
     return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
@@ -2154,7 +2217,7 @@ function renderCardTemplateRow(template, selected) {
 }
 
 function renderCardTemplateDetail(template) {
-  const hasDraft = Boolean(localStorage.getItem(CARD_CATALOG_STORAGE_KEY));
+  const hasDraft = hasStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY);
   const preview = renderCardTemplatePreview(template);
   const validation = cardTemplateValidation(template);
   const promotionValidation = cardCatalogPromotionValidation(template);
@@ -2315,7 +2378,7 @@ function updateCardFrameDraftFromInput(input) {
 
   setNestedPresentationValue(entry, input.dataset.cardFrameField, cardFrameInputValue(input));
   cleanupPresentationEntry(entry);
-  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
   applyPresentationCatalog(nextCatalog);
   renderPresentationEditor();
   renderCardStudio();
@@ -2339,7 +2402,7 @@ function updateHeroPresentationDraftFromInput(input) {
 
   setNestedPresentationValue(entry, input.dataset.heroPresentationField, heroPresentationInputValue(input));
   cleanupPresentationEntry(entry);
-  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
   applyPresentationCatalog(nextCatalog);
   renderPresentationEditor();
   render();
@@ -2422,7 +2485,7 @@ function currentSelectedHeroPresentationEntry() {
 function applyHeroPresentationValue(selected, draftHero, message) {
   cleanupPresentationEntry(draftHero);
   const nextCatalog = replacePresentationEntry(presentationCatalog, selected, draftHero);
-  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
   applyPresentationCatalog(nextCatalog);
   renderPresentationEditor();
   render();
@@ -2503,7 +2566,7 @@ function cleanupPresentationEntry(entry) {
 }
 
 function renderCardCatalogPromotionReview(template) {
-  const hasDraft = Boolean(localStorage.getItem(CARD_CATALOG_STORAGE_KEY));
+  const hasDraft = hasStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY);
   const authoredTemplate = authoredCardCatalog?.templates?.find((entry) => entry?.templateId === template.templateId) ?? null;
   const diffRows = cardTemplateDiffRows(authoredTemplate, template);
   const summary = cardCatalogDiffSummary(authoredCardCatalog, cardCatalog);
@@ -3335,7 +3398,7 @@ function applyGeneratedBehaviorTextToPresentation() {
   }
 
   entry.text = generatedText;
-  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
   applyPresentationCatalog(nextCatalog);
   renderPresentationEditor();
   renderCardStudio();
@@ -3446,12 +3509,12 @@ function updateEquipmentStudioDraftFromInput(input) {
   const replacedCatalog = replaceCardTemplate(nextCatalog, selected.templateId, draftTemplate);
   validateCardCatalogDraft(replacedCatalog);
   cardCatalog = replacedCatalog;
-  localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(replacedCatalog));
+  writeStudioStorage(CARD_CATALOG_STORAGE_KEY, JSON.stringify(replacedCatalog), LEGACY_CARD_CATALOG_STORAGE_KEY);
   selectedCardTemplateId = draftTemplate.templateId;
 
   if (presentationEntry && nextPresentationCatalog) {
     cleanupPresentationEntry(presentationEntry);
-    localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextPresentationCatalog));
+    writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextPresentationCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
     applyPresentationCatalog(nextPresentationCatalog);
   }
 
@@ -3522,12 +3585,12 @@ function updateMinionStudioDraftFromInput(input) {
   const replacedCatalog = replaceCardTemplate(nextCatalog, selected.templateId, draftTemplate);
   validateCardCatalogDraft(replacedCatalog);
   cardCatalog = replacedCatalog;
-  localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(replacedCatalog));
+  writeStudioStorage(CARD_CATALOG_STORAGE_KEY, JSON.stringify(replacedCatalog), LEGACY_CARD_CATALOG_STORAGE_KEY);
   selectedCardTemplateId = draftTemplate.templateId;
 
   if (presentationEntry && nextPresentationCatalog) {
     cleanupPresentationEntry(presentationEntry);
-    localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextPresentationCatalog));
+    writeStudioStorage(PRESENTATION_STORAGE_KEY, JSON.stringify(nextPresentationCatalog), LEGACY_PRESENTATION_STORAGE_KEY);
     applyPresentationCatalog(nextPresentationCatalog);
   }
 
@@ -3773,7 +3836,7 @@ function applyCardTemplateValue(selected, draftTemplate, message) {
   validateCardTemplateDraft(selected, draftTemplate);
   const nextCatalog = replaceCardTemplate(cardCatalog, selected.templateId, draftTemplate);
   validateCardCatalogDraft(nextCatalog);
-  localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(nextCatalog));
+  writeStudioStorage(CARD_CATALOG_STORAGE_KEY, JSON.stringify(nextCatalog), LEGACY_CARD_CATALOG_STORAGE_KEY);
   cardCatalog = nextCatalog;
   selectedCardTemplateId = draftTemplate.templateId;
   renderCardStudio();
@@ -3789,7 +3852,7 @@ async function promoteCardCatalogDraft() {
   try {
     validateCardCatalogDraft(cardCatalog);
     validateCardCatalogPromotionDraft(cardCatalog);
-    if (!localStorage.getItem(CARD_CATALOG_STORAGE_KEY)) {
+    if (!hasStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY)) {
       throw new Error("Promote requires a local card catalog draft.");
     }
 
@@ -3808,7 +3871,7 @@ async function promoteCardCatalogDraft() {
 
     authoredCardCatalog = result.catalog;
     cardCatalog = cloneJson(result.catalog);
-    localStorage.removeItem(CARD_CATALOG_STORAGE_KEY);
+    removeStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY);
     selectedCardTemplateId = currentSelectedCardTemplate()?.templateId ?? firstVisibleCardTemplate()?.templateId ?? "";
     renderCardStudio();
     loadAuthoringStatus();
@@ -3844,7 +3907,7 @@ function resetCardCatalogDraft() {
     return;
   }
 
-  localStorage.removeItem(CARD_CATALOG_STORAGE_KEY);
+  removeStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY);
   cardCatalog = cloneJson(authoredCardCatalog);
   selectedCardTemplateId = currentSelectedCardTemplate()?.templateId ?? firstVisibleCardTemplate()?.templateId ?? "";
   renderCardStudio();
@@ -3853,7 +3916,7 @@ function resetCardCatalogDraft() {
 
 function loadCardCatalogDraft() {
   try {
-    const stored = localStorage.getItem(CARD_CATALOG_STORAGE_KEY);
+    const stored = readStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY);
     if (!stored) {
       return null;
     }
@@ -3861,7 +3924,7 @@ function loadCardCatalogDraft() {
     validateCardCatalogDraft(draft);
     return draft;
   } catch {
-    localStorage.removeItem(CARD_CATALOG_STORAGE_KEY);
+    removeStudioStorage(CARD_CATALOG_STORAGE_KEY, LEGACY_CARD_CATALOG_STORAGE_KEY);
     return null;
   }
 }
@@ -4506,7 +4569,7 @@ function createNewAssetDraft() {
   const nextManifest = cloneJson(assetManifest);
   nextManifest.assets = [...(Array.isArray(nextManifest.assets) ? nextManifest.assets : []), asset];
   validateAssetManifestDraft(nextManifest);
-  localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(nextManifest));
+  writeStudioStorage(ASSET_STORAGE_KEY, JSON.stringify(nextManifest), LEGACY_ASSET_STORAGE_KEY);
   assetManifest = nextManifest;
   assetUsageIndex = buildAssetUsageIndex();
   assetFilterKind = "all";
@@ -4577,7 +4640,7 @@ function renderAssetRow(asset, selected) {
 
 function renderAssetDetail(asset) {
   const usage = assetUsageIndex[asset.assetId] ?? [];
-  const hasDraft = Boolean(localStorage.getItem(ASSET_STORAGE_KEY));
+  const hasDraft = hasStudioStorage(ASSET_STORAGE_KEY, LEGACY_ASSET_STORAGE_KEY);
   const promotionReview = renderAssetPromotionReview(asset);
   const preview = asset.publicPath
     ? `<div class="asset-preview"><img src="${escapeAttr(asset.publicPath)}" alt="${escapeAttr(asset.assetId)} preview"></div>`
@@ -4750,7 +4813,7 @@ function applyAssetEntryValue(selected, draftEntry, message) {
   validateAssetEntryDraft(selected, draftEntry);
   const nextManifest = replaceAssetEntry(assetManifest, selected.assetId, draftEntry);
   validateAssetManifestDraft(nextManifest);
-  localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(nextManifest));
+  writeStudioStorage(ASSET_STORAGE_KEY, JSON.stringify(nextManifest), LEGACY_ASSET_STORAGE_KEY);
   assetManifest = nextManifest;
   assetUsageIndex = buildAssetUsageIndex();
   selectedAssetId = draftEntry.assetId;
@@ -4824,7 +4887,7 @@ async function promoteAssetEntryDraft() {
 
     authoredAssetManifest = result.manifest;
     assetManifest = cloneJson(result.manifest);
-    localStorage.removeItem(ASSET_STORAGE_KEY);
+    removeStudioStorage(ASSET_STORAGE_KEY, LEGACY_ASSET_STORAGE_KEY);
     assetUsageIndex = buildAssetUsageIndex();
     selectedAssetId = result.asset?.assetId ?? selected.assetId;
     renderAssetLibrary();
@@ -4884,7 +4947,7 @@ function resetAssetManifestDraft() {
     return;
   }
 
-  localStorage.removeItem(ASSET_STORAGE_KEY);
+  removeStudioStorage(ASSET_STORAGE_KEY, LEGACY_ASSET_STORAGE_KEY);
   assetManifest = cloneJson(authoredAssetManifest);
   assetUsageIndex = buildAssetUsageIndex();
   selectedAssetId = currentSelectedAsset()?.assetId ?? firstVisibleAsset()?.assetId ?? "";
@@ -4894,7 +4957,7 @@ function resetAssetManifestDraft() {
 
 function loadAssetManifestDraft() {
   try {
-    const stored = localStorage.getItem(ASSET_STORAGE_KEY);
+    const stored = readStudioStorage(ASSET_STORAGE_KEY, LEGACY_ASSET_STORAGE_KEY);
     if (!stored) {
       return null;
     }
@@ -4902,7 +4965,7 @@ function loadAssetManifestDraft() {
     validateAssetManifestDraft(draft);
     return draft;
   } catch {
-    localStorage.removeItem(ASSET_STORAGE_KEY);
+    removeStudioStorage(ASSET_STORAGE_KEY, LEGACY_ASSET_STORAGE_KEY);
     return null;
   }
 }
@@ -6688,17 +6751,17 @@ function mergeKnownLayoutTokens(layout, existingTokens = {}) {
 
 function loadBoardLayoutDraft() {
   try {
-    const stored = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    const stored = readStudioStorage(LAYOUT_STORAGE_KEY, LEGACY_LAYOUT_STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch {
-    localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    removeStudioStorage(LAYOUT_STORAGE_KEY, LEGACY_LAYOUT_STORAGE_KEY);
     return null;
   }
 }
 
 function loadLayoutSnapEnabled() {
   try {
-    return localStorage.getItem(LAYOUT_SNAP_STORAGE_KEY) !== "false";
+    return readStudioStorage(LAYOUT_SNAP_STORAGE_KEY, LEGACY_LAYOUT_SNAP_STORAGE_KEY) !== "false";
   } catch {
     return true;
   }
@@ -6920,10 +6983,10 @@ function applyPresentationCatalog(catalog) {
 
 function loadPresentationCatalogDraft() {
   try {
-    const stored = localStorage.getItem(PRESENTATION_STORAGE_KEY);
+    const stored = readStudioStorage(PRESENTATION_STORAGE_KEY, LEGACY_PRESENTATION_STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch {
-    localStorage.removeItem(PRESENTATION_STORAGE_KEY);
+    removeStudioStorage(PRESENTATION_STORAGE_KEY, LEGACY_PRESENTATION_STORAGE_KEY);
     return null;
   }
 }
@@ -6981,7 +7044,7 @@ function presentationHeroToHeroDef(hero) {
 }
 
 function saveLayout() {
-  localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(exportBoardLayoutDocument()));
+  writeStudioStorage(LAYOUT_STORAGE_KEY, JSON.stringify(exportBoardLayoutDocument()), LEGACY_LAYOUT_STORAGE_KEY);
 }
 
 function cloneLayout(layout) {
@@ -7092,7 +7155,7 @@ function resetBoardLayoutDraft() {
   applyPlayAreaFromBoardLayout(boardLayoutDocument);
   layoutState = layoutTokensFromBoardLayout(boardLayoutDocument);
   selectedLayoutRegionId = "";
-  localStorage.removeItem(LAYOUT_STORAGE_KEY);
+  removeStudioStorage(LAYOUT_STORAGE_KEY, LEGACY_LAYOUT_STORAGE_KEY);
   ensureSelectedLayoutRegion();
   renderLayoutControls();
   applyLayout();
