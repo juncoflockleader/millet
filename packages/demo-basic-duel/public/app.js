@@ -108,6 +108,7 @@ let PLAY_AREA = {
 
 const LAYOUT_STORAGE_KEY = `ember-duel.layout.${RULESET_ID}.v1`;
 const PRESENTATION_STORAGE_KEY = `ember-duel.presentation.${RULESET_ID}.v1`;
+const ASSET_STORAGE_KEY = `ember-duel.assets.${RULESET_ID}.v1`;
 const GAME_DEFINITION_URL = `${RULESET_BASE_URL}/game-definition.json`;
 const ASSET_MANIFEST_URL = `${RULESET_BASE_URL}/asset-manifest.json`;
 const FALLBACK_BOARD_LAYOUT_URL = "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json";
@@ -199,6 +200,21 @@ const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "seat", "team", "o
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "admin", "hidden"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
 
+const ASSET_REQUIRED_FIELDS = ["assetId", "version", "kind", "contentHash", "sourceUri", "license", "owner"];
+const ASSET_OPTIONAL_FIELDS = [
+  "publicPath",
+  "mediaType",
+  "width",
+  "height",
+  "durationMs",
+  "frameCount",
+  "generationId",
+  "prompt",
+  "previewRole",
+  "usage"
+];
+const ASSET_ALLOWED_FIELDS = new Set([...ASSET_REQUIRED_FIELDS, ...ASSET_OPTIONAL_FIELDS]);
+
 const KEYWORDS = {
   attack: {
     title: "Attack",
@@ -252,6 +268,7 @@ let authoredPresentationCatalog = null;
 let presentationEditorOpen = false;
 let selectedPresentationEntryId = "";
 let assetManifest = null;
+let authoredAssetManifest = null;
 let assetLibraryOpen = false;
 let selectedAssetId = "";
 let assetFilterKind = "all";
@@ -572,6 +589,13 @@ function installAssetLibrary() {
     }
     selectedAssetId = button.dataset.assetId;
     renderAssetLibrary();
+  });
+  dom.assetDetail?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-asset-action]");
+    if (!button) {
+      return;
+    }
+    handleAssetDetailAction(button.dataset.assetAction);
   });
 }
 
@@ -903,11 +927,13 @@ async function loadAssetManifest() {
       throw new Error(`Asset manifest request failed: ${response.status}`);
     }
 
-    assetManifest = await response.json();
+    authoredAssetManifest = await response.json();
+    const draft = loadAssetManifestDraft();
+    assetManifest = draft ?? cloneJson(authoredAssetManifest);
     assetUsageIndex = buildAssetUsageIndex();
     selectedAssetId = selectedAssetId || firstVisibleAsset()?.assetId || "";
     renderAssetLibrary();
-    setAssetLibraryStatus(`Loaded ${assetManifest.assets?.length ?? 0} assets.`);
+    setAssetLibraryStatus(draft ? "Loaded local asset manifest draft." : `Loaded ${assetManifest.assets?.length ?? 0} assets.`);
   } catch (error) {
     setAssetLibraryStatus(error instanceof Error ? error.message : "Could not load asset manifest.");
   }
@@ -990,6 +1016,7 @@ function renderAssetRow(asset, selected) {
 
 function renderAssetDetail(asset) {
   const usage = assetUsageIndex[asset.assetId] ?? [];
+  const hasDraft = Boolean(localStorage.getItem(ASSET_STORAGE_KEY));
   const preview = asset.publicPath
     ? `<div class="asset-preview"><img src="${escapeAttr(asset.publicPath)}" alt="${escapeAttr(asset.assetId)} preview"></div>`
     : `<div class="asset-preview no-preview">No preview</div>`;
@@ -1016,7 +1043,190 @@ function renderAssetDetail(asset) {
       </div>
       ${asset.prompt ? `<p class="asset-prompt">${escapeHtml(asset.prompt)}</p>` : ""}
     </div>
+    <div class="asset-entry-editor">
+      <div class="asset-editor-head">
+        <strong>Manifest Entry</strong>
+        <span>${hasDraft ? "Local draft active" : "Ruleset source"}</span>
+      </div>
+      <textarea class="asset-entry-json" spellcheck="false" aria-label="Asset manifest entry JSON">${escapeHtml(JSON.stringify(asset, null, 2))}</textarea>
+      <div class="asset-editor-actions">
+        <button type="button" data-asset-action="apply">Apply Entry</button>
+        <button class="ghost" type="button" data-asset-action="copy">Copy Manifest</button>
+        <button class="ghost" type="button" data-asset-action="reset">Reset</button>
+      </div>
+    </div>
   `;
+}
+
+function handleAssetDetailAction(action) {
+  if (action === "apply") {
+    applyAssetEntryDraft();
+  } else if (action === "copy") {
+    copyAssetManifestDraft();
+  } else if (action === "reset") {
+    resetAssetManifestDraft();
+  }
+}
+
+function applyAssetEntryDraft() {
+  const selected = currentSelectedAsset();
+  const textarea = dom.assetDetail?.querySelector(".asset-entry-json");
+  if (!selected || !assetManifest || !textarea) {
+    setAssetLibraryStatus("No asset entry selected.");
+    return;
+  }
+
+  try {
+    const draftEntry = JSON.parse(textarea.value);
+    validateAssetEntryDraft(selected, draftEntry);
+    const nextManifest = replaceAssetEntry(assetManifest, selected.assetId, draftEntry);
+    validateAssetManifestDraft(nextManifest);
+    localStorage.setItem(ASSET_STORAGE_KEY, JSON.stringify(nextManifest));
+    assetManifest = nextManifest;
+    assetUsageIndex = buildAssetUsageIndex();
+    selectedAssetId = draftEntry.assetId;
+    renderAssetLibrary();
+    setAssetLibraryStatus(`Applied local asset draft for ${draftEntry.assetId}.`);
+  } catch (error) {
+    setAssetLibraryStatus(error instanceof Error ? error.message : "Invalid asset entry JSON.");
+  }
+}
+
+async function copyAssetManifestDraft() {
+  if (!assetManifest) {
+    setAssetLibraryStatus("No asset manifest loaded.");
+    return;
+  }
+
+  const text = JSON.stringify(assetManifest, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    setAssetLibraryStatus("Copied asset manifest JSON.");
+  } catch {
+    const textarea = dom.assetDetail?.querySelector(".asset-entry-json");
+    if (textarea) {
+      textarea.value = text;
+      textarea.select();
+    }
+    setAssetLibraryStatus("Select the JSON field to copy the manifest.");
+  }
+}
+
+function resetAssetManifestDraft() {
+  if (!authoredAssetManifest) {
+    setAssetLibraryStatus("No authored asset manifest loaded.");
+    return;
+  }
+
+  localStorage.removeItem(ASSET_STORAGE_KEY);
+  assetManifest = cloneJson(authoredAssetManifest);
+  assetUsageIndex = buildAssetUsageIndex();
+  selectedAssetId = currentSelectedAsset()?.assetId ?? firstVisibleAsset()?.assetId ?? "";
+  renderAssetLibrary();
+  setAssetLibraryStatus("Reset to authored asset manifest.");
+}
+
+function loadAssetManifestDraft() {
+  try {
+    const stored = localStorage.getItem(ASSET_STORAGE_KEY);
+    if (!stored) {
+      return null;
+    }
+    const draft = JSON.parse(stored);
+    validateAssetManifestDraft(draft);
+    return draft;
+  } catch {
+    localStorage.removeItem(ASSET_STORAGE_KEY);
+    return null;
+  }
+}
+
+function replaceAssetEntry(manifest, assetId, draftEntry) {
+  const nextManifest = cloneJson(manifest);
+  const assets = Array.isArray(nextManifest.assets) ? nextManifest.assets : [];
+  const index = assets.findIndex((asset) => asset?.assetId === assetId);
+  if (index === -1) {
+    throw new Error(`Could not find asset ${assetId}.`);
+  }
+  assets[index] = draftEntry;
+  nextManifest.assets = assets;
+  return nextManifest;
+}
+
+function currentSelectedAsset() {
+  const assets = assetManifest?.assets ?? [];
+  return assets.find((asset) => asset.assetId === selectedAssetId) ?? null;
+}
+
+function validateAssetManifestDraft(manifest) {
+  if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
+    throw new Error("Asset manifest must be a JSON object.");
+  }
+  if (typeof manifest.id !== "string" || manifest.id.length === 0) {
+    throw new Error("Asset manifest requires a non-empty id.");
+  }
+  if (typeof manifest.version !== "string" || manifest.version.length === 0) {
+    throw new Error("Asset manifest requires a non-empty version.");
+  }
+  if (!Array.isArray(manifest.assets)) {
+    throw new Error("Asset manifest requires an assets array.");
+  }
+
+  const ids = new Set();
+  manifest.assets.forEach((asset, index) => {
+    validateAssetEntryShape(asset, `Asset ${index + 1}`);
+    if (ids.has(asset.assetId)) {
+      throw new Error(`Duplicate asset id ${asset.assetId}.`);
+    }
+    ids.add(asset.assetId);
+  });
+}
+
+function validateAssetEntryDraft(selected, draftEntry) {
+  validateAssetEntryShape(draftEntry, "Asset entry");
+  if (draftEntry.assetId !== selected.assetId) {
+    throw new Error(`Keep assetId as ${selected.assetId}.`);
+  }
+}
+
+function validateAssetEntryShape(entry, label) {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+    throw new Error(`${label} must be a JSON object.`);
+  }
+
+  Object.keys(entry).forEach((key) => {
+    if (!ASSET_ALLOWED_FIELDS.has(key)) {
+      throw new Error(`${label} has unsupported field ${key}.`);
+    }
+  });
+
+  ASSET_REQUIRED_FIELDS.forEach((field) => {
+    if (typeof entry[field] !== "string" || entry[field].length === 0) {
+      throw new Error(`${label} requires non-empty ${field}.`);
+    }
+  });
+
+  if (!/^sha256:[a-f0-9]{64}$/.test(entry.contentHash)) {
+    throw new Error(`${label} contentHash must be sha256 plus 64 lowercase hex characters.`);
+  }
+
+  ["width", "height", "durationMs", "frameCount"].forEach((field) => {
+    if (entry[field] !== undefined && (!Number.isInteger(entry[field]) || entry[field] < 1)) {
+      throw new Error(`${label} ${field} must be a positive integer.`);
+    }
+  });
+
+  if (entry.usage !== undefined && (!Array.isArray(entry.usage) || entry.usage.some((item) => typeof item !== "string" || item.length === 0))) {
+    throw new Error(`${label} usage must be an array of non-empty strings.`);
+  }
+
+  ASSET_OPTIONAL_FIELDS
+    .filter((field) => !["width", "height", "durationMs", "frameCount", "usage"].includes(field))
+    .forEach((field) => {
+      if (entry[field] !== undefined && (typeof entry[field] !== "string" || entry[field].length === 0)) {
+        throw new Error(`${label} ${field} must be a non-empty string.`);
+      }
+    });
 }
 
 function filteredAssets() {

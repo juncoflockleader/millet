@@ -25,7 +25,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Hero cards can be targets and action sources. In the demo, each hero has a `Focus Flame` ability that spends 2 mana to damage the enemy hero.
 - `Preview` opens ruleset UI preview fixtures for read-only card, hero, equipment, and minion states.
 - `?ruleset=sample-identity` loads the Sanguosha-like eight-player ruleset preview and renders authored absolute board regions for seats, roles, piles, hand, equipment, judgment, prompt, and history.
-- `Assets` opens the ruleset asset library.
+- `Assets` opens the ruleset asset library and local manifest entry editor.
 - `Presentation` opens a local presentation catalog entry editor.
 - `Layout` opens the board layout editor for token controls, region fields, region drag/resize, and full `BoardLayoutJson` import/export.
 - `End Turn` submits the engine-level `end_turn` command.
@@ -53,6 +53,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Presentation editor changes are stored in browser `localStorage` under `ember-duel.presentation.<rulesetId>.v1` and can be reset to the authored ruleset catalog.
 - UI preview fixtures are loaded from `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
 - The asset library is loaded from `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, with previews from each asset `publicPath`.
+- Asset editor changes are stored in browser `localStorage` under `ember-duel.assets.<rulesetId>.v1` and can be copied as active manifest JSON or reset to the authored ruleset source.
 
 ## Assets
 
