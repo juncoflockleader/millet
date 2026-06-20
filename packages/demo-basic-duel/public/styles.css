@@ -2209,6 +2209,17 @@ p,
   gap: 8px;
 }
 
+.playtest-script-list {
+  min-height: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.playtest-script-list .preview-row {
+  min-height: 52px;
+  grid-template-columns: 92px minmax(0, 1fr);
+}
+
 .playtest-actions button {
   min-height: 30px;
   padding: 0 9px;

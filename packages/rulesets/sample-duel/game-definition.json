@@ -38,7 +38,9 @@
     "defaultPresentationCatalog": "ui/ember-duel-presentation.json",
     "presentationCatalogs": ["ui/ember-duel-presentation.json"],
     "defaultPreviewFixture": "ui/ember-duel-preview-fixtures.json",
-    "previewFixtures": ["ui/ember-duel-preview-fixtures.json"]
+    "previewFixtures": ["ui/ember-duel-preview-fixtures.json"],
+    "defaultPlaytestScript": "ui/ember-duel-playtests.json",
+    "playtestScripts": ["ui/ember-duel-playtests.json"]
   },
   "behaviors": [
     "firebolt",

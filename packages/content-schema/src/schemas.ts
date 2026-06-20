@@ -123,6 +123,11 @@ export const gameDefinitionSchema = {
         previewFixtures: {
           type: "array",
           items: { type: "string", minLength: 1 }
+        },
+        defaultPlaytestScript: { type: "string", minLength: 1 },
+        playtestScripts: {
+          type: "array",
+          items: { type: "string", minLength: 1 }
         }
       }
     }
@@ -501,6 +506,102 @@ export const uiPreviewFixtureSchema = {
               type: "object",
               additionalProperties: true
             }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
+const uiPlaytestCommandSchema = {
+  type: "object",
+  required: ["playerId", "type"],
+  additionalProperties: true,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    matchId: { type: "string", minLength: 1 },
+    playerId: { type: "string", minLength: 1 },
+    userId: { type: "string", minLength: 1 },
+    type: { type: "string", minLength: 1 },
+    payload: true
+  }
+} as const satisfies JsonSchema;
+
+const uiPlaytestStepSchema = {
+  type: "object",
+  required: ["id", "action"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    label: { type: "string", minLength: 1 },
+    action: { enum: ["create_match", "submit_command", "fetch_state", "fetch_replay", "assert_resource"] },
+    match: {
+      type: "object",
+      additionalProperties: true,
+      properties: {
+        rulesetId: { type: "string", minLength: 1 },
+        playerCount: { type: "integer", minimum: 1 },
+        demoDuel: { type: "boolean" }
+      }
+    },
+    command: uiPlaytestCommandSchema,
+    expect: {
+      type: "object",
+      additionalProperties: true,
+      properties: {
+        playerId: { type: "string", minLength: 1 },
+        resource: { type: "string", minLength: 1 },
+        current: { type: "number" },
+        minCount: { type: "integer", minimum: 0 },
+        eventType: { type: "string", minLength: 1 }
+      }
+    }
+  }
+} as const satisfies JsonSchema;
+
+export const uiPlaytestScriptSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://millet.dev/schemas/ui-playtest-script.schema.json",
+  type: "object",
+  required: ["id", "version", "kind", "scripts"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    version: { type: "string", minLength: 1 },
+    kind: { enum: ["ui_playtest_script"] },
+    metadata: {
+      type: "object",
+      additionalProperties: true
+    },
+    scripts: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        required: ["id", "label", "steps"],
+        additionalProperties: false,
+        properties: {
+          id: { type: "string", minLength: 1 },
+          label: { type: "string", minLength: 1 },
+          description: { type: "string", minLength: 1 },
+          mode: { enum: ["live_match", "fixture"] },
+          match: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              rulesetId: { type: "string", minLength: 1 },
+              playerCount: { type: "integer", minimum: 1 },
+              demoDuel: { type: "boolean" }
+            }
+          },
+          steps: {
+            type: "array",
+            minItems: 1,
+            items: uiPlaytestStepSchema
+          },
+          expect: {
+            type: "object",
+            additionalProperties: true
           }
         }
       }

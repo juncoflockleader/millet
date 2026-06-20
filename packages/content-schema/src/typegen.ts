@@ -8,6 +8,7 @@ import {
   matchEventSchema,
   presentationCatalogSchema,
   replayFixtureSchema,
+  uiPlaytestScriptSchema,
   uiPreviewFixtureSchema,
   type JsonSchema
 } from "./schemas.ts";
@@ -25,6 +26,7 @@ const DEFAULT_SCHEMA_TYPES: SchemaTypeDefinition[] = [
   { name: "BoardLayoutJson", schema: boardLayoutSchema },
   { name: "PresentationCatalogJson", schema: presentationCatalogSchema },
   { name: "UiPreviewFixtureJson", schema: uiPreviewFixtureSchema },
+  { name: "UiPlaytestScriptJson", schema: uiPlaytestScriptSchema },
   { name: "AssetManifestJson", schema: assetManifestSchema },
   { name: "LocalizationBundleJson", schema: localizationBundleSchema },
   { name: "ReplayFixtureJson", schema: replayFixtureSchema }

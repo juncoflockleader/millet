@@ -52,6 +52,8 @@ export interface GameDefinitionJson {
     "presentationCatalogs"?: string[];
     "defaultPreviewFixture"?: string;
     "previewFixtures"?: string[];
+    "defaultPlaytestScript"?: string;
+    "playtestScripts"?: string[];
   };
 }
 
@@ -380,6 +382,58 @@ export interface UiPreviewFixtureJson {
     "events"?: {
       [key: string]: unknown;
     }[];
+  }[];
+}
+
+export interface UiPlaytestScriptJson {
+  "id": string;
+  "version": string;
+  "kind": "ui_playtest_script";
+  "metadata"?: {
+    [key: string]: unknown;
+  };
+  "scripts": {
+    "id": string;
+    "label": string;
+    "description"?: string;
+    "mode"?: "live_match" | "fixture";
+    "match"?: {
+      "rulesetId"?: string;
+      "playerCount"?: number;
+      "demoDuel"?: boolean;
+      [key: string]: unknown;
+    };
+    "steps": {
+      "id": string;
+      "label"?: string;
+      "action": "create_match" | "submit_command" | "fetch_state" | "fetch_replay" | "assert_resource";
+      "match"?: {
+        "rulesetId"?: string;
+        "playerCount"?: number;
+        "demoDuel"?: boolean;
+        [key: string]: unknown;
+      };
+      "command"?: {
+        "id"?: string;
+        "matchId"?: string;
+        "playerId": string;
+        "userId"?: string;
+        "type": string;
+        "payload"?: unknown;
+        [key: string]: unknown;
+      };
+      "expect"?: {
+        "playerId"?: string;
+        "resource"?: string;
+        "current"?: number;
+        "minCount"?: number;
+        "eventType"?: string;
+        [key: string]: unknown;
+      };
+    }[];
+    "expect"?: {
+      [key: string]: unknown;
+    };
   }[];
 }
 

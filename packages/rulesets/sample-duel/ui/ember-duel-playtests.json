@@ -1,0 +1,77 @@
+{
+  "id": "ember-duel-playtests",
+  "version": "0.1.0",
+  "kind": "ui_playtest_script",
+  "metadata": {
+    "name": "Ember Duel Playtests",
+    "description": "Repeatable Studio smoke runs for the sample-duel ruleset."
+  },
+  "scripts": [
+    {
+      "id": "firebolt-smoke",
+      "label": "Firebolt Smoke",
+      "description": "Create a demo match, cast Firebolt from Player 1 into Player 2, then verify the replay and hero health.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-duel",
+        "demoDuel": true
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create demo match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-firebolt",
+          "label": "P1 casts Firebolt at P2",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "firebolt",
+              "sourceObjectId": "card_firebolt",
+              "selections": {
+                "target": ["p2"]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 7",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 7
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 7
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1
+        }
+      }
+    }
+  ]
+}

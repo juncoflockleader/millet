@@ -132,6 +132,7 @@ const ASSET_MANIFEST_URL = `${RULESET_BASE_URL}/asset-manifest.json`;
 const FALLBACK_BOARD_LAYOUT_URL = "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json";
 const FALLBACK_PRESENTATION_CATALOG_URL = "/content/rulesets/sample-duel/ui/ember-duel-presentation.json";
 const FALLBACK_PREVIEW_FIXTURES_URL = "/content/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json";
+const FALLBACK_PLAYTEST_SCRIPT_URL = "/content/rulesets/sample-duel/ui/ember-duel-playtests.json";
 
 const DEFAULT_LAYOUT = {
   version: 1,
@@ -538,6 +539,8 @@ let previewPanelOpen = false;
 let activePreviewFixture = null;
 let previewMode = false;
 let playtestPanelOpen = false;
+let playtestScriptDocument = null;
+let activePlaytestScriptId = "";
 let playtestRun = null;
 
 const dom = {
@@ -678,6 +681,7 @@ loadCardCatalog();
 loadAuthoredPresentationCatalog();
 loadAssetManifest();
 loadPreviewFixtures();
+loadPlaytestScripts();
 
 function normalizeStudioProjects(projects) {
   if (!Array.isArray(projects)) {
@@ -1215,6 +1219,14 @@ function installPlaytestPanel() {
   dom.playtestPanelButton?.addEventListener("click", () => togglePlaytestPanel());
   dom.closePlaytestPanelButton?.addEventListener("click", () => togglePlaytestPanel(false));
   dom.playtestPanelBody?.addEventListener("click", (event) => {
+    const scriptRow = event.target.closest("[data-playtest-script-id]");
+    if (scriptRow) {
+      activePlaytestScriptId = scriptRow.dataset.playtestScriptId ?? "";
+      renderPlaytestPanel();
+      setPlaytestStatus(`Selected ${scriptRow.dataset.playtestScriptLabel ?? activePlaytestScriptId}.`);
+      return;
+    }
+
     const button = event.target.closest("[data-playtest-action]");
     if (!button || button.disabled) {
       return;
@@ -1764,6 +1776,34 @@ async function loadPreviewFixtures() {
   }
 }
 
+async function loadPlaytestScripts() {
+  try {
+    const scriptUrl = await resolvePlaytestScriptUrl();
+    if (!scriptUrl) {
+      playtestScriptDocument = null;
+      activePlaytestScriptId = "";
+      renderPlaytestPanel();
+      setPlaytestStatus("No scripted playtests configured for this project.");
+      return;
+    }
+
+    const response = await fetch(scriptUrl);
+    if (!response.ok) {
+      throw new Error(`Playtest script request failed: ${response.status}`);
+    }
+
+    playtestScriptDocument = await response.json();
+    activePlaytestScriptId = selectedPlaytestScript()?.id ?? playtestScripts()[0]?.id ?? "";
+    renderPlaytestPanel();
+    setPlaytestStatus(`Loaded ${playtestScripts().length} scripted playtests.`);
+  } catch (error) {
+    playtestScriptDocument = null;
+    activePlaytestScriptId = "";
+    renderPlaytestPanel();
+    setPlaytestStatus(error instanceof Error ? error.message : "Could not load playtest scripts.");
+  }
+}
+
 function renderPreviewPanel() {
   if (!dom.previewPanel) {
     return;
@@ -1791,7 +1831,9 @@ function renderPlaytestPanel() {
   }
 
   const draftStatuses = playtestDraftStatuses();
-  const canRunLiveSmoke = ACTIVE_PROJECT.mode === "playable" && RULESET_ID === "sample-duel";
+  const scripts = playtestScripts();
+  const selectedScript = selectedPlaytestScript();
+  const canRunSelectedScript = ACTIVE_PROJECT.mode === "playable" && (selectedScript?.mode ?? "live_match") === "live_match";
   dom.playtestPanelBody.innerHTML = `
     <section class="playtest-card">
       <div class="playtest-card-head">
@@ -1808,20 +1850,49 @@ function renderPlaytestPanel() {
     <section class="playtest-card">
       <div class="playtest-card-head">
         <div>
-          <strong>${canRunLiveSmoke ? "Scripted Smoke" : "Fixture Preview"}</strong>
-          <span>${canRunLiveSmoke
-            ? "Create a demo match, cast Firebolt from P1 into P2, then inspect replay output."
+          <strong>${scripts.length > 0 ? "Scripted Playtests" : "Fixture Preview"}</strong>
+          <span>${selectedScript
+            ? escapeHtml(selectedScript.description ?? selectedScript.label ?? selectedScript.id)
             : "This project currently uses authored fixtures for UI validation."}</span>
         </div>
       </div>
+      ${scripts.length > 0 ? renderPlaytestScriptList(scripts, selectedScript) : ""}
       <div class="playtest-actions">
-        ${canRunLiveSmoke
-          ? `<button type="button" data-playtest-action="run-ember-duel-smoke" ${playtestRun?.status === "running" ? "disabled" : ""}>Run Firebolt Smoke</button>`
+        ${scripts.length > 0
+          ? `<button type="button" data-playtest-action="run-selected-playtest" ${!canRunSelectedScript || playtestRun?.status === "running" ? "disabled" : ""}>Run Selected</button>`
           : `<button type="button" data-playtest-action="open-preview">Open Preview</button>`}
         <button class="ghost" type="button" data-playtest-action="refresh-drafts">Refresh Drafts</button>
       </div>
     </section>
     ${renderPlaytestRunResult()}
+  `;
+}
+
+function renderPlaytestScriptList(scripts, selectedScript) {
+  return `
+    <div class="playtest-script-list" role="listbox" aria-label="Playtest scripts">
+      ${scripts.map((script) => renderPlaytestScriptRow(script, selectedScript?.id === script.id)).join("")}
+    </div>
+  `;
+}
+
+function renderPlaytestScriptRow(script, selected) {
+  const steps = Array.isArray(script.steps) ? script.steps.length : 0;
+  return `
+    <button
+      class="preview-row ${selected ? "selected" : ""}"
+      type="button"
+      role="option"
+      aria-selected="${selected ? "true" : "false"}"
+      data-playtest-script-id="${escapeAttr(script.id)}"
+      data-playtest-script-label="${escapeAttr(script.label ?? script.id)}"
+    >
+      <span class="preview-focus">${escapeHtml(labelFromId(script.mode ?? "live_match"))}</span>
+      <span class="preview-copy">
+        <strong>${escapeHtml(script.label ?? script.id)}</strong>
+        <span>${escapeHtml(`${steps} steps · ${script.description ?? script.id}`)}</span>
+      </span>
+    </button>
   `;
 }
 
@@ -1872,7 +1943,7 @@ function renderPlaytestRunResult() {
       </div>
       <div class="playtest-metrics">
         <span><b>${escapeHtml(playtestRun.eventCount)}</b> events</span>
-        <span><b>${escapeHtml(playtestRun.p2Health)}</b> P2 health</span>
+        <span><b>${escapeHtml(playtestRun.resourceValue)}</b> ${escapeHtml(playtestRun.resourceLabel)}</span>
         <span><b>${escapeHtml(playtestRun.damageEvents)}</b> damage</span>
       </div>
       <div class="playtest-event-list">
@@ -1929,9 +2000,18 @@ function assetDraftDetail(value) {
   return `${assets} asset entries`;
 }
 
+function playtestScripts() {
+  return Array.isArray(playtestScriptDocument?.scripts) ? playtestScriptDocument.scripts : [];
+}
+
+function selectedPlaytestScript() {
+  const scripts = playtestScripts();
+  return scripts.find((script) => script.id === activePlaytestScriptId) ?? scripts[0] ?? null;
+}
+
 function handlePlaytestAction(action) {
-  if (action === "run-ember-duel-smoke") {
-    void runEmberDuelSmokePlaytest();
+  if (action === "run-selected-playtest") {
+    void runSelectedPlaytestScript();
   } else if (action === "open-preview") {
     togglePlaytestPanel(false);
     togglePreviewPanel(true);
@@ -1941,51 +2021,20 @@ function handlePlaytestAction(action) {
   }
 }
 
-async function runEmberDuelSmokePlaytest() {
+async function runSelectedPlaytestScript() {
+  const script = selectedPlaytestScript();
+  if (!script) {
+    setPlaytestStatus("No playtest script selected.");
+    return;
+  }
+
   playtestRun = { status: "running" };
   renderPlaytestPanel();
-  setPlaytestStatus("Running Firebolt smoke through local match APIs.");
+  setPlaytestStatus(`Running ${script.label ?? script.id} through local match APIs.`);
 
   try {
-    const createResponse = await fetch("/matches", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ rulesetId: RULESET_ID, demoDuel: true })
-    });
-    const created = await readJson(createResponse);
-    if (!createResponse.ok) {
-      throw new Error(created.message ?? created.error ?? "Could not create playtest match.");
-    }
-
-    const nextMatchId = created.matchId;
-    const command = {
-      id: `cmd_playtest_firebolt_${Date.now()}`,
-      matchId: nextMatchId,
-      playerId: "p1",
-      type: "execute_behavior",
-      payload: {
-        behaviorId: "firebolt",
-        sourceObjectId: "card_firebolt",
-        selections: { target: ["p2"] }
-      }
-    };
-    const commandResponse = await fetch(`/matches/${nextMatchId}/commands`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-millet-user-id": "u1"
-      },
-      body: JSON.stringify({ command })
-    });
-    const commandResult = await readJson(commandResponse);
-    if (!commandResponse.ok) {
-      throw new Error(commandResult.message ?? commandResult.error ?? "Scripted command failed.");
-    }
-
-    const [statePayload, replayPayload] = await Promise.all([
-      fetchJson(`/matches/${nextMatchId}/state?admin=true`, { "x-millet-admin": "true" }),
-      fetchJson(`/matches/${nextMatchId}/replay?admin=true`, { "x-millet-admin": "true" })
-    ]);
+    const result = await executePlaytestScript(script);
+    const { nextMatchId, statePayload, replayPayload } = result;
 
     matchId = nextMatchId;
     state = statePayload.state;
@@ -1996,8 +2045,8 @@ async function runEmberDuelSmokePlaytest() {
     selectedPlayerId = state?.turn?.activePlayerId ?? "p1";
     render();
 
-    playtestRun = summarizeSmokePlaytest(nextMatchId, statePayload.state, replayPayload.events ?? []);
-    setPlaytestStatus("Firebolt smoke completed. The live board now shows the generated match.");
+    playtestRun = summarizePlaytestRun(script, nextMatchId, statePayload.state, replayPayload.events ?? []);
+    setPlaytestStatus(`${script.label ?? script.id} completed. The live board now shows the generated match.`);
   } catch (error) {
     playtestRun = {
       status: "error",
@@ -2009,17 +2058,142 @@ async function runEmberDuelSmokePlaytest() {
   renderPlaytestPanel();
 }
 
-function summarizeSmokePlaytest(nextMatchId, playtestState, playtestEvents) {
+async function executePlaytestScript(script) {
+  let nextMatchId = "";
+  let statePayload = null;
+  let replayPayload = null;
+
+  for (const step of Array.isArray(script.steps) ? script.steps : []) {
+    const action = step?.action;
+    if (action === "create_match") {
+      const matchOptions = {
+        rulesetId: RULESET_ID,
+        ...(script.match && typeof script.match === "object" ? script.match : {}),
+        ...(step.match && typeof step.match === "object" ? step.match : {})
+      };
+      const createResponse = await fetch("/matches", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(matchOptions)
+      });
+      const created = await readJson(createResponse);
+      if (!createResponse.ok) {
+        throw new Error(created.message ?? created.error ?? "Could not create playtest match.");
+      }
+      nextMatchId = created.matchId;
+      statePayload = null;
+      replayPayload = null;
+    } else if (action === "submit_command") {
+      if (!nextMatchId) {
+        throw new Error(`Playtest step ${step.id ?? action} needs a match before submitting a command.`);
+      }
+      await submitPlaytestCommand(step, script, nextMatchId);
+      statePayload = null;
+      replayPayload = null;
+    } else if (action === "fetch_state") {
+      statePayload = await fetchPlaytestState(nextMatchId);
+    } else if (action === "fetch_replay") {
+      replayPayload = await fetchPlaytestReplay(nextMatchId);
+    } else if (action === "assert_resource") {
+      statePayload ??= await fetchPlaytestState(nextMatchId);
+      assertPlaytestResource(step, statePayload.state);
+    }
+  }
+
+  statePayload ??= await fetchPlaytestState(nextMatchId);
+  replayPayload ??= await fetchPlaytestReplay(nextMatchId);
+
+  return { nextMatchId, statePayload, replayPayload };
+}
+
+async function submitPlaytestCommand(step, script, nextMatchId) {
+  const sourceCommand = step.command && typeof step.command === "object" ? cloneJson(step.command) : {};
+  const userId = sourceCommand.userId ?? userIdForPlayer(sourceCommand.playerId);
+  delete sourceCommand.userId;
+
+  const command = {
+    ...sourceCommand,
+    id: sourceCommand.id ?? `cmd_playtest_${safeDomId(script.id)}_${safeDomId(step.id)}_${Date.now()}`,
+    matchId: nextMatchId
+  };
+
+  const commandResponse = await fetch(`/matches/${nextMatchId}/commands`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-millet-user-id": userId
+    },
+    body: JSON.stringify({ command })
+  });
+  const commandResult = await readJson(commandResponse);
+  if (!commandResponse.ok) {
+    throw new Error(commandResult.message ?? commandResult.error ?? `Playtest command ${step.id ?? "step"} failed.`);
+  }
+}
+
+function userIdForPlayer(playerId) {
+  if (playerId === "p1") {
+    return "u1";
+  }
+  if (playerId === "p2") {
+    return "u2";
+  }
+  return typeof playerId === "string" && playerId.length > 0 ? playerId : "u1";
+}
+
+async function fetchPlaytestState(nextMatchId) {
+  if (!nextMatchId) {
+    throw new Error("Playtest script did not create a match.");
+  }
+  return await fetchJson(`/matches/${nextMatchId}/state?admin=true`, { "x-millet-admin": "true" });
+}
+
+async function fetchPlaytestReplay(nextMatchId) {
+  if (!nextMatchId) {
+    throw new Error("Playtest script did not create a match.");
+  }
+  return await fetchJson(`/matches/${nextMatchId}/replay?admin=true`, { "x-millet-admin": "true" });
+}
+
+function assertPlaytestResource(step, playtestState) {
+  const expect = step.expect && typeof step.expect === "object" ? step.expect : {};
+  const playerId = expect.playerId;
+  const resource = expect.resource;
+  const expectedCurrent = expect.current;
+  if (typeof playerId !== "string" || typeof resource !== "string" || typeof expectedCurrent !== "number") {
+    throw new Error(`Playtest assert_resource step ${step.id ?? ""} requires playerId, resource, and current.`);
+  }
+
+  const current = playtestState?.players?.[playerId]?.resources?.[resource]?.current;
+  if (current !== expectedCurrent) {
+    throw new Error(`Expected ${playerId} ${resource} to be ${expectedCurrent}, got ${current ?? "missing"}.`);
+  }
+}
+
+function summarizePlaytestRun(script, nextMatchId, playtestState, playtestEvents) {
   const eventTypes = eventTypeCounts(playtestEvents);
+  const primaryResource = primaryPlaytestResource(script, playtestState);
   return {
     status: "ok",
-    label: "Firebolt Smoke",
+    label: script.label ?? script.id ?? "Playtest",
     matchId: nextMatchId,
     lastSequence: playtestState?.lastSequence ?? 0,
     eventCount: playtestEvents.length,
     damageEvents: eventTypes.damage_dealt ?? 0,
-    p2Health: playtestState?.players?.p2?.resources?.health?.current ?? "-",
+    resourceLabel: primaryResource.label,
+    resourceValue: primaryResource.value,
     recentEvents: playtestEvents.slice(-5).map((event) => logLine(event))
+  };
+}
+
+function primaryPlaytestResource(script, playtestState) {
+  const expectedResources = Array.isArray(script.expect?.resources) ? script.expect.resources : [];
+  const expected = expectedResources.find((entry) => typeof entry?.playerId === "string" && typeof entry?.resource === "string");
+  const playerId = expected?.playerId ?? "p2";
+  const resource = expected?.resource ?? "health";
+  return {
+    label: `${playerId} ${resource}`,
+    value: playtestState?.players?.[playerId]?.resources?.[resource]?.current ?? "-"
   };
 }
 
@@ -6701,6 +6875,18 @@ async function resolvePreviewFixturesUrl() {
       : FALLBACK_PREVIEW_FIXTURES_URL;
   } catch {
     return FALLBACK_PREVIEW_FIXTURES_URL;
+  }
+}
+
+async function resolvePlaytestScriptUrl() {
+  try {
+    const gameDefinition = await loadGameDefinitionDocument();
+    const scriptPath = gameDefinition?.ui?.defaultPlaytestScript;
+    return typeof scriptPath === "string" && scriptPath.length > 0
+      ? `${RULESET_BASE_URL}/${scriptPath}`
+      : (RULESET_ID === "sample-duel" ? FALLBACK_PLAYTEST_SCRIPT_URL : null);
+  } catch {
+    return RULESET_ID === "sample-duel" ? FALLBACK_PLAYTEST_SCRIPT_URL : null;
   }
 }
 

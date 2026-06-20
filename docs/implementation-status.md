@@ -11,7 +11,7 @@ Goal: implement M0-M8 from `docs/milestones.md`.
 
 Latest local result:
 
-- 135 tests passing.
+- 136 tests passing.
 
 Basic 1v1 demo smoke:
 
@@ -28,7 +28,7 @@ Latest local result:
 - Interaction smoke confirmed legacy action buttons, click-to-select targeting, drag-to-target targeting, hero card ability targeting, hero ability button execution, display-slot property badges, and viewport fit at `1280 x 720`.
 - Layout editor smoke confirmed the `Layout` panel opens, sliders update CSS variables, row handles update exported JSON/localStorage, edited card width applies to rendered cards, and the existing Firebolt action flow still works.
 - Studio shell smoke confirmed the browser UI now opens as Millet Studio, loads its project registry separately from the editor code, loads Ember Duel as the default playable project, exposes a project switcher, disables live matches for the Sanguosha Identity preview project, and keeps the legacy `?ruleset=sample-identity` entrypoint working.
-- Playtest panel smoke confirmed Millet Studio reports browser-local draft status, runs the Ember Duel Firebolt scripted smoke through live match APIs, updates the board to the generated match, summarizes replay metrics, and routes the Sanguosha Identity preview project back to fixture previews.
+- Playtest panel smoke confirmed Millet Studio reports browser-local draft status, loads authored ruleset playtest scripts, runs the selected Ember Duel `Firebolt Smoke` script through live match APIs, updates the board to the generated match, summarizes replay metrics, and routes the Sanguosha Identity preview project back to fixture previews.
 - Layout region smoke confirmed the editor overlay renders authored board layout regions and widget components, while layout handles remain active.
 - Board layout editor smoke confirmed selected region fields update local `BoardLayoutJson`, custom regions can be added, guide boxes can be dragged, exported JSON/localStorage keep `kind: "board_layout"` with 14 regions after adding one, and the `Presentation` panel still applies a local Firebolt `Ignite` draft into Preview.
 - Board layout editor action smoke confirmed the `Layout` panel opens with snap enabled, geometry inputs snap to the 8px grid, region Add/Copy/Flip X/Fill actions update local `BoardLayoutJson`, selected-region summaries show current geometry, and no page errors are emitted.
@@ -63,7 +63,7 @@ Latest local result:
 - Hidden-role widget smoke confirmed the eight-seat identity preview renders 8 seats, 8 role-summary rows, public lord badges, viewer-owned loyalist badges, 12 hidden role badges across seats and summary, 6 hidden player summary rows, and no visible `role_hidden_*` or hidden object ids.
 - UI engine implementation has started with schema-backed board layout content, ruleset `ui.defaultBoardLayout` discovery, read-only ruleset content serving, and Ember Duel consuming ruleset layout tokens as authored defaults.
 - The next studio-shell slice separated the editor shell from the demo concept by introducing an external Millet Studio project registry, project switcher, default playable `Ember Duel` project, preview-only `Sanguosha Identity` project mapping, and project-scoped `millet.studio.*` browser draft keys with legacy draft fallback.
-- The next playtest-debug slice added a Millet Studio `Playtest` panel with local draft status, an Ember Duel Firebolt scripted smoke run through match APIs, replay/event summaries, and preview-project routing.
+- The next playtest-debug slice added `UiPlaytestScriptJson`, ruleset playtest script refs, validation for missing/duplicate/unknown-behavior script content, an authored Ember Duel `Firebolt Smoke` script, and a Millet Studio `Playtest` panel that lists and runs project-authored scripts through match APIs with replay/event summaries and preview-project routing.
 - The next layout-editor slice added board layout region geometry bounds validation and a schema-backed region/widget guide overlay in Ember Duel.
 - The next runtime-layout slice threaded schema-backed board region/widget metadata into live Ember Duel DOM surfaces and target validation.
 - The next runtime-region-renderer slice moved player-side hero, battlefield, equipment, hand, and deck surfaces onto a small widget-component dispatch layer, added the disabled ChatWindow center-lane surface, and connected ActionPanel prompt summaries to projected prompt state.

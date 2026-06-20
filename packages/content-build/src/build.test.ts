@@ -621,6 +621,83 @@ test("ruleset validation rejects invalid UI preview fixtures", () => {
   assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad zone other_zone references unknown object missing_object")));
 });
 
+test("ruleset validation rejects invalid UI playtest scripts", () => {
+  const dir = mkdtempSync(join(tmpdir(), "millet-ui-playtest-invalid-ruleset-"));
+  mkdirSync(join(dir, "ui"));
+  writeFileSync(
+    join(dir, "game-definition.json"),
+    JSON.stringify({
+      id: "invalid-ui-playtest-ruleset",
+      version: "0.1.0",
+      metadata: {},
+      playerConfig: {},
+      zones: [{ id: "hand", zoneType: "hand", scope: "player" }],
+      behaviors: ["known_behavior"],
+      ui: {
+        defaultPlaytestScript: "ui/bad-playtests.json",
+        playtestScripts: ["ui/bad-playtests.json", "ui/missing-playtests.json"]
+      }
+    })
+  );
+  writeFileSync(
+    join(dir, "behaviors.json"),
+    JSON.stringify({
+      id: "invalid-ui-playtest-behaviors",
+      version: "0.1.0",
+      behaviors: ["known_behavior"]
+    })
+  );
+  writeFileSync(
+    join(dir, "ui", "bad-playtests.json"),
+    JSON.stringify({
+      id: "bad-playtests",
+      version: "0.1.0",
+      kind: "ui_playtest_script",
+      scripts: [
+        {
+          id: "bad",
+          label: "Bad Playtest",
+          mode: "live_match",
+          steps: [
+            {
+              id: "cast",
+              action: "submit_command",
+              command: {
+                playerId: "p1",
+                type: "execute_behavior",
+                payload: { behaviorId: "missing_behavior" }
+              }
+            },
+            {
+              id: "cast",
+              action: "fetch_state"
+            }
+          ]
+        },
+        {
+          id: "bad",
+          label: "Duplicate Playtest",
+          steps: [
+            {
+              id: "create",
+              action: "create_match",
+              match: { rulesetId: "invalid-ui-playtest-ruleset" }
+            }
+          ]
+        }
+      ]
+    })
+  );
+
+  const errors = validateRulesetDir(dir).filter((issue) => issue.severity === "error");
+
+  assert.ok(errors.some((issue) => issue.message.includes("UI playtest script ui/missing-playtests.json is missing")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate UI playtest script id bad")));
+  assert.ok(errors.some((issue) => issue.message.includes("Playtest script bad has duplicate step id cast")));
+  assert.ok(errors.some((issue) => issue.message.includes("Playtest script bad step cast references unknown behavior missing_behavior")));
+  assert.ok(errors.some((issue) => issue.message.includes("Playtest script bad live_match must include a create_match step")));
+});
+
 test("ruleset dependency report summarizes files and content references", () => {
   const report = createRulesetDependencyReport(buildRulesetBundle("packages/rulesets/sample-duel"));
 

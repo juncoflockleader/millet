@@ -8,6 +8,7 @@ import {
   gameDefinitionSchema,
   localizationBundleSchema,
   presentationCatalogSchema,
+  uiPlaytestScriptSchema,
   uiPreviewFixtureSchema,
   validateJsonSchema,
   type JsonSchema
@@ -648,6 +649,81 @@ function addUiPreviewFixtureIssues(
   });
 }
 
+function addUiPlaytestScriptIssues(
+  issues: ValidationIssue[],
+  file: string,
+  document: Record<string, unknown>,
+  behaviorIds: Set<string>
+): void {
+  if (!Array.isArray(document.scripts)) {
+    return;
+  }
+
+  const scriptIds = new Set<string>();
+
+  document.scripts.forEach((script, index) => {
+    if (typeof script !== "object" || script === null || Array.isArray(script)) {
+      return;
+    }
+
+    const record = script as Record<string, unknown>;
+    const scriptId = typeof record.id === "string" ? record.id : `scripts[${index}]`;
+
+    if (typeof record.id === "string") {
+      if (scriptIds.has(record.id)) {
+        issues.push({ severity: "error", file, message: `Duplicate UI playtest script id ${record.id}` });
+      }
+      scriptIds.add(record.id);
+    }
+
+    const steps = record.steps;
+    if (!Array.isArray(steps)) {
+      return;
+    }
+
+    const stepIds = new Set<string>();
+    let hasCreateMatch = false;
+
+    steps.forEach((step, stepIndex) => {
+      if (typeof step !== "object" || step === null || Array.isArray(step)) {
+        return;
+      }
+
+      const stepRecord = step as Record<string, unknown>;
+      const stepId = typeof stepRecord.id === "string" ? stepRecord.id : `steps[${stepIndex}]`;
+      if (typeof stepRecord.id === "string") {
+        if (stepIds.has(stepRecord.id)) {
+          issues.push({ severity: "error", file, message: `Playtest script ${scriptId} has duplicate step id ${stepRecord.id}` });
+        }
+        stepIds.add(stepRecord.id);
+      }
+
+      if (stepRecord.action === "create_match") {
+        hasCreateMatch = true;
+      }
+
+      const command = stepRecord.command;
+      if (stepRecord.action === "submit_command" && typeof command === "object" && command !== null && !Array.isArray(command)) {
+        const payload = (command as Record<string, unknown>).payload;
+        if (typeof payload === "object" && payload !== null && !Array.isArray(payload)) {
+          const behaviorId = (payload as Record<string, unknown>).behaviorId;
+          if (typeof behaviorId === "string" && behaviorIds.size > 0 && !behaviorIds.has(behaviorId)) {
+            issues.push({
+              severity: "error",
+              file,
+              message: `Playtest script ${scriptId} step ${stepId} references unknown behavior ${behaviorId}`
+            });
+          }
+        }
+      }
+    });
+
+    if ((record.mode ?? "live_match") === "live_match" && !hasCreateMatch) {
+      issues.push({ severity: "error", file, message: `Playtest script ${scriptId} live_match must include a create_match step` });
+    }
+  });
+}
+
 export function validateRulesetDir(dir: string): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const jsonFiles = collectJsonFiles(dir);
@@ -731,6 +807,23 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
     for (const fixtureRef of referencedPreviewFixtures) {
       if (!fileNames.has(fixtureRef)) {
         issues.push({ severity: "error", file: gameDefinitionPath, message: `UI preview fixture ${fixtureRef} is missing` });
+      }
+    }
+
+    const referencedPlaytestScripts = new Set<string>();
+    if (typeof uiConfig.defaultPlaytestScript === "string") {
+      referencedPlaytestScripts.add(uiConfig.defaultPlaytestScript);
+    }
+    if (Array.isArray(uiConfig.playtestScripts)) {
+      for (const scriptRef of uiConfig.playtestScripts) {
+        if (typeof scriptRef === "string") {
+          referencedPlaytestScripts.add(scriptRef);
+        }
+      }
+    }
+    for (const scriptRef of referencedPlaytestScripts) {
+      if (!fileNames.has(scriptRef)) {
+        issues.push({ severity: "error", file: gameDefinitionPath, message: `UI playtest script ${scriptRef} is missing` });
       }
     }
   }
@@ -845,6 +938,9 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
     } else if (uiDocument.kind === "ui_preview_fixture") {
       addSchemaIssues(issues, uiPath, uiDocument, uiPreviewFixtureSchema);
       addUiPreviewFixtureIssues(issues, uiPath, uiDocument, cardTemplateIds);
+    } else if (uiDocument.kind === "ui_playtest_script") {
+      addSchemaIssues(issues, uiPath, uiDocument, uiPlaytestScriptSchema);
+      addUiPlaytestScriptIssues(issues, uiPath, uiDocument, behaviorIds);
     } else {
       issues.push({ severity: "error", file: uiPath, message: `Unsupported UI document kind ${String(uiDocument.kind)}` });
     }
