@@ -867,6 +867,11 @@ function installCardStudio() {
     handleCardTemplateAction(button.dataset.cardAction);
   });
   dom.cardTemplateDetail?.addEventListener("change", (event) => {
+    const frameInput = event.target.closest("[data-card-frame-field]");
+    if (frameInput) {
+      updateCardFrameDraftFromInput(frameInput);
+      return;
+    }
     const input = event.target.closest("[data-card-display-field]");
     if (!input) {
       return;
@@ -1394,6 +1399,7 @@ function renderCardTemplateDetail(template) {
       ${renderCardTemplateValidation(validation)}
     </div>
     ${renderCardBehaviorSync(template)}
+    ${renderCardFrameEditor(template)}
     ${renderCardDisplayEditor(template)}
     <div class="card-template-editor">
       <div class="asset-editor-head">
@@ -1408,6 +1414,169 @@ function renderCardTemplateDetail(template) {
       </div>
     </div>
   `;
+}
+
+function renderCardFrameEditor(template) {
+  const presentation = presentationEntryForTemplate(template.templateId);
+  if (!presentation) {
+    return `
+      <div class="card-frame-editor missing">
+        <div class="card-display-head">
+          <div>
+            <strong>Frame & Art</strong>
+            <span>No presentation entry</span>
+          </div>
+        </div>
+        <div class="card-display-empty">Create a presentation entry before editing art crop or frame assets.</div>
+      </div>
+    `;
+  }
+
+  const assets = presentation.assets && typeof presentation.assets === "object" ? presentation.assets : {};
+  const layout = presentation.layout && typeof presentation.layout === "object" ? presentation.layout : {};
+  const datalistId = `card-art-assets-${safeDomId(template.templateId)}`;
+  return `
+    <div class="card-frame-editor">
+      <div class="card-display-head">
+        <div>
+          <strong>Frame & Art</strong>
+          <span>${escapeHtml(layout.variant ?? "default")} presentation</span>
+        </div>
+      </div>
+      <div class="card-frame-grid">
+        <label class="card-frame-field wide">
+          <span>Art path</span>
+          <input
+            type="text"
+            list="${escapeAttr(datalistId)}"
+            value="${escapeAttr(assets.art ?? "")}"
+            data-card-frame-field="assets.art"
+            aria-label="Card art asset path"
+          >
+        </label>
+        <label class="card-frame-field wide">
+          <span>Frame path</span>
+          <input
+            type="text"
+            list="${escapeAttr(datalistId)}"
+            value="${escapeAttr(assets.frame ?? "")}"
+            data-card-frame-field="assets.frame"
+            aria-label="Card frame asset path"
+          >
+        </label>
+        <label class="card-frame-field">
+          <span>Variant</span>
+          <input type="text" value="${escapeAttr(layout.variant ?? "")}" data-card-frame-field="layout.variant">
+        </label>
+        <label class="card-frame-field">
+          <span>Fit</span>
+          <select data-card-frame-field="layout.artFit">
+            ${renderSelectOptions(["cover", "contain", "fill"], layout.artFit ?? "cover")}
+          </select>
+        </label>
+        ${renderCardFrameNumberField("layout.artPositionX", "Art X", layout.artPositionX ?? 50, 0, 100, 1)}
+        ${renderCardFrameNumberField("layout.artPositionY", "Art Y", layout.artPositionY ?? 50, 0, 100, 1)}
+        ${renderCardFrameNumberField("layout.artHeight", "Art H", layout.artHeight ?? "", 32, 110, 1)}
+      </div>
+      ${renderAssetPathDatalist(datalistId)}
+    </div>
+  `;
+}
+
+function renderCardFrameNumberField(field, label, value, min, max, step) {
+  return `
+    <label class="card-frame-field">
+      <span>${escapeHtml(label)}</span>
+      <input
+        type="number"
+        min="${escapeAttr(min)}"
+        max="${escapeAttr(max)}"
+        step="${escapeAttr(step)}"
+        value="${escapeAttr(value)}"
+        data-card-frame-field="${escapeAttr(field)}"
+      >
+    </label>
+  `;
+}
+
+function renderAssetPathDatalist(datalistId) {
+  const paths = Array.from(new Set(
+    (assetManifest?.assets ?? [])
+      .map((asset) => asset?.publicPath)
+      .filter((path) => typeof path === "string" && path.length > 0)
+  )).sort();
+  return `
+    <datalist id="${escapeAttr(datalistId)}">
+      ${paths.map((path) => `<option value="${escapeAttr(path)}"></option>`).join("")}
+    </datalist>
+  `;
+}
+
+function updateCardFrameDraftFromInput(input) {
+  const selected = currentSelectedCardTemplate();
+  if (!selected) {
+    setCardStudioStatus("No card template selected.");
+    return;
+  }
+  if (!presentationCatalog) {
+    setCardStudioStatus("No presentation catalog loaded.");
+    return;
+  }
+
+  const nextCatalog = cloneJson(presentationCatalog);
+  const entry = findPresentationEntryRecord(nextCatalog, selected.templateId);
+  if (!entry) {
+    setCardStudioStatus("No presentation entry available for frame and art editing.");
+    return;
+  }
+
+  setNestedPresentationValue(entry, input.dataset.cardFrameField, cardFrameInputValue(input));
+  cleanupPresentationEntry(entry);
+  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  applyPresentationCatalog(nextCatalog);
+  renderPresentationEditor();
+  renderCardStudio();
+  render();
+  setCardStudioStatus(`Updated frame and art presentation for ${selected.templateId}.`);
+}
+
+function cardFrameInputValue(input) {
+  if (input.type === "number") {
+    if (input.value === "") {
+      return undefined;
+    }
+    const value = Number(input.value);
+    return Number.isFinite(value) ? value : undefined;
+  }
+  const value = input.value.trim();
+  return value ? value : undefined;
+}
+
+function setNestedPresentationValue(entry, path, value) {
+  if (!path) {
+    return;
+  }
+  const keys = path.split(".");
+  const lastKey = keys.pop();
+  const target = keys.reduce((record, key) => {
+    if (!record[key] || typeof record[key] !== "object" || Array.isArray(record[key])) {
+      record[key] = {};
+    }
+    return record[key];
+  }, entry);
+  if (value === undefined) {
+    delete target[lastKey];
+  } else {
+    target[lastKey] = value;
+  }
+}
+
+function cleanupPresentationEntry(entry) {
+  for (const key of ["assets", "layout"]) {
+    if (entry[key] && typeof entry[key] === "object" && !Array.isArray(entry[key]) && Object.keys(entry[key]).length === 0) {
+      delete entry[key];
+    }
+  }
 }
 
 function renderCardDisplayEditor(template) {
@@ -1550,11 +1719,12 @@ function renderCardTemplatePreview(template) {
     counters: template.stats
   };
   const detail = cardDetail(info, object);
-  const art = info.art ? ` style="--card-art: url('${escapeHtml(info.art)}')"` : "";
+  const style = cardPresentationStyle(info);
   return `
     <div class="card-template-preview">
       <article
         class="card disabled-card"
+        ${style}
         data-template="${escapeAttr(template.templateId)}"
         data-tooltip-title="${escapeAttr(info.name)}"
         data-tooltip-body="${escapeAttr(cardTemplateTooltip(info, template))}"
@@ -1563,7 +1733,7 @@ function renderCardTemplatePreview(template) {
         aria-label="${escapeAttr(`${info.name}. ${detail}. ${info.text}`)}"
       >
         ${renderDisplayProperties(info, object)}
-        <div class="card-art"${art} aria-hidden="true"></div>
+        <div class="card-art" aria-hidden="true"></div>
         <div>
           <div class="name">${escapeHtml(info.name)}</div>
           <div class="meta">${escapeHtml(detail)}</div>
@@ -1578,6 +1748,7 @@ function renderCardTemplatePreview(template) {
 function cardTemplatePreviewInfo(template) {
   const presentation = presentationEntryForTemplate(template.templateId);
   const display = template.display?.properties ?? presentation?.properties?.display ?? [];
+  const layout = presentation?.layout && typeof presentation.layout === "object" ? presentation.layout : {};
   return {
     name: presentation?.name ?? cardTemplateDisplayName(template),
     manaCost: template.manaCost ?? presentation?.properties?.manaCost,
@@ -1586,6 +1757,11 @@ function cardTemplatePreviewInfo(template) {
     text: presentation?.text ?? labelFromId(template.descriptionKey ?? template.nameKey),
     action: presentation?.action ?? labelFromId(template.behaviorIds?.[0] ?? "Preview"),
     art: presentation?.assets?.art,
+    frame: presentation?.assets?.frame,
+    artFit: layout.artFit,
+    artPositionX: layout.artPositionX,
+    artPositionY: layout.artPositionY,
+    artHeight: layout.artHeight,
     display
   };
 }
@@ -2884,6 +3060,55 @@ function labelFromId(value) {
   return String(value ?? "")
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function safeDomId(value) {
+  return String(value ?? "item").replace(/[^a-zA-Z0-9_-]+/g, "_");
+}
+
+function cardPresentationStyle(info) {
+  const styles = [];
+  if (info.art) {
+    styles.push(`--card-art: url('${cssUrlValue(info.art)}')`);
+  }
+  if (info.frame) {
+    styles.push(`--card-frame: url('${cssUrlValue(info.frame)}')`);
+  }
+  if (info.artFit) {
+    styles.push(`--card-art-fit: ${cardArtFitValue(info.artFit)}`);
+  }
+  const position = cardArtPositionValue(info.artPositionX, info.artPositionY);
+  if (position) {
+    styles.push(`--card-art-position: ${position}`);
+  }
+  const artHeight = Number(info.artHeight);
+  if (Number.isFinite(artHeight) && artHeight > 0) {
+    styles.push(`--card-art-height: ${Math.round(artHeight)}px`);
+  }
+  return styles.length > 0 ? `style="${escapeAttr(styles.join("; "))}"` : "";
+}
+
+function cssUrlValue(value) {
+  return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/[\n\r]/g, "");
+}
+
+function cardArtFitValue(value) {
+  if (value === "contain") {
+    return "contain";
+  }
+  if (value === "fill") {
+    return "100% 100%";
+  }
+  return "cover";
+}
+
+function cardArtPositionValue(x, y) {
+  const positionX = Number(x);
+  const positionY = Number(y);
+  if (!Number.isFinite(positionX) && !Number.isFinite(positionY)) {
+    return "";
+  }
+  return `${Number.isFinite(positionX) ? Math.round(positionX) : 50}% ${Number.isFinite(positionY) ? Math.round(positionY) : 50}%`;
 }
 
 function renderLayoutControls() {
@@ -4305,6 +4530,11 @@ function presentationObjectToCardDef(entry) {
     text: entry.text ?? "",
     action: entry.action ?? "",
     art: entry.assets?.art,
+    frame: entry.assets?.frame,
+    artFit: entry.layout?.artFit,
+    artPositionX: entry.layout?.artPositionX,
+    artPositionY: entry.layout?.artPositionY,
+    artHeight: entry.layout?.artHeight,
     display: entry.properties?.display ?? []
   };
 }
@@ -4318,6 +4548,11 @@ function presentationHeroToHeroDef(hero) {
     name: hero.name ?? PLAYER_NAMES[hero.playerId] ?? hero.playerId,
     title: hero.title ?? "Hero",
     art: hero.assets?.art,
+    frame: hero.assets?.frame,
+    artFit: hero.layout?.artFit,
+    artPositionX: hero.layout?.artPositionX,
+    artPositionY: hero.layout?.artPositionY,
+    artHeight: hero.layout?.artHeight,
     ability: hero.ability
       ? {
           name: hero.ability.name,
@@ -5335,11 +5570,12 @@ function renderCard(playerId, object, context) {
   const action = actionForObject(playerId, object, context);
   const disabled = !action;
   const detail = cardDetail(info, object);
-  const art = info.art ? ` style="--card-art: url('${escapeHtml(info.art)}')"` : "";
+  const style = cardPresentationStyle(info);
   const tooltip = cardTooltipBody(info, object, playerId, detail, context);
   return `
     <article
       class="card ${disabled ? "disabled-card" : ""}"
+      ${style}
       data-template="${escapeHtml(object.templateId ?? "unknown")}"
       ${actionDataAttrs(action)}
       data-tooltip-title="${escapeAttr(info.name)}"
@@ -5349,7 +5585,7 @@ function renderCard(playerId, object, context) {
       aria-label="${escapeAttr(`${info.name}. ${detail}. ${info.text}`)}"
     >
       ${renderDisplayProperties(info, object)}
-      <div class="card-art"${art} aria-hidden="true"></div>
+      <div class="card-art" aria-hidden="true"></div>
       <div>
         <div class="name">${escapeHtml(info.name)}</div>
         <div class="meta">${escapeHtml(detail)}</div>
