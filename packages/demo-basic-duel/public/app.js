@@ -209,6 +209,22 @@ const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "match", "spectato
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "opponent", "admin"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
 const REGION_OVERFLOW_OPTIONS = ["fan", "scroll", "stack", "compact", "hidden"];
+const WIDGET_KIND_OPTIONS = ["card_collection", "single_object", "system", "debug", "custom"];
+const WIDGET_COMPONENT_OPTIONS = [
+  "HeroCard",
+  "CardRow",
+  "EquipmentSlot",
+  "DeckStack",
+  "ActionPanel",
+  "HistoryLog",
+  "ChatWindow",
+  "IdentityPlayerPanel",
+  "EquipmentStrip",
+  "JudgmentStrip",
+  "DiscardPile",
+  "RoleSummary",
+  "CustomWidget"
+];
 const TARGET_MODE_OPTIONS = ["enemyHero", "selfHero", "battlefield", "targeted"];
 const EQUIPMENT_SLOT_OPTIONS = ["weapon", "armor", "mount", "treasure", "custom"];
 const EQUIPMENT_REPLACEMENT_MODE_OPTIONS = ["replace", "reject", "stack", "custom"];
@@ -564,6 +580,7 @@ const dom = {
   layoutRegionPresetSelect: document.querySelector("#layoutRegionPresetSelect"),
   layoutRegionList: document.querySelector("#layoutRegionList"),
   layoutRegionDetail: document.querySelector("#layoutRegionDetail"),
+  layoutWidgetDetail: document.querySelector("#layoutWidgetDetail"),
   layoutDiagnostics: document.querySelector("#layoutDiagnostics"),
   layoutJson: document.querySelector("#layoutJson"),
   layoutEditorStatus: document.querySelector("#layoutEditorStatus"),
@@ -833,6 +850,27 @@ function installLayoutEditor() {
       return;
     }
     updateSelectedLayoutRegionFromInput(input);
+  });
+  dom.layoutWidgetDetail?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-layout-widget-action]");
+    if (!button) {
+      return;
+    }
+    handleLayoutWidgetAction(button.dataset.layoutWidgetAction);
+  });
+  dom.layoutWidgetDetail?.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-layout-widget-field]");
+    if (!input || ["id", "config"].includes(input.dataset.layoutWidgetField)) {
+      return;
+    }
+    updateSelectedLayoutWidgetFromInput(input);
+  });
+  dom.layoutWidgetDetail?.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-layout-widget-field]");
+    if (!input) {
+      return;
+    }
+    updateSelectedLayoutWidgetFromInput(input);
   });
   dom.layoutRegionLayer?.addEventListener("click", (event) => {
     const regionBox = event.target.closest("[data-region-id]");
@@ -4949,6 +4987,7 @@ function renderLayoutRegionEditor(options = {}) {
   if (!preserveDetail) {
     dom.layoutRegionDetail.innerHTML = renderLayoutRegionDetail();
   }
+  renderLayoutWidgetInspector({ preserveWidgetFocus: Boolean(options.preserveWidgetFocus) });
   renderLayoutDiagnostics();
 }
 
@@ -5011,7 +5050,7 @@ function renderLayoutRegionDetail() {
     </label>
     <label class="layout-field">
       <span>Widget</span>
-      <input type="text" value="${escapeAttr(metadata.widgetId)}" data-layout-region-field="widgetId">
+      <input type="text" list="layout-widget-id-options" value="${escapeAttr(metadata.widgetId)}" data-layout-region-field="widgetId">
     </label>
     <label class="layout-field">
       <span>Visible</span>
@@ -5045,6 +5084,95 @@ function renderLayoutRegionDetail() {
       ${renderGeometryField("width", geometry.width)}
       ${renderGeometryField("height", geometry.height)}
     </div>
+    ${renderWidgetIdDatalist()}
+  `;
+}
+
+function renderLayoutWidgetInspector(options = {}) {
+  if (!dom.layoutWidgetDetail) {
+    return;
+  }
+  const preserveFocus = options.preserveWidgetFocus && dom.layoutWidgetDetail.contains(document.activeElement);
+  if (preserveFocus) {
+    return;
+  }
+  dom.layoutWidgetDetail.innerHTML = renderLayoutWidgetDetail();
+}
+
+function renderLayoutWidgetDetail() {
+  const region = selectedLayoutRegion();
+  if (!region) {
+    return `<div class="layout-widget-empty">Select a region to inspect its widget.</div>`;
+  }
+
+  const widgetId = typeof region.widgetId === "string" ? region.widgetId : "";
+  const widget = layoutWidgetById(widgetId);
+  const metadata = layoutRegionMetadata(region.id);
+  if (!widget) {
+    return `
+      <div class="layout-widget-empty">
+        <strong>No widget found</strong>
+        <span>${escapeHtml(widgetId ? `Region ${region.id} references ${widgetId}.` : `Region ${region.id} has no widgetId.`)}</span>
+        <button class="ghost" type="button" data-layout-widget-action="create">Create Widget</button>
+      </div>
+    `;
+  }
+
+  const config = widget.config && typeof widget.config === "object" && !Array.isArray(widget.config)
+    ? widget.config
+    : {};
+  const usage = layoutWidgetUsage(widget.id);
+  return `
+    <div class="layout-widget-summary">
+      <strong>Widget Inspector</strong>
+      <span>${escapeHtml(`${usage} region${usage === 1 ? "" : "s"} use ${widget.id}`)}</span>
+      <code>${escapeHtml(metadata.component)}</code>
+    </div>
+    <label class="layout-field wide">
+      <span>Widget ID</span>
+      <input type="text" value="${escapeAttr(widget.id)}" data-layout-widget-field="id">
+    </label>
+    <label class="layout-field">
+      <span>Kind</span>
+      <select data-layout-widget-field="kind">
+        ${renderSelectOptions(WIDGET_KIND_OPTIONS, widget.kind || defaultWidgetKindForRegionKind(region.kind))}
+      </select>
+    </label>
+    <label class="layout-field">
+      <span>Component</span>
+      <input type="text" list="layout-widget-component-options" value="${escapeAttr(widget.component ?? "")}" data-layout-widget-field="component">
+    </label>
+    <label class="layout-field wide layout-config-field">
+      <span>Config JSON</span>
+      <textarea rows="5" spellcheck="false" data-layout-widget-field="config">${escapeHtml(JSON.stringify(config, null, 2))}</textarea>
+    </label>
+    ${renderWidgetComponentDatalist()}
+  `;
+}
+
+function renderWidgetIdDatalist() {
+  const widgets = Array.isArray(boardLayoutDocument?.widgets) ? boardLayoutDocument.widgets : [];
+  return `
+    <datalist id="layout-widget-id-options">
+      ${widgets
+        .filter((widget) => widget && typeof widget.id === "string")
+        .map((widget) => `<option value="${escapeAttr(widget.id)}">${escapeHtml(widget.component ?? widget.kind ?? "")}</option>`)
+        .join("")}
+    </datalist>
+  `;
+}
+
+function renderWidgetComponentDatalist() {
+  const components = new Set(WIDGET_COMPONENT_OPTIONS);
+  for (const widget of Array.isArray(boardLayoutDocument?.widgets) ? boardLayoutDocument.widgets : []) {
+    if (typeof widget?.component === "string" && widget.component) {
+      components.add(widget.component);
+    }
+  }
+  return `
+    <datalist id="layout-widget-component-options">
+      ${Array.from(components).sort().map((component) => `<option value="${escapeAttr(component)}"></option>`).join("")}
+    </datalist>
   `;
 }
 
@@ -5135,8 +5263,16 @@ function boardLayoutDiagnostics() {
       issues.push({ severity: "error", message: `Duplicate widget id ${widgetId}.` });
     }
     widgetIds.add(widgetId);
+    if (!WIDGET_KIND_OPTIONS.includes(widget.kind)) {
+      issues.push({ severity: "error", message: `Widget ${widgetId} has unsupported kind ${widget.kind || "(empty)"}.` });
+    }
     if (!widget.component) {
       issues.push({ severity: "error", message: `Widget ${widgetId} is missing a component.` });
+    } else if (!WIDGET_COMPONENT_OPTIONS.includes(widget.component)) {
+      issues.push({ severity: "warning", message: `Widget ${widgetId} uses unregistered component ${widget.component}.` });
+    }
+    if (widget.config !== undefined && (!widget.config || typeof widget.config !== "object" || Array.isArray(widget.config))) {
+      issues.push({ severity: "error", message: `Widget ${widgetId} config must be an object.` });
     }
   });
 
@@ -5163,6 +5299,13 @@ function boardLayoutDiagnostics() {
     const geometryIssue = layoutGeometryIssue(regionId, region.geometry, width, height);
     if (geometryIssue) {
       issues.push(geometryIssue);
+    }
+  });
+
+  widgets.forEach((widget) => {
+    const widgetId = typeof widget?.id === "string" ? widget.id : "";
+    if (widgetId && !regions.some((region) => region?.widgetId === widgetId)) {
+      issues.push({ severity: "warning", message: `Widget ${widgetId} is not used by any region.` });
     }
   });
 
@@ -5278,6 +5421,107 @@ function updateSelectedLayoutRegionFromInput(input) {
   }
 
   commitBoardLayoutDocumentChange("", { preserveDetailFocus: true });
+}
+
+function updateSelectedLayoutWidgetFromInput(input) {
+  const widget = selectedLayoutWidget();
+  if (!widget) {
+    setLayoutStatus("Create a widget before editing it.");
+    renderLayoutWidgetInspector();
+    return;
+  }
+
+  const field = input.dataset.layoutWidgetField;
+  if (field === "id") {
+    renameSelectedLayoutWidget(input.value.trim());
+    return;
+  }
+  if (field === "kind") {
+    widget.kind = input.value;
+  } else if (field === "component") {
+    widget.component = input.value.trim();
+  } else if (field === "config") {
+    try {
+      widget.config = parseWidgetConfigInput(input.value);
+      input.classList.remove("invalid");
+    } catch (error) {
+      input.classList.add("invalid");
+      setLayoutStatus(error instanceof Error ? error.message : "Widget config must be valid JSON.");
+      renderLayoutDiagnostics();
+      return;
+    }
+  }
+
+  commitBoardLayoutDocumentChange("Updated widget.", { preserveWidgetFocus: true });
+}
+
+function parseWidgetConfigInput(value) {
+  const text = value.trim();
+  if (!text) {
+    return {};
+  }
+  const parsed = JSON.parse(text);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Widget config must be a JSON object.");
+  }
+  return parsed;
+}
+
+function handleLayoutWidgetAction(action) {
+  if (action === "create") {
+    createSelectedLayoutWidget();
+  }
+}
+
+function createSelectedLayoutWidget() {
+  const region = selectedLayoutRegion();
+  const document = ensureBoardLayoutDocument();
+  if (!region) {
+    setLayoutStatus("Select a region before creating a widget.");
+    return;
+  }
+
+  document.widgets ??= [];
+  let widgetId = typeof region.widgetId === "string" && region.widgetId ? region.widgetId : "";
+  if (!widgetId || layoutWidgetById(widgetId)) {
+    widgetId = uniqueWidgetId(widgetId || `${region.id}_widget`);
+    region.widgetId = widgetId;
+  }
+  const component = componentForRegionKind(region.kind);
+  document.widgets.push({
+    id: widgetId,
+    kind: defaultWidgetKindForRegionKind(region.kind),
+    component,
+    config: defaultWidgetConfigForComponent(component)
+  });
+  commitBoardLayoutDocumentChange(`Created widget ${widgetId}.`);
+}
+
+function renameSelectedLayoutWidget(nextId) {
+  const widget = selectedLayoutWidget();
+  if (!widget) {
+    setLayoutStatus("No selected widget to rename.");
+    return;
+  }
+  const previousId = widget.id;
+  if (!nextId) {
+    setLayoutStatus("Widget id is required.");
+    renderLayoutWidgetInspector();
+    return;
+  }
+  if (nextId !== previousId && layoutWidgetById(nextId)) {
+    setLayoutStatus(`Widget id ${nextId} is already used.`);
+    renderLayoutWidgetInspector();
+    return;
+  }
+
+  widget.id = nextId;
+  layoutRegions().forEach((region) => {
+    if (region.widgetId === previousId) {
+      region.widgetId = nextId;
+    }
+  });
+  commitBoardLayoutDocumentChange(`Renamed widget ${previousId} to ${nextId}.`);
 }
 
 function renameSelectedLayoutRegion(nextId) {
@@ -5434,6 +5678,19 @@ function uniqueRegionId(baseId) {
   return id;
 }
 
+function uniqueWidgetId(baseId) {
+  const widgets = Array.isArray(boardLayoutDocument?.widgets) ? boardLayoutDocument.widgets : [];
+  const used = new Set(widgets.map((widget) => widget?.id).filter(Boolean));
+  const safeBaseId = baseId || "layout_widget";
+  let id = safeBaseId;
+  let suffix = 2;
+  while (used.has(id)) {
+    id = `${safeBaseId}_${suffix}`;
+    suffix += 1;
+  }
+  return id;
+}
+
 function currentLayoutRegionGeometry(region) {
   return clampGuideGeometry(region?.geometry) ?? layoutTokenGeometry(region?.id);
 }
@@ -5487,6 +5744,18 @@ function layoutWidgetById(widgetId) {
   return boardLayoutDocument.widgets.find((widget) => widget && typeof widget === "object" && widget.id === widgetId) ?? null;
 }
 
+function selectedLayoutWidget() {
+  const widgetId = selectedLayoutRegion()?.widgetId;
+  return typeof widgetId === "string" ? layoutWidgetById(widgetId) : null;
+}
+
+function layoutWidgetUsage(widgetId) {
+  if (!widgetId) {
+    return 0;
+  }
+  return layoutRegions().filter((region) => region.widgetId === widgetId).length;
+}
+
 function runtimeRegionIdForPlayer(playerId, kind) {
   const side = playerId === "p2" ? "opponent" : "player";
   return `${side}_${kind}`;
@@ -5527,10 +5796,19 @@ function componentForRegionKind(kind) {
   if (kind === "equipment") {
     return "EquipmentSlot";
   }
+  if (kind === "judgment") {
+    return "JudgmentStrip";
+  }
   if (kind === "deck") {
     return "DeckStack";
   }
+  if (kind === "discard" || kind === "graveyard") {
+    return "DiscardPile";
+  }
   if (kind === "action_window") {
+    return "ActionPanel";
+  }
+  if (kind === "prompt") {
     return "ActionPanel";
   }
   if (kind === "history_log") {
@@ -5539,7 +5817,45 @@ function componentForRegionKind(kind) {
   if (kind === "chat") {
     return "ChatWindow";
   }
-  return "UnknownRegion";
+  if (kind === "opponent_summary") {
+    return "RoleSummary";
+  }
+  return "CustomWidget";
+}
+
+function defaultWidgetKindForRegionKind(kind) {
+  if (["battlefield", "hand", "deck", "discard", "graveyard", "judgment", "equipment"].includes(kind)) {
+    return "card_collection";
+  }
+  if (kind === "hero") {
+    return "single_object";
+  }
+  if (["action_window", "history_log", "chat", "prompt", "opponent_summary", "spectator_overlay"].includes(kind)) {
+    return "system";
+  }
+  if (kind === "debug_overlay") {
+    return "debug";
+  }
+  return "custom";
+}
+
+function defaultWidgetConfigForComponent(component) {
+  if (component === "HeroCard") {
+    return { supportsSourceActions: true, supportsTargetHighlight: true };
+  }
+  if (component === "CardRow") {
+    return { supportsDragSource: true, supportsFanOverflow: true };
+  }
+  if (component === "EquipmentSlot" || component === "EquipmentStrip") {
+    return { supportsDragSource: true, showEmptySlot: true };
+  }
+  if (component === "DeckStack") {
+    return { showCount: true };
+  }
+  if (component === "ChatWindow") {
+    return { enabled: false, placeholder: "Chat unavailable." };
+  }
+  return {};
 }
 
 function inferRegionMetadata(regionId) {
@@ -6356,8 +6672,12 @@ function commitLayoutChange(message = "") {
 function commitBoardLayoutDocumentChange(message = "", options = {}) {
   saveLayout();
   renderLayoutRegionGuides();
-  renderLayoutRegionEditor({ preserveDetailFocus: Boolean(options.preserveDetailFocus) });
+  renderLayoutRegionEditor({
+    preserveDetailFocus: Boolean(options.preserveDetailFocus),
+    preserveWidgetFocus: Boolean(options.preserveWidgetFocus)
+  });
   syncLayoutJson();
+  annotateStaticLayoutRegions();
   if (shouldRenderAbsolutePreviewBoard()) {
     render();
   }

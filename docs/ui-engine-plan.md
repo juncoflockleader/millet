@@ -20,7 +20,7 @@ Current implemented slice:
 - `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
 - ruleset validation for preview fixture refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown card templates, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - demo content endpoint at `/content/rulesets/:rulesetId/*.json`.
-- Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports document id/version/name/logical-size/scaling edits, whole-board template application, token controls, region presets, region selection, region field editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, local diagnostics, custom token preservation, and renders authored board regions/widgets as an overlay guide.
+- Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports document id/version/name/logical-size/scaling edits, whole-board template application, token controls, region presets, region selection, region field editing, widget id/kind/component/config editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, local diagnostics, custom token preservation, and renders authored board regions/widgets as an overlay guide.
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
 - Ember Duel runtime and absolute preview boards share widget-component registries with visible `CustomWidget`/unknown-component fallbacks driven by widget config placeholder/description text.
@@ -515,7 +515,7 @@ Validation should cover:
 - Build visual region editor with predefined regions and custom widgets.
 - Preserve viewport-fit scaling.
 - Acceptance: a Hearthstone-like and Sanguosha-like board layout can be authored and exported.
-- Current slice: Ember Duel `Layout` panel edits viewport-fitted tokens plus selected `BoardLayoutJson` regions, applies ruleset-default, Hearthstone-like `2P Duel`, and Sanguosha-like `8-Seat Identity` board templates, supports region geometry fields and canvas drag/resize, imports/exports full board layout JSON, and runtime/absolute board renderers resolve authored widget component names through registries with visible custom-widget fallbacks.
+- Current slice: Ember Duel `Layout` panel edits viewport-fitted tokens plus selected `BoardLayoutJson` regions/widgets, applies ruleset-default, Hearthstone-like `2P Duel`, and Sanguosha-like `8-Seat Identity` board templates, supports region geometry fields and canvas drag/resize, exposes a widget inspector for widget id/kind/component/config JSON, imports/exports full board layout JSON, and runtime/absolute board renderers resolve authored widget component names through registries with visible custom-widget fallbacks.
 
 ### UI-M3: Card Template Studio
 
