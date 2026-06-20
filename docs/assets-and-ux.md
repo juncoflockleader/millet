@@ -167,12 +167,12 @@ Card templates can also declare where important properties should appear. The pr
 
 This keeps ruleset-specific visual language data-driven. A Hearthstone-like weapon can put durability in a corner badge, while a Sanguosha-like card can put suit and point metadata in slots that match that ruleset's table language. Clients may skin the icons and frame, but the card template tells them which properties deserve first-class placement.
 
-The current default runtime validates the slots and icons it knows how to render before content reaches the browser:
+The content validator accepts a default slot/icon registry and extends it from `BoardLayoutJson.propertyDisplay` declarations before content reaches the browser:
 
 - slots: `top-left`, `top-right`, `bottom-left`, `bottom-right`
 - icons: `mana`, `sword`, `heart`, `durability`
 
-This validation runs for card catalog template displays, presentation catalog object displays, hero displays, and hero ability displays. Future card-layout definitions should be able to extend this registry per layout, but unsupported default tokens are errors today because they would render as misplaced or unskinned badges.
+This validation runs for card catalog template displays, presentation catalog object displays, hero displays, and hero ability displays. Board layouts can add ruleset-specific slots and icons; `sample-identity` declares `suit-point`, `role-corner`, `suit`, `rank`, and `faction` so Sanguosha-like point/suit and identity badges validate without changing client code.
 
 ## Text And Behavior Sync
 

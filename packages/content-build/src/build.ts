@@ -96,8 +96,46 @@ const IMAGE_ASSET_KINDS = new Set([
 const ALLOWED_IMAGE_MEDIA_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
 const MIN_CARD_ASSET_DIMENSION = 64;
 const MAX_CARD_ASSET_DIMENSION = 8192;
-const SUPPORTED_PROPERTY_DISPLAY_SLOTS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
-const SUPPORTED_PROPERTY_DISPLAY_ICONS = new Set(["durability", "heart", "mana", "sword"]);
+const DEFAULT_PROPERTY_DISPLAY_SLOTS = ["top-left", "top-right", "bottom-left", "bottom-right"];
+const DEFAULT_PROPERTY_DISPLAY_ICONS = ["durability", "heart", "mana", "sword"];
+
+interface PropertyDisplayRegistry {
+  slots: Set<string>;
+  icons: Set<string>;
+}
+
+function createDefaultPropertyDisplayRegistry(): PropertyDisplayRegistry {
+  return {
+    slots: new Set(DEFAULT_PROPERTY_DISPLAY_SLOTS),
+    icons: new Set(DEFAULT_PROPERTY_DISPLAY_ICONS)
+  };
+}
+
+function addPropertyDisplayDefinitionsToRegistry(registry: PropertyDisplayRegistry, layout: Record<string, unknown>): void {
+  const propertyDisplay = layout.propertyDisplay;
+  if (typeof propertyDisplay !== "object" || propertyDisplay === null || Array.isArray(propertyDisplay)) {
+    return;
+  }
+
+  const record = propertyDisplay as Record<string, unknown>;
+  for (const slot of Array.isArray(record.slots) ? record.slots : []) {
+    if (typeof slot === "object" && slot !== null && !Array.isArray(slot)) {
+      const slotId = (slot as Record<string, unknown>).id;
+      if (typeof slotId === "string" && slotId.length > 0) {
+        registry.slots.add(slotId);
+      }
+    }
+  }
+
+  for (const icon of Array.isArray(record.icons) ? record.icons : []) {
+    if (typeof icon === "object" && icon !== null && !Array.isArray(icon)) {
+      const iconId = (icon as Record<string, unknown>).id;
+      if (typeof iconId === "string" && iconId.length > 0) {
+        registry.icons.add(iconId);
+      }
+    }
+  }
+}
 
 function addAssetCompatibilityIssues(issues: ValidationIssue[], file: string, manifest: Record<string, unknown>): void {
   if (!Array.isArray(manifest.assets)) {
@@ -194,7 +232,8 @@ function addPropertyDisplayIssues(
   issues: ValidationIssue[],
   file: string,
   displays: unknown,
-  context: string
+  context: string,
+  registry: PropertyDisplayRegistry
 ): void {
   if (!Array.isArray(displays)) {
     return;
@@ -208,7 +247,7 @@ function addPropertyDisplayIssues(
     const record = display as Record<string, unknown>;
     const property = typeof record.property === "string" && record.property.length > 0 ? record.property : String(index);
 
-    if (typeof record.slot === "string" && !SUPPORTED_PROPERTY_DISPLAY_SLOTS.has(record.slot)) {
+    if (typeof record.slot === "string" && !registry.slots.has(record.slot)) {
       issues.push({
         severity: "error",
         file,
@@ -216,7 +255,7 @@ function addPropertyDisplayIssues(
       });
     }
 
-    if (typeof record.icon === "string" && !SUPPORTED_PROPERTY_DISPLAY_ICONS.has(record.icon)) {
+    if (typeof record.icon === "string" && !registry.icons.has(record.icon)) {
       issues.push({
         severity: "error",
         file,
@@ -233,7 +272,8 @@ function addCardCatalogIssues(
   behaviorIds: Set<string>,
   assetIds: Set<string>,
   localizationKeys: Set<string>,
-  cardTemplateIds: Set<string>
+  cardTemplateIds: Set<string>,
+  propertyDisplayRegistry: PropertyDisplayRegistry
 ): void {
   if (!Array.isArray(catalog.templates)) {
     return;
@@ -279,7 +319,7 @@ function addCardCatalogIssues(
 
     const display = record.display;
     if (typeof display === "object" && display !== null && !Array.isArray(display)) {
-      addPropertyDisplayIssues(issues, file, (display as Record<string, unknown>).properties, prefix);
+      addPropertyDisplayIssues(issues, file, (display as Record<string, unknown>).properties, prefix, propertyDisplayRegistry);
     }
   });
 }
@@ -289,7 +329,8 @@ function addPresentationCatalogIssues(
   file: string,
   catalog: Record<string, unknown>,
   cardTemplateIds: Set<string>,
-  behaviorIds: Set<string>
+  behaviorIds: Set<string>,
+  propertyDisplayRegistry: PropertyDisplayRegistry
 ): void {
   const presentationTemplateIds = new Set<string>();
 
@@ -327,7 +368,7 @@ function addPresentationCatalogIssues(
 
       const properties = record.properties;
       if (typeof properties === "object" && properties !== null && !Array.isArray(properties)) {
-        addPropertyDisplayIssues(issues, file, (properties as Record<string, unknown>).display, `Presentation ${templateId}`);
+        addPropertyDisplayIssues(issues, file, (properties as Record<string, unknown>).display, `Presentation ${templateId}`, propertyDisplayRegistry);
       }
     });
   }
@@ -360,12 +401,12 @@ function addPresentationCatalogIssues(
         if (typeof behaviorId === "string" && behaviorIds.size > 0 && !behaviorIds.has(behaviorId)) {
           issues.push({ severity: "error", file, message: `Hero ${playerId} ability references unknown behavior ${behaviorId}` });
         }
-        addPropertyDisplayIssues(issues, file, abilityRecord.display, `Hero ${playerId} ability`);
+        addPropertyDisplayIssues(issues, file, abilityRecord.display, `Hero ${playerId} ability`, propertyDisplayRegistry);
       }
 
       const properties = record.properties;
       if (typeof properties === "object" && properties !== null && !Array.isArray(properties)) {
-        addPropertyDisplayIssues(issues, file, (properties as Record<string, unknown>).display, `Hero ${playerId}`);
+        addPropertyDisplayIssues(issues, file, (properties as Record<string, unknown>).display, `Hero ${playerId}`, propertyDisplayRegistry);
       }
     });
   }
@@ -440,6 +481,30 @@ function addBoardLayoutIssues(issues: ValidationIssue[], file: string, layout: R
         }
       }
     });
+  }
+
+  const propertyDisplay = layout.propertyDisplay;
+  if (typeof propertyDisplay === "object" && propertyDisplay !== null && !Array.isArray(propertyDisplay)) {
+    const record = propertyDisplay as Record<string, unknown>;
+    for (const [field, label] of [
+      ["slots", "slot"],
+      ["icons", "icon"]
+    ] as const) {
+      const ids = new Set<string>();
+      for (const entry of Array.isArray(record[field]) ? record[field] : []) {
+        if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+          continue;
+        }
+        const id = (entry as Record<string, unknown>).id;
+        if (typeof id !== "string" || id.length === 0) {
+          continue;
+        }
+        if (ids.has(id)) {
+          issues.push({ severity: "error", file, message: `Duplicate property display ${label} id ${id}` });
+        }
+        ids.add(id);
+      }
+    }
   }
 }
 
@@ -591,6 +656,7 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
   const assetIds = new Set<string>();
   const cardTemplateIds = new Set<string>();
   const localizationKeys = new Set<string>();
+  const propertyDisplayRegistry = createDefaultPropertyDisplayRegistry();
 
   if (!fileNames.has("game-definition.json")) {
     issues.push({ severity: "error", file: dir, message: "Missing game-definition.json" });
@@ -753,11 +819,18 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
   }
 
   const cardCatalogFile = typeof gameDefinition.cardCatalog === "string" ? gameDefinition.cardCatalog : "card-catalog.json";
+  for (const uiFile of [...fileNames].filter((fileName) => fileName.startsWith("ui/") && fileName.endsWith(".json")).sort()) {
+    const uiDocument = readJson(join(dir, uiFile)) as Record<string, unknown>;
+    if (uiDocument.kind === "board_layout") {
+      addPropertyDisplayDefinitionsToRegistry(propertyDisplayRegistry, uiDocument);
+    }
+  }
+
   if (fileNames.has(cardCatalogFile)) {
     const cardCatalogPath = join(dir, cardCatalogFile);
     const catalog = readJson(cardCatalogPath) as Record<string, unknown>;
     addSchemaIssues(issues, cardCatalogPath, catalog, cardCatalogSchema);
-    addCardCatalogIssues(issues, cardCatalogPath, catalog, behaviorIds, assetIds, localizationKeys, cardTemplateIds);
+    addCardCatalogIssues(issues, cardCatalogPath, catalog, behaviorIds, assetIds, localizationKeys, cardTemplateIds, propertyDisplayRegistry);
   }
 
   for (const uiFile of [...fileNames].filter((fileName) => fileName.startsWith("ui/") && fileName.endsWith(".json")).sort()) {
@@ -768,7 +841,7 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
       addBoardLayoutIssues(issues, uiPath, uiDocument);
     } else if (uiDocument.kind === "presentation_catalog") {
       addSchemaIssues(issues, uiPath, uiDocument, presentationCatalogSchema);
-      addPresentationCatalogIssues(issues, uiPath, uiDocument, cardTemplateIds, behaviorIds);
+      addPresentationCatalogIssues(issues, uiPath, uiDocument, cardTemplateIds, behaviorIds, propertyDisplayRegistry);
     } else if (uiDocument.kind === "ui_preview_fixture") {
       addSchemaIssues(issues, uiPath, uiDocument, uiPreviewFixtureSchema);
       addUiPreviewFixtureIssues(issues, uiPath, uiDocument, cardTemplateIds);

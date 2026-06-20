@@ -11,7 +11,7 @@ Goal: implement M0-M8 from `docs/milestones.md`.
 
 Latest local result:
 
-- 128 tests passing.
+- 129 tests passing.
 
 Basic 1v1 demo smoke:
 
@@ -46,6 +46,7 @@ Latest local result:
 - The next identity-layout slice added a schema-backed Sanguosha-like eight-seat board layout for `sample-identity`, including seat ring, role summary, shared deck/discard, active hand, judgment, equipment, action/response, and history regions.
 - The next prompt-control slice upgraded `ActionPanel` from summary chips to prompt-specific controls for response mode, responder progress, pass answers, main actions, allowed response behaviors, and a read-only prompt preview fixture.
 - The next identity-preview slice added a projection-safe eight-player preview fixture for `sample-identity`, covering public lord role, viewer-owned role, redacted hidden roles, hidden hands/deck, equipment, judgment, discard, and a nullification response prompt. Local content smoke confirmed the server serves it as one full-board fixture with 8 players, 20 hidden objects, and a `nullification_stack` priority-loop prompt.
+- The next property-display slice added board-layout-declared slot/icon registries, validation for duplicate registry entries, and Sanguosha-like `suit-point`, `role-corner`, `suit`, `rank`, and `faction` display tokens in `sample-identity`.
 
 CLI smoke checks:
 

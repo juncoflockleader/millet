@@ -250,6 +250,73 @@ test("ruleset validation rejects invalid card catalog references", () => {
   assert.ok(errors.some((issue) => issue.message.includes("Template known display property manaCost uses unsupported icon crystal")));
 });
 
+test("ruleset validation accepts property display registries from board layouts", () => {
+  const dir = mkdtempSync(join(tmpdir(), "millet-display-registry-ruleset-"));
+  mkdirSync(join(dir, "ui"));
+  writeFileSync(
+    join(dir, "game-definition.json"),
+    JSON.stringify({
+      id: "display-registry-ruleset",
+      version: "0.1.0",
+      metadata: {},
+      playerConfig: {},
+      zones: [{ id: "hand", zoneType: "hand", scope: "player" }],
+      cardCatalog: "card-catalog.json",
+      ui: {
+        defaultBoardLayout: "ui/display-layout.json",
+        boardLayouts: ["ui/display-layout.json"]
+      }
+    })
+  );
+  writeFileSync(
+    join(dir, "card-catalog.json"),
+    JSON.stringify({
+      id: "display-registry-cards",
+      version: "0.1.0",
+      templates: [
+        {
+          templateId: "judgment_card",
+          version: "0.1.0",
+          objectType: "card",
+          nameKey: "card.judgment.name",
+          display: {
+            properties: [
+              { property: "suit", slot: "suit-point", icon: "suit" },
+              { property: "rank", slot: "suit-point", icon: "rank" }
+            ]
+          }
+        }
+      ]
+    })
+  );
+  writeFileSync(
+    join(dir, "ui", "display-layout.json"),
+    JSON.stringify({
+      id: "display-layout",
+      version: "0.1.0",
+      kind: "board_layout",
+      logicalSize: { width: 320, height: 240 },
+      scaling: { mode: "fit_viewport" },
+      propertyDisplay: {
+        slots: [{ id: "suit-point", label: "Suit And Point" }],
+        icons: [{ id: "suit", label: "Suit" }, { id: "rank", label: "Point" }]
+      },
+      regions: [
+        {
+          id: "hand",
+          kind: "hand",
+          ownerScope: "player",
+          geometry: { x: 0, y: 0, width: 320, height: 80 },
+          widgetId: "hand"
+        }
+      ],
+      widgets: [{ id: "hand", kind: "card_collection", component: "CardRow" }]
+    })
+  );
+
+  assert.deepEqual(validateRulesetDir(dir).filter((issue) => issue.severity === "error"), []);
+});
+
 test("ruleset validation rejects invalid UI board layouts", () => {
   const dir = mkdtempSync(join(tmpdir(), "millet-ui-layout-invalid-ruleset-"));
   mkdirSync(join(dir, "ui"));
@@ -275,6 +342,10 @@ test("ruleset validation rejects invalid UI board layouts", () => {
       kind: "board_layout",
       logicalSize: { width: 1120, height: 620 },
       scaling: { mode: "fit_viewport" },
+      propertyDisplay: {
+        slots: [{ id: "badge" }, { id: "badge" }],
+        icons: [{ id: "gem" }, { id: "gem" }]
+      },
       regions: [
         {
           id: "hand",
@@ -320,6 +391,8 @@ test("ruleset validation rejects invalid UI board layouts", () => {
   assert.ok(errors.some((issue) => issue.message.includes("references unknown widget missing-widget")));
   assert.ok(errors.some((issue) => issue.message.includes("Region off_board geometry exceeds logical board bounds 1120x620")));
   assert.ok(errors.some((issue) => issue.message.includes("Board layout ui/missing-layout.json is missing")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate property display slot id badge")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate property display icon id gem")));
 });
 
 test("ruleset validation rejects invalid UI presentation catalogs", () => {

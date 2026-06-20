@@ -14,7 +14,7 @@ Current implemented slice:
 - `sample-duel` presentation catalog at `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`.
 - `game-definition.json` `ui.defaultPresentationCatalog` discovery.
 - ruleset validation for presentation catalog schema, missing presentation refs, duplicate presentation ids, unknown card templates, and unknown behavior refs.
-- ruleset validation for unsupported default property display slots/icons in card catalogs, presentation catalogs, hero displays, and hero ability displays.
+- ruleset validation for property display slot/icon registries declared by board layouts, including card catalogs, presentation catalogs, hero displays, and hero ability displays.
 - `UiPreviewFixtureJson` schema for projected card, hero, equipment, minion, and full-board preview states.
 - `sample-duel` UI preview fixtures at `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
 - `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
@@ -294,7 +294,7 @@ Property display examples:
 - Hearthstone-like weapon: attack bottom-left, durability bottom-right
 - Sanguosha-like basic/trick card: suit and point in upper corner, category label, kingdom/faction if relevant
 
-Current default validation accepts `top-left`, `top-right`, `bottom-left`, and `bottom-right` slots plus `mana`, `sword`, `heart`, and `durability` icons. Layout-specific slot/icon registries remain future work; for now this catches tokens the Ember Duel runtime cannot skin before they reach the browser.
+Default validation accepts `top-left`, `top-right`, `bottom-left`, and `bottom-right` slots plus `mana`, `sword`, `heart`, and `durability` icons. Board layouts can extend this registry with layout-specific slots and icons; `sample-identity` uses this for Sanguosha-like `suit-point`, `role-corner`, `suit`, `rank`, and `faction` display tokens.
 
 ### Behavior Sync
 
@@ -535,8 +535,7 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add fixture/runtime preview coverage for the Sanguosha-like multi-player layout.
-2. Add layout-specific property slot/icon registries so Sanguosha point/suit badges can be validated per card layout.
-3. Add authoring UI panels for editing asset and presentation catalog entries.
-4. Add import/write workflows for the asset library; the current panel is read-only.
-5. Add projection-safe hidden role/player widgets for identity-game previews.
+1. Add runtime renderer coverage for the Sanguosha-like multi-player layout.
+2. Add authoring UI panels for editing asset and presentation catalog entries.
+3. Add import/write workflows for the asset library; the current panel is read-only.
+4. Add projection-safe hidden role/player widgets for identity-game previews.

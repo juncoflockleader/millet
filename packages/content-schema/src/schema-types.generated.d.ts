@@ -114,6 +114,21 @@ export interface BoardLayoutJson {
   "tokens"?: {
     [key: string]: unknown;
   };
+  "propertyDisplay"?: {
+    "slots"?: {
+      "id": string;
+      "label"?: string;
+      "description"?: string;
+      "regionKinds"?: string[];
+      "objectTypes"?: string[];
+    }[];
+    "icons"?: {
+      "id": string;
+      "label"?: string;
+      "description"?: string;
+      "assetRef"?: string;
+    }[];
+  };
   "regions": {
     "id": string;
     "kind": "hero" | "hand" | "deck" | "discard" | "graveyard" | "battlefield" | "equipment" | "judgment" | "prompt" | "action_window" | "chat" | "history_log" | "opponent_summary" | "spectator_overlay" | "debug_overlay" | "custom";

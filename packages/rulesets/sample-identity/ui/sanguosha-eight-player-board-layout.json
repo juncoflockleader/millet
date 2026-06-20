@@ -34,6 +34,25 @@
       "artHeight": 42
     }
   },
+  "propertyDisplay": {
+    "slots": [
+      { "id": "top-left", "label": "Upper Left Corner", "objectTypes": ["card", "equipment", "identity"] },
+      { "id": "top-right", "label": "Upper Right Corner", "objectTypes": ["card", "equipment", "identity"] },
+      { "id": "bottom-left", "label": "Lower Left Corner", "objectTypes": ["equipment"] },
+      { "id": "bottom-right", "label": "Lower Right Corner", "objectTypes": ["equipment"] },
+      { "id": "suit-point", "label": "Suit And Point Corner", "objectTypes": ["card"] },
+      { "id": "role-corner", "label": "Identity Role Corner", "objectTypes": ["identity"] }
+    ],
+    "icons": [
+      { "id": "mana", "label": "Resource" },
+      { "id": "sword", "label": "Attack Range" },
+      { "id": "heart", "label": "Health" },
+      { "id": "durability", "label": "Durability" },
+      { "id": "suit", "label": "Suit" },
+      { "id": "rank", "label": "Point" },
+      { "id": "faction", "label": "Identity Faction" }
+    ]
+  },
   "regions": [
     {
       "id": "seat_1_lord",

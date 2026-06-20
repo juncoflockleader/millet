@@ -40,6 +40,20 @@
       "artHeight": 50
     }
   },
+  "propertyDisplay": {
+    "slots": [
+      { "id": "top-left", "label": "Cost Corner", "objectTypes": ["card", "hero"] },
+      { "id": "top-right", "label": "Top Right Corner", "objectTypes": ["card", "hero", "equipment", "minion"] },
+      { "id": "bottom-left", "label": "Attack Corner", "objectTypes": ["equipment", "minion"] },
+      { "id": "bottom-right", "label": "Health Or Durability Corner", "objectTypes": ["equipment", "minion"] }
+    ],
+    "icons": [
+      { "id": "mana", "label": "Mana" },
+      { "id": "sword", "label": "Attack" },
+      { "id": "heart", "label": "Health" },
+      { "id": "durability", "label": "Durability" }
+    ]
+  },
   "regions": [
     {
       "id": "opponent_hero",

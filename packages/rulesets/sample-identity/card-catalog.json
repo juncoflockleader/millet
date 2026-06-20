@@ -122,6 +122,13 @@
       "assetRefs": ["identity-role-back"],
       "stats": {
         "rank": 7
+      },
+      "display": {
+        "layout": "sanguosha-default",
+        "properties": [
+          { "property": "suit", "source": "metadata", "slot": "suit-point", "icon": "suit", "label": "Suit", "priority": 0 },
+          { "property": "rank", "source": "stats", "slot": "suit-point", "icon": "rank", "label": "Point", "priority": 1 }
+        ]
       }
     },
     {
@@ -133,6 +140,13 @@
       "assetRefs": ["identity-role-back"],
       "stats": {
         "rank": 10
+      },
+      "display": {
+        "layout": "sanguosha-default",
+        "properties": [
+          { "property": "suit", "source": "metadata", "slot": "suit-point", "icon": "suit", "label": "Suit", "priority": 0 },
+          { "property": "rank", "source": "stats", "slot": "suit-point", "icon": "rank", "label": "Point", "priority": 1 }
+        ]
       }
     },
     {
@@ -144,6 +158,13 @@
       "assetRefs": ["identity-role-back"],
       "stats": {
         "rank": 2
+      },
+      "display": {
+        "layout": "sanguosha-default",
+        "properties": [
+          { "property": "suit", "source": "metadata", "slot": "suit-point", "icon": "suit", "label": "Suit", "priority": 0 },
+          { "property": "rank", "source": "stats", "slot": "suit-point", "icon": "rank", "label": "Point", "priority": 1 }
+        ]
       }
     },
     {
@@ -152,7 +173,13 @@
       "objectType": "identity",
       "nameKey": "identity.lord.name",
       "tags": ["lord"],
-      "assetRefs": ["identity-role-back"]
+      "assetRefs": ["identity-role-back"],
+      "display": {
+        "layout": "sanguosha-identity",
+        "properties": [
+          { "property": "role", "source": "metadata", "slot": "role-corner", "icon": "faction", "label": "Role" }
+        ]
+      }
     },
     {
       "templateId": "loyalist",
@@ -160,7 +187,13 @@
       "objectType": "identity",
       "nameKey": "identity.loyalist.name",
       "tags": ["loyalist"],
-      "assetRefs": ["identity-role-back"]
+      "assetRefs": ["identity-role-back"],
+      "display": {
+        "layout": "sanguosha-identity",
+        "properties": [
+          { "property": "role", "source": "metadata", "slot": "role-corner", "icon": "faction", "label": "Role" }
+        ]
+      }
     },
     {
       "templateId": "rebel",
@@ -168,7 +201,13 @@
       "objectType": "identity",
       "nameKey": "identity.rebel.name",
       "tags": ["rebel"],
-      "assetRefs": ["identity-role-back"]
+      "assetRefs": ["identity-role-back"],
+      "display": {
+        "layout": "sanguosha-identity",
+        "properties": [
+          { "property": "role", "source": "metadata", "slot": "role-corner", "icon": "faction", "label": "Role" }
+        ]
+      }
     },
     {
       "templateId": "spy",
@@ -176,7 +215,13 @@
       "objectType": "identity",
       "nameKey": "identity.spy.name",
       "tags": ["spy"],
-      "assetRefs": ["identity-role-back"]
+      "assetRefs": ["identity-role-back"],
+      "display": {
+        "layout": "sanguosha-identity",
+        "properties": [
+          { "property": "role", "source": "metadata", "slot": "role-corner", "icon": "faction", "label": "Role" }
+        ]
+      }
     }
   ]
 }

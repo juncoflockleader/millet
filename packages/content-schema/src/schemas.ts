@@ -254,6 +254,47 @@ export const boardLayoutSchema = {
       type: "object",
       additionalProperties: true
     },
+    propertyDisplay: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        slots: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["id"],
+            additionalProperties: false,
+            properties: {
+              id: { type: "string", minLength: 1 },
+              label: { type: "string", minLength: 1 },
+              description: { type: "string", minLength: 1 },
+              regionKinds: {
+                type: "array",
+                items: { type: "string", minLength: 1 }
+              },
+              objectTypes: {
+                type: "array",
+                items: { type: "string", minLength: 1 }
+              }
+            }
+          }
+        },
+        icons: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["id"],
+            additionalProperties: false,
+            properties: {
+              id: { type: "string", minLength: 1 },
+              label: { type: "string", minLength: 1 },
+              description: { type: "string", minLength: 1 },
+              assetRef: { type: "string", minLength: 1 }
+            }
+          }
+        }
+      }
+    },
     regions: {
       type: "array",
       minItems: 1,
