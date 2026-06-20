@@ -26,7 +26,8 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - `Preview` opens ruleset UI preview fixtures for read-only card, hero, equipment, and minion states.
 - `?ruleset=sample-identity` loads the Sanguosha-like eight-player ruleset preview and renders authored absolute board regions for seats, roles, piles, hand, equipment, judgment, prompt, and history.
 - `Assets` opens the ruleset asset library.
-- `Layout` opens the board layout editor.
+- `Presentation` opens a local presentation catalog entry editor.
+- `Layout` opens the board layout editor for token controls, region fields, region drag/resize, and full `BoardLayoutJson` import/export.
 - `End Turn` submits the engine-level `end_turn` command.
 - The event log is loaded from `/matches/:id/replay?admin=true`.
 
@@ -40,15 +41,16 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Keyword tooltips are available inside rules text for terms such as `damage`, `mana`, `durability`, `draw`, and `attack`.
 - The whole card can be hovered or focused to inspect its rules text, owner, zone, and current status.
 - The board layout editor adjusts CSS-driven layout values for row heights, hero column width, board/hand split, center-lane split, card width, card art height, gaps, and padding.
-- The editor overlay also renders authored board layout regions and widget components, including hero, battlefield, equipment, hand, deck, action, history, and chat surfaces.
+- The editor overlay also renders authored board layout regions and widget components, including hero, battlefield, equipment, hand, deck, action, history, and chat surfaces. Selecting a guide box or region row exposes region fields, and guide boxes can be dragged or resized on the canvas.
 - Runtime hero, battlefield, equipment, hand, action, and history surfaces are annotated with the authored region/widget metadata, and drag/drop battlefield targeting is attached to the battlefield regions.
 - Player-side hero, battlefield, equipment, hand, and deck containers are rendered through a small region dispatch layer keyed by the authored widget component names.
 - Deck stacks render projection-safe counts and discard/graveyard summaries without exposing hidden deck order or top-card identity.
 - The center lane includes authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` system widget surfaces.
 - `ActionPanel` renders the current open prompt type, responder, and action chips from projected match state.
 - The authored default layout is loaded from `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json` through `/content/rulesets/sample-duel/ui/ember-duel-board-layout.json`.
-- Layout editor changes are stored in browser `localStorage` under `ember-duel.layout.v1` and can be copied or imported as JSON.
+- Layout editor changes are stored in browser `localStorage` under `ember-duel.layout.<rulesetId>.v1` and can be copied or imported as full `BoardLayoutJson`.
 - Card, hero, equipment, and minion presentation defaults are loaded from `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`.
+- Presentation editor changes are stored in browser `localStorage` under `ember-duel.presentation.<rulesetId>.v1` and can be reset to the authored ruleset catalog.
 - UI preview fixtures are loaded from `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`.
 - The asset library is loaded from `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, with previews from each asset `publicPath`.
 

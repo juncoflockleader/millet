@@ -20,7 +20,7 @@ Current implemented slice:
 - `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
 - ruleset validation for preview fixture refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown card templates, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - demo content endpoint at `/content/rulesets/:rulesetId/*.json`.
-- Ember Duel layout editor consumes the ruleset board layout tokens as its authored default, keeps local editor overrides in `localStorage`, and renders authored board regions/widgets as an overlay guide.
+- Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports token controls, region selection, region field editing, region drag/resize, and renders authored board regions/widgets as an overlay guide.
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
 - Ember Duel center-lane system regions now expose authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` widget surfaces.
@@ -28,6 +28,7 @@ Current implemented slice:
 - Ember Duel runtime consumes the ruleset presentation catalog for card, hero, equipment, and minion art/text/action/property display definitions.
 - `sample-duel` asset manifest now covers the demo board background, card portraits, VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
 - Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, and shows manifest/presentation/effect usage references.
+- Ember Duel `Presentation` panel lets designers inspect, locally edit, copy, apply, and reset presentation catalog entries while live previews re-render from the draft catalog.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
 - Ember Duel can load `?ruleset=sample-identity` and render Sanguosha-like full-board preview fixtures through authored absolute board regions with viewport-fit scaling.
@@ -508,6 +509,7 @@ Validation should cover:
 - Build visual region editor with predefined regions and custom widgets.
 - Preserve viewport-fit scaling.
 - Acceptance: a Hearthstone-like and Sanguosha-like board layout can be authored and exported.
+- Current slice: Ember Duel `Layout` panel edits viewport-fitted tokens plus selected `BoardLayoutJson` regions, supports region geometry fields and canvas drag/resize, and imports/exports full board layout JSON.
 
 ### UI-M3: Card Template Studio
 
@@ -536,6 +538,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add authoring UI panels for editing asset and presentation catalog entries.
+1. Add authoring UI panels for editing asset catalog entries.
 2. Add import/write workflows for the asset library; the current panel is read-only.
 3. Add projection-safe hidden role/player widgets for identity-game previews.

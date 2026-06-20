@@ -16,6 +16,7 @@
         <div class="topbar-actions">
           <button id="previewPanelButton" class="ghost" type="button">Preview</button>
           <button id="assetLibraryButton" class="ghost" type="button">Assets</button>
+          <button id="presentationEditorButton" class="ghost" type="button">Presentation</button>
           <button id="layoutEditorButton" class="ghost" type="button">Layout</button>
           <button id="newMatchButton" type="button">New Match</button>
           <button id="refreshButton" type="button" disabled>Refresh</button>
@@ -63,11 +64,32 @@
         <div class="layout-editor-head">
           <div>
             <strong>Board Layout</strong>
-            <span>Draft v1</span>
+            <span id="layoutRegionCount">0 regions</span>
           </div>
           <button id="closeLayoutEditorButton" class="ghost icon-button" type="button" aria-label="Close layout editor">X</button>
         </div>
-        <div class="layout-controls" id="layoutControls"></div>
+        <div class="layout-editor-body">
+          <section class="layout-editor-section" aria-label="Layout token controls">
+            <div class="layout-section-head">
+              <strong>Tokens</strong>
+              <span>Fast 1v1 controls</span>
+            </div>
+            <div class="layout-controls" id="layoutControls"></div>
+          </section>
+          <section class="layout-editor-section layout-region-editor" aria-label="Board regions">
+            <div class="layout-section-head">
+              <strong>Regions</strong>
+              <div>
+                <button id="addLayoutRegionButton" class="ghost" type="button">Add</button>
+                <button id="deleteLayoutRegionButton" class="ghost" type="button">Delete</button>
+              </div>
+            </div>
+            <div class="layout-region-editor-body">
+              <div class="layout-region-list" id="layoutRegionList" role="listbox" aria-label="Board layout regions"></div>
+              <div class="layout-region-detail" id="layoutRegionDetail"></div>
+            </div>
+          </section>
+        </div>
         <div class="layout-editor-actions">
           <button id="fitLayoutButton" class="ghost" type="button">Fit Rows</button>
           <button id="resetLayoutButton" class="ghost" type="button">Reset</button>
@@ -102,6 +124,27 @@
           <div class="asset-detail" id="assetDetail"></div>
         </div>
         <p class="asset-library-status" id="assetLibraryStatus" aria-live="polite"></p>
+      </aside>
+      <aside class="presentation-editor" id="presentationEditor" aria-label="Presentation catalog editor" hidden>
+        <div class="panel-head">
+          <div>
+            <strong>Presentation Catalog</strong>
+            <span id="presentationEntryCount">0 entries</span>
+          </div>
+          <button id="closePresentationEditorButton" class="ghost icon-button" type="button" aria-label="Close presentation editor">X</button>
+        </div>
+        <div class="presentation-editor-body">
+          <div class="presentation-entry-list" id="presentationEntryList" role="listbox" aria-label="Presentation entries"></div>
+          <div class="presentation-entry-detail">
+            <textarea id="presentationEntryJson" spellcheck="false" aria-label="Presentation entry JSON"></textarea>
+            <div class="presentation-editor-actions">
+              <button id="applyPresentationEntryButton" type="button">Apply</button>
+              <button id="copyPresentationCatalogButton" class="ghost" type="button">Copy Catalog</button>
+              <button id="resetPresentationCatalogButton" class="ghost" type="button">Reset</button>
+            </div>
+          </div>
+        </div>
+        <p class="presentation-editor-status" id="presentationEditorStatus" aria-live="polite"></p>
       </aside>
       <div class="tooltip-layer" id="tooltipLayer" role="tooltip" hidden></div>
     </main>

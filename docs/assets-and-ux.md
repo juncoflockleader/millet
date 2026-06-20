@@ -113,7 +113,7 @@ In `Ember Duel` this is implemented as:
 
 This default pushes UI design toward compact, scan-friendly board layouts. Extra inspection detail should move into card text, tooltips, logs, side panels, or modals instead of making the board taller than the viewport.
 
-`Ember Duel` includes a prototype board layout editor behind the `Layout` button. It loads its authored default from the ruleset board layout at `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json`, then edits CSS-backed layout tokens while preserving the fixed logical board size:
+`Ember Duel` includes a board layout editor behind the `Layout` button. It loads its authored default from the ruleset board layout at `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json`, then edits CSS-backed layout tokens while preserving the fixed logical board size:
 
 - opponent row height
 - center lane height
@@ -124,7 +124,7 @@ This default pushes UI design toward compact, scan-friendly board layouts. Extra
 - card width and art height
 - board padding and row gap
 
-The editor stores its local draft in browser `localStorage` and exports JSON. This is intentionally presentation-only; it does not change engine rules, zones, card legality, or server state.
+The editor stores a full local `BoardLayoutJson` draft in browser `localStorage` and exports/imports the same JSON shape. Token controls are still optimized for the Hearthstone-like 1v1 board, while the region editor supports selecting authored regions, editing label/kind/owner/widget/visibility/drop/accepts/targetability fields, and changing `x`, `y`, `width`, and `height` through form fields or direct canvas drag/resize. This is intentionally presentation-only; it does not change engine rules, zones, card legality, or server state.
 
 The editor overlay also renders the authored `BoardLayoutJson` regions and widget components as guide boxes. Core regions such as hero, battlefield, equipment, hand, deck, action window, history, and chat remain visible while designers adjust the layout tokens.
 
@@ -133,6 +133,8 @@ The live board uses the same authored region/widget metadata as runtime `data-*`
 `sample-identity` also declares a Sanguosha-like eight-seat board layout at `packages/rulesets/sample-identity/ui/sanguosha-eight-player-board-layout.json`. It defines an eight-player seat ring, role summary, shared deck/discard piles, active-player hand, judgment strip, equipment strip, action/response window, and history log as schema-backed regions and widgets. Its `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json` fixture gives the same table a projection-safe eight-player preview with public lord role, viewer-owned role, redacted hidden roles, hidden hands/deck, equipment, judgment, discard, and a nullification response prompt. Opening the demo with `?ruleset=sample-identity` renders that fixture through authored absolute board regions and keeps the 1280x720 play area fitted inside the viewport.
 
 `Ember Duel` also loads its card, hero, equipment, and minion presentation defaults from `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`. That catalog gives the runtime a content-driven source for art paths, names, rules text, action labels, property displays, layouts, and behavior references.
+
+The `Presentation` panel lets designers inspect catalog entries, edit selected entry JSON locally, apply/reset `localStorage`-backed drafts, copy the active catalog, and see cards/heroes re-render without changing ruleset files.
 
 ### Cards are self-contained
 
