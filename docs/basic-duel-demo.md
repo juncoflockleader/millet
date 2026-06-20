@@ -28,7 +28,7 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - `Assets` opens the ruleset asset library, local manifest entry editor, browser-local image import draft flow, new asset draft creation, and demo-server asset promotion control.
 - `Cards` opens the ruleset card template studio for local template JSON drafts, type filters, dependency health, card preview, behavior/text sync, generated UX hint review, and property badge layout editing.
 - `Presentation` opens a local presentation catalog entry editor.
-- `Layout` opens the board layout editor for token controls, region fields, snap-to-grid region drag/resize, region copy/flip/fill actions, and full `BoardLayoutJson` import/export.
+- `Layout` opens the board layout editor for document fields, token controls, region presets, region fields, snap-to-grid region drag/resize, region copy/flip/fill actions, local diagnostics, and full `BoardLayoutJson` import/export.
 - `End Turn` submits the engine-level `end_turn` command.
 - The event log is loaded from `/matches/:id/replay?admin=true`.
 
@@ -41,15 +41,15 @@ The demo is a hotseat browser game backed by the real Millet server APIs and the
 - Card properties are rendered from display-slot metadata. Spell cost appears in the top-left badge, minion attack/health in bottom corner badges, and weapon attack/durability in bottom corner badges.
 - Keyword tooltips are available inside rules text for terms such as `damage`, `mana`, `durability`, `draw`, and `attack`.
 - The whole card can be hovered or focused to inspect its rules text, owner, zone, and current status.
-- The board layout editor adjusts CSS-driven layout values for row heights, hero column width, board/hand split, center-lane split, card width, card art height, gaps, and padding.
-- The editor overlay also renders authored board layout regions and widget components, including hero, battlefield, equipment, hand, deck, action, history, and chat surfaces. Selecting a guide box or region row exposes region fields and a geometry summary; guide boxes can be snapped, dragged, resized, copied, mirrored, filled to the board, or deleted on the canvas.
+- The board layout editor adjusts document id/version/name, logical size, scaling policy, and CSS-driven 1v1 shortcut token values for row heights, hero column width, board/hand split, center-lane split, card width, card art height, gaps, and padding.
+- The editor overlay also renders authored board layout regions and widget components, including hero, battlefield, equipment, hand, deck, action, history, and chat surfaces. Selecting a guide box or region row exposes region fields and a geometry summary; guide boxes can be snapped, dragged, resized, copied, mirrored, filled to the board, renamed, or deleted on the canvas. Region presets create common board areas with matching widget definitions, while the diagnostics panel flags duplicate ids, missing widgets, and out-of-bounds geometry before export.
 - Runtime hero, battlefield, equipment, hand, action, and history surfaces are annotated with the authored region/widget metadata, and drag/drop battlefield targeting is attached to the battlefield regions.
 - Player-side hero, battlefield, equipment, hand, and deck containers are rendered through a small region dispatch layer keyed by the authored widget component names.
 - Deck stacks render projection-safe counts and discard/graveyard summaries without exposing hidden deck order or top-card identity.
 - The center lane includes authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` system widget surfaces.
 - `ActionPanel` renders the current open prompt type, responder, and action chips from projected match state.
 - The authored default layout is loaded from `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json` through `/content/rulesets/sample-duel/ui/ember-duel-board-layout.json`.
-- Layout editor changes are stored in browser `localStorage` under `ember-duel.layout.<rulesetId>.v1` and can be copied or imported as full `BoardLayoutJson`.
+- Layout editor changes are stored in browser `localStorage` under `ember-duel.layout.<rulesetId>.v1` and can be copied or imported as full `BoardLayoutJson`. Export preserves custom ruleset token groups, so Sanguosha-like table tokens survive edits made through the generic editor.
 - Card, hero, equipment, and minion presentation defaults are loaded from `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`.
 - Card templates are loaded from `packages/rulesets/<rulesetId>/card-catalog.json`. The `Cards` panel stores local template edits in browser `localStorage` under `ember-duel.cards.<rulesetId>.v1`, validates template shape, shows declared behavior/asset dependency health, compares presentation text with generated behavior text from `/content/rulesets/<rulesetId>/behavior-summaries.json`, can apply generated text to the local presentation draft, renders a card preview from catalog plus presentation data, edits display layout/property badge rows from the active board layout slot/icon registry, and can copy/reset the active catalog draft.
 - Presentation editor changes are stored in browser `localStorage` under `ember-duel.presentation.<rulesetId>.v1` and can be reset to the authored ruleset catalog.

@@ -20,7 +20,7 @@ Current implemented slice:
 - `sample-identity` projection-safe identity preview fixtures at `packages/rulesets/sample-identity/ui/sanguosha-identity-preview-fixtures.json`.
 - ruleset validation for preview fixture refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown card templates, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - demo content endpoint at `/content/rulesets/:rulesetId/*.json`.
-- Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports token controls, region selection, region field editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, and renders authored board regions/widgets as an overlay guide.
+- Ember Duel layout editor consumes the ruleset board layout as its authored default, keeps full `BoardLayoutJson` drafts in `localStorage`, supports document id/version/name/logical-size/scaling edits, token controls, region presets, region selection, region field editing, snap-to-grid region drag/resize, region copy/flip/fill/delete actions, local diagnostics, custom token preservation, and renders authored board regions/widgets as an overlay guide.
 - Ember Duel runtime board surfaces carry schema-backed board region/widget metadata for hero, battlefield, equipment, hand, action, and history regions.
 - Ember Duel player-side runtime regions dispatch through authored widget components (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`) instead of directly hand-authoring every hero/battlefield/equipment/hand/deck container.
 - Ember Duel center-lane system regions now expose authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` widget surfaces.
@@ -543,4 +543,4 @@ Validation should cover:
 
 1. Add card frame/art crop controls beyond property badge placement.
 2. Add a guarded card catalog promote/publish flow after local card drafts have review diffs.
-3. Expand board layout editing into a more complete visual layout editor for logical size, presets, diagnostics, and generalized token preservation.
+3. Add a runtime widget registry layer for custom board widgets beyond the demo's built-in components.

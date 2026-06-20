@@ -192,18 +192,161 @@ const REGION_KIND_OPTIONS = [
   "hand",
   "equipment",
   "deck",
+  "discard",
+  "graveyard",
+  "judgment",
+  "prompt",
   "action_window",
   "history_log",
   "chat",
-  "discard",
-  "judgment",
   "opponent_summary",
+  "spectator_overlay",
+  "debug_overlay",
   "custom"
 ];
 
-const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "seat", "team", "observer"];
-const REGION_VISIBILITY_OPTIONS = ["public", "owner", "admin", "hidden"];
+const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "match", "spectator"];
+const REGION_VISIBILITY_OPTIONS = ["public", "owner", "opponent", "admin"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
+const REGION_OVERFLOW_OPTIONS = ["fan", "scroll", "stack", "compact", "hidden"];
+const REGION_PRESETS = [
+  {
+    id: "custom",
+    label: "Custom",
+    region: {
+      kind: "custom",
+      ownerScope: "shared",
+      label: "Custom Region",
+      geometry: { x: 420, y: 260, width: 180, height: 96 },
+      widgetId: "custom-widget",
+      accepts: [],
+      targetable: false,
+      dropBehavior: "none",
+      overflow: "compact",
+      visibleTo: "public"
+    },
+    widget: { kind: "custom", component: "CustomWidget" }
+  },
+  {
+    id: "hero",
+    label: "Hero",
+    region: {
+      kind: "hero",
+      ownerScope: "player",
+      label: "Hero",
+      geometry: { x: 24, y: 24, width: 172, height: 160 },
+      widgetId: "hero-card",
+      accepts: ["hero", "player"],
+      targetable: true,
+      dropBehavior: "select_player_target",
+      overflow: "compact",
+      visibleTo: "public"
+    },
+    widget: { kind: "single_object", component: "HeroCard" }
+  },
+  {
+    id: "battlefield",
+    label: "Battlefield",
+    region: {
+      kind: "battlefield",
+      ownerScope: "player",
+      label: "Battlefield",
+      geometry: { x: 220, y: 24, width: 320, height: 160 },
+      widgetId: "card-row",
+      accepts: ["minion"],
+      targetable: true,
+      dropBehavior: "select_object_target",
+      overflow: "fan",
+      visibleTo: "public"
+    },
+    widget: { kind: "card_collection", component: "CardRow" }
+  },
+  {
+    id: "hand",
+    label: "Hand",
+    region: {
+      kind: "hand",
+      ownerScope: "player",
+      label: "Hand",
+      geometry: { x: 560, y: 24, width: 420, height: 160 },
+      widgetId: "hand-fan",
+      accepts: ["card"],
+      targetable: false,
+      dropBehavior: "none",
+      overflow: "fan",
+      visibleTo: "owner"
+    },
+    widget: { kind: "card_collection", component: "CardRow" }
+  },
+  {
+    id: "deck",
+    label: "Deck",
+    region: {
+      kind: "deck",
+      ownerScope: "player",
+      label: "Deck",
+      geometry: { x: 1000, y: 24, width: 72, height: 104 },
+      widgetId: "deck-stack",
+      accepts: ["card"],
+      targetable: false,
+      dropBehavior: "none",
+      overflow: "stack",
+      visibleTo: "public"
+    },
+    widget: { kind: "card_collection", component: "DeckStack" }
+  },
+  {
+    id: "equipment",
+    label: "Equipment",
+    region: {
+      kind: "equipment",
+      ownerScope: "player",
+      label: "Equipment",
+      geometry: { x: 24, y: 204, width: 220, height: 96 },
+      widgetId: "equipment-slot",
+      accepts: ["weapon", "armor", "equipment"],
+      targetable: false,
+      dropBehavior: "none",
+      overflow: "compact",
+      visibleTo: "public"
+    },
+    widget: { kind: "card_collection", component: "EquipmentSlot" }
+  },
+  {
+    id: "action_window",
+    label: "Action",
+    region: {
+      kind: "action_window",
+      ownerScope: "shared",
+      label: "Action Window",
+      geometry: { x: 280, y: 204, width: 360, height: 96 },
+      widgetId: "action-panel",
+      accepts: ["command", "response"],
+      targetable: false,
+      dropBehavior: "none",
+      overflow: "compact",
+      visibleTo: "public"
+    },
+    widget: { kind: "system", component: "ActionPanel" }
+  },
+  {
+    id: "history_log",
+    label: "History",
+    region: {
+      kind: "history_log",
+      ownerScope: "shared",
+      label: "History Log",
+      geometry: { x: 660, y: 204, width: 380, height: 96 },
+      widgetId: "history-log",
+      accepts: ["event"],
+      targetable: false,
+      dropBehavior: "none",
+      overflow: "scroll",
+      visibleTo: "public"
+    },
+    widget: { kind: "system", component: "HistoryLog" }
+  }
+];
 const LAYOUT_SNAP_SIZE = 8;
 const CARD_TEMPLATE_REQUIRED_FIELDS = ["templateId", "version", "objectType", "nameKey"];
 const CARD_TEMPLATE_OPTIONAL_FIELDS = ["descriptionKey", "tags", "behaviorIds", "assetRefs", "manaCost", "stats", "display", "metadata"];
@@ -362,8 +505,10 @@ const dom = {
   closeLayoutEditorButton: document.querySelector("#closeLayoutEditorButton"),
   layoutControls: document.querySelector("#layoutControls"),
   layoutRegionCount: document.querySelector("#layoutRegionCount"),
+  layoutRegionPresetSelect: document.querySelector("#layoutRegionPresetSelect"),
   layoutRegionList: document.querySelector("#layoutRegionList"),
   layoutRegionDetail: document.querySelector("#layoutRegionDetail"),
+  layoutDiagnostics: document.querySelector("#layoutDiagnostics"),
   layoutJson: document.querySelector("#layoutJson"),
   layoutEditorStatus: document.querySelector("#layoutEditorStatus"),
   fitLayoutButton: document.querySelector("#fitLayoutButton"),
@@ -587,12 +732,23 @@ function installLayoutEditor() {
     renderLayoutRegionEditor({ preserveDetailFocus: true });
   });
   dom.layoutControls?.addEventListener("input", (event) => {
+    const documentInput = event.target.closest("[data-layout-document-field]");
+    if (documentInput) {
+      updateBoardLayoutDocumentFromInput(documentInput);
+      return;
+    }
     const input = event.target.closest("[data-layout-path]");
     if (!input) {
       return;
     }
     setLayoutValue(input.dataset.layoutPath, Number(input.value));
     commitLayoutChange();
+  });
+  dom.layoutControls?.addEventListener("change", (event) => {
+    const documentInput = event.target.closest("[data-layout-document-field]");
+    if (documentInput) {
+      updateBoardLayoutDocumentFromInput(documentInput);
+    }
   });
   dom.layoutRegionList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-layout-region-id]");
@@ -2735,7 +2891,14 @@ function renderLayoutControls() {
     return;
   }
 
-  dom.layoutControls.innerHTML = LAYOUT_CONTROLS.map((control) => `
+  dom.layoutControls.innerHTML = `
+    ${renderLayoutDocumentEditor()}
+    <div class="layout-control-group">
+      <div class="layout-control-group-head">
+        <strong>1v1 Quick Tokens</strong>
+        <span>Optional shortcuts</span>
+      </div>
+      ${LAYOUT_CONTROLS.map((control) => `
     <label class="layout-control">
       <span>
         <strong>${escapeHtml(control.label)}</strong>
@@ -2757,6 +2920,78 @@ function renderLayoutControls() {
         aria-label="${escapeAttr(control.label)}"
       >
     </label>
+      `).join("")}
+    </div>
+  `;
+  renderLayoutRegionPresetOptions();
+}
+
+function renderLayoutDocumentEditor() {
+  const document = ensureBoardLayoutDocument();
+  const scaling = normalizeScaling(document.scaling, {
+    mode: "fit_viewport",
+    minScale: PLAY_AREA.minScale,
+    maxScale: 1
+  });
+  const metadata = document.metadata && typeof document.metadata === "object" ? document.metadata : {};
+  return `
+    <div class="layout-document-editor">
+      <div class="layout-control-group-head">
+        <strong>Document</strong>
+        <span>${escapeHtml(document.kind ?? "board_layout")}</span>
+      </div>
+      <label class="layout-field wide">
+        <span>Layout ID</span>
+        <input type="text" value="${escapeAttr(document.id ?? "")}" data-layout-document-field="id">
+      </label>
+      <label class="layout-field">
+        <span>Version</span>
+        <input type="text" value="${escapeAttr(document.version ?? "")}" data-layout-document-field="version">
+      </label>
+      <label class="layout-field">
+        <span>Scale Mode</span>
+        <select data-layout-document-field="scaling.mode">
+          ${renderSelectOptions(["fit_viewport", "fixed", "responsive"], scaling.mode)}
+        </select>
+      </label>
+      <label class="layout-field wide">
+        <span>Name</span>
+        <input type="text" value="${escapeAttr(metadata.name ?? "")}" data-layout-document-field="metadata.name">
+      </label>
+      <div class="layout-geometry-grid">
+        ${renderDocumentNumberField("logicalSize.width", "W", PLAY_AREA.width, 1, 4096)}
+        ${renderDocumentNumberField("logicalSize.height", "H", PLAY_AREA.height, 1, 4096)}
+        ${renderDocumentNumberField("scaling.minScale", "Min", scaling.minScale, 0.05, 2, 0.01)}
+        ${renderDocumentNumberField("scaling.maxScale", "Max", scaling.maxScale, 0.05, 4, 0.01)}
+      </div>
+    </div>
+  `;
+}
+
+function renderDocumentNumberField(field, label, value, min, max, step = 1) {
+  return `
+    <label class="layout-field">
+      <span>${escapeHtml(label)}</span>
+      <input
+        type="number"
+        min="${escapeAttr(min)}"
+        max="${escapeAttr(max)}"
+        step="${escapeAttr(step)}"
+        value="${escapeAttr(value)}"
+        data-layout-document-field="${escapeAttr(field)}"
+      >
+    </label>
+  `;
+}
+
+function renderLayoutRegionPresetOptions() {
+  if (!dom.layoutRegionPresetSelect) {
+    return;
+  }
+
+  const currentValue = dom.layoutRegionPresetSelect.value || "custom";
+  dom.layoutRegionPresetSelect.innerHTML = REGION_PRESETS.map((preset) => `
+    <option value="${escapeAttr(preset.id)}" ${preset.id === currentValue ? "selected" : ""}>${escapeHtml(preset.label)}</option>
   `).join("");
 }
 
@@ -2853,6 +3088,7 @@ function renderLayoutRegionEditor(options = {}) {
   if (!preserveDetail) {
     dom.layoutRegionDetail.innerHTML = renderLayoutRegionDetail();
   }
+  renderLayoutDiagnostics();
 }
 
 function renderLayoutRegionRow(region) {
@@ -2894,7 +3130,7 @@ function renderLayoutRegionDetail() {
     </div>
     <label class="layout-field wide">
       <span>Region ID</span>
-      <input type="text" value="${escapeAttr(region.id)}" disabled>
+      <input type="text" value="${escapeAttr(region.id)}" data-layout-region-field="id">
     </label>
     <label class="layout-field wide">
       <span>Label</span>
@@ -2926,6 +3162,12 @@ function renderLayoutRegionDetail() {
       <span>Drop</span>
       <select data-layout-region-field="dropBehavior">
         ${renderSelectOptions(REGION_DROP_OPTIONS, metadata.dropBehavior || "none")}
+      </select>
+    </label>
+    <label class="layout-field">
+      <span>Overflow</span>
+      <select data-layout-region-field="overflow">
+        ${renderSelectOptions(REGION_OVERFLOW_OPTIONS, region.overflow || "compact")}
       </select>
     </label>
     <label class="layout-field checkbox-field">
@@ -2968,6 +3210,157 @@ function renderSelectOptions(options, selectedValue) {
   `).join("");
 }
 
+function renderLayoutDiagnostics() {
+  if (!dom.layoutDiagnostics) {
+    return;
+  }
+
+  const diagnostics = boardLayoutDiagnostics();
+  const errors = diagnostics.filter((issue) => issue.severity === "error");
+  dom.layoutDiagnostics.classList.toggle("ok", errors.length === 0);
+  dom.layoutDiagnostics.innerHTML = `
+    <div class="layout-diagnostics-head">
+      <strong>${errors.length === 0 ? "Layout Valid" : "Layout Needs Fix"}</strong>
+      <span>${diagnostics.length} issue${diagnostics.length === 1 ? "" : "s"}</span>
+    </div>
+    ${diagnostics.length > 0
+      ? diagnostics.map((issue) => `<span class="${escapeAttr(issue.severity)}">${escapeHtml(issue.message)}</span>`).join("")
+      : `<span class="ok">No local layout issues detected.</span>`}
+  `;
+}
+
+function boardLayoutDiagnostics() {
+  const document = boardLayoutDocument;
+  const issues = [];
+  if (!document || typeof document !== "object") {
+    return [{ severity: "error", message: "No board layout document loaded." }];
+  }
+
+  if (!document.id) {
+    issues.push({ severity: "error", message: "Layout id is required." });
+  }
+  if (!document.version) {
+    issues.push({ severity: "error", message: "Layout version is required." });
+  }
+  if (document.kind !== "board_layout") {
+    issues.push({ severity: "error", message: "Layout kind must be board_layout." });
+  }
+
+  const width = Number(document.logicalSize?.width);
+  const height = Number(document.logicalSize?.height);
+  if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
+    issues.push({ severity: "error", message: "Logical width and height must be positive numbers." });
+  }
+
+  const scalingMode = document.scaling?.mode;
+  if (!["fit_viewport", "fixed", "responsive"].includes(scalingMode)) {
+    issues.push({ severity: "error", message: "Scaling mode must be fit_viewport, fixed, or responsive." });
+  }
+  const minScale = Number(document.scaling?.minScale ?? 0);
+  const maxScale = Number(document.scaling?.maxScale ?? 1);
+  if (Number.isFinite(minScale) && Number.isFinite(maxScale) && maxScale > 0 && minScale > maxScale) {
+    issues.push({ severity: "warning", message: "Minimum scale is larger than maximum scale." });
+  }
+
+  const widgets = Array.isArray(document.widgets) ? document.widgets : [];
+  const widgetIds = new Set();
+  widgets.forEach((widget, index) => {
+    const widgetId = typeof widget?.id === "string" ? widget.id : "";
+    if (!widgetId) {
+      issues.push({ severity: "error", message: `Widget ${index + 1} is missing an id.` });
+      return;
+    }
+    if (widgetIds.has(widgetId)) {
+      issues.push({ severity: "error", message: `Duplicate widget id ${widgetId}.` });
+    }
+    widgetIds.add(widgetId);
+    if (!widget.component) {
+      issues.push({ severity: "error", message: `Widget ${widgetId} is missing a component.` });
+    }
+  });
+
+  const regions = Array.isArray(document.regions) ? document.regions : [];
+  if (regions.length === 0) {
+    issues.push({ severity: "error", message: "At least one region is required." });
+  }
+  const regionIds = new Set();
+  regions.forEach((region, index) => {
+    const regionId = typeof region?.id === "string" ? region.id : "";
+    if (!regionId) {
+      issues.push({ severity: "error", message: `Region ${index + 1} is missing an id.` });
+      return;
+    }
+    if (regionIds.has(regionId)) {
+      issues.push({ severity: "error", message: `Duplicate region id ${regionId}.` });
+    }
+    regionIds.add(regionId);
+    if (!region.widgetId) {
+      issues.push({ severity: "error", message: `Region ${regionId} is missing widgetId.` });
+    } else if (widgetIds.size > 0 && !widgetIds.has(region.widgetId)) {
+      issues.push({ severity: "error", message: `Region ${regionId} references unknown widget ${region.widgetId}.` });
+    }
+    const geometryIssue = layoutGeometryIssue(regionId, region.geometry, width, height);
+    if (geometryIssue) {
+      issues.push(geometryIssue);
+    }
+  });
+
+  return issues;
+}
+
+function layoutGeometryIssue(regionId, geometry, boardWidth, boardHeight) {
+  if (!geometry || typeof geometry !== "object") {
+    return { severity: "error", message: `Region ${regionId} is missing geometry.` };
+  }
+  const x = Number(geometry.x);
+  const y = Number(geometry.y);
+  const width = Number(geometry.width);
+  const height = Number(geometry.height);
+  if (![x, y, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+    return { severity: "error", message: `Region ${regionId} geometry must have positive numeric x/y/width/height.` };
+  }
+  if (x < 0 || y < 0 || x + width > boardWidth || y + height > boardHeight) {
+    return { severity: "error", message: `Region ${regionId} geometry exceeds ${Math.round(boardWidth)}x${Math.round(boardHeight)}.` };
+  }
+  return null;
+}
+
+function updateBoardLayoutDocumentFromInput(input) {
+  const document = ensureBoardLayoutDocument();
+  const field = input.dataset.layoutDocumentField;
+  if (!field) {
+    return;
+  }
+
+  if (field === "id" || field === "version") {
+    document[field] = input.value.trim();
+  } else if (field === "metadata.name") {
+    document.metadata = document.metadata && typeof document.metadata === "object" ? document.metadata : {};
+    if (input.value.trim()) {
+      document.metadata.name = input.value.trim();
+    } else {
+      delete document.metadata.name;
+    }
+  } else if (field === "scaling.mode") {
+    document.scaling = normalizeScaling({ ...document.scaling, mode: input.value }, document.scaling ?? {});
+  } else if (field === "logicalSize.width" || field === "logicalSize.height") {
+    document.logicalSize = normalizeLogicalSize({
+      ...document.logicalSize,
+      [field.endsWith("width") ? "width" : "height"]: Number(input.value)
+    }, document.logicalSize ?? { width: PLAY_AREA.width, height: PLAY_AREA.height });
+    applyPlayAreaFromBoardLayout(document);
+  } else if (field === "scaling.minScale" || field === "scaling.maxScale") {
+    const key = field.endsWith("minScale") ? "minScale" : "maxScale";
+    document.scaling = normalizeScaling({
+      ...document.scaling,
+      [key]: Number(input.value)
+    }, document.scaling ?? { mode: "fit_viewport", minScale: PLAY_AREA.minScale, maxScale: 1 });
+    applyPlayAreaFromBoardLayout(document);
+  }
+
+  commitBoardLayoutDocumentChange("Updated layout document.", { preserveDetailFocus: true, preserveControlsFocus: true });
+}
+
 function layoutRegions() {
   return Array.isArray(boardLayoutDocument?.regions)
     ? boardLayoutDocument.regions.filter((region) => region && typeof region === "object")
@@ -3002,6 +3395,11 @@ function updateSelectedLayoutRegionFromInput(input) {
   }
 
   const field = input.dataset.layoutRegionField;
+  if (field === "id") {
+    renameSelectedLayoutRegion(input.value.trim());
+    return;
+  }
+
   if (field === "targetable") {
     region.targetable = Boolean(input.checked);
   } else if (field === "accepts") {
@@ -3021,27 +3419,43 @@ function updateSelectedLayoutRegionFromInput(input) {
   commitBoardLayoutDocumentChange("", { preserveDetailFocus: true });
 }
 
+function renameSelectedLayoutRegion(nextId) {
+  const region = selectedLayoutRegion();
+  if (!region) {
+    return;
+  }
+  const previousId = region.id;
+  if (!nextId) {
+    setLayoutStatus("Region id is required.");
+    renderLayoutRegionEditor();
+    return;
+  }
+  if (nextId !== previousId && layoutRegions().some((candidate) => candidate.id === nextId)) {
+    setLayoutStatus(`Region id ${nextId} is already used.`);
+    renderLayoutRegionEditor();
+    return;
+  }
+
+  region.id = nextId;
+  selectedLayoutRegionId = nextId;
+  commitBoardLayoutDocumentChange(`Renamed region ${previousId} to ${nextId}.`);
+}
+
 function addLayoutRegion() {
   const document = ensureBoardLayoutDocument();
   document.regions ??= [];
-  const index = document.regions.length + 1;
-  const id = uniqueRegionId(`custom_region_${index}`);
-  const region = {
-    id,
-    kind: "custom",
-    ownerScope: "shared",
-    label: labelFromId(id),
-    geometry: { x: 420, y: 260, width: 180, height: 96 },
-    widgetId: "",
-    accepts: [],
-    targetable: false,
-    dropBehavior: "none",
-    overflow: "compact",
-    visibleTo: "public"
-  };
+  const preset = selectedLayoutRegionPreset();
+  const id = uniqueRegionId(defaultRegionIdForPreset(preset));
+  const region = cloneJson(preset.region);
+  region.id = id;
+  if (!region.label || preset.id !== "custom") {
+    region.label = labelFromId(id);
+  }
+  region.geometry = normalizedRegionGeometry(region.geometry) ?? { x: 0, y: 0, width: 120, height: 90 };
+  ensureLayoutWidgetForPreset(preset, region.widgetId);
   document.regions.push(region);
   selectedLayoutRegionId = id;
-  commitBoardLayoutDocumentChange("Added region.");
+  commitBoardLayoutDocumentChange(`Added ${preset.label} region.`);
 }
 
 function duplicateSelectedLayoutRegion() {
@@ -3115,6 +3529,37 @@ function deleteSelectedLayoutRegion() {
   boardLayoutDocument.regions = boardLayoutDocument.regions.filter((region) => region?.id !== selectedLayoutRegionId);
   selectedLayoutRegionId = "";
   commitBoardLayoutDocumentChange("Deleted region.");
+}
+
+function selectedLayoutRegionPreset() {
+  const presetId = dom.layoutRegionPresetSelect?.value || "custom";
+  return REGION_PRESETS.find((preset) => preset.id === presetId) ?? REGION_PRESETS[0];
+}
+
+function defaultRegionIdForPreset(preset) {
+  const ownerScope = preset.region?.ownerScope;
+  const kind = preset.region?.kind || preset.id;
+  if (ownerScope === "player" || ownerScope === "opponent") {
+    return `${ownerScope}_${kind}`;
+  }
+  if (ownerScope === "match") {
+    return `match_${kind}`;
+  }
+  return kind === "custom" ? "custom_region" : kind;
+}
+
+function ensureLayoutWidgetForPreset(preset, widgetId) {
+  const document = ensureBoardLayoutDocument();
+  if (!widgetId || document.widgets?.some((widget) => widget?.id === widgetId)) {
+    return;
+  }
+
+  document.widgets ??= [];
+  document.widgets.push({
+    id: widgetId,
+    kind: preset.widget?.kind ?? "custom",
+    component: preset.widget?.component ?? componentForRegionKind(preset.region?.kind)
+  });
 }
 
 function uniqueRegionId(baseId) {
@@ -3518,6 +3963,7 @@ async function loadAuthoredBoardLayout() {
     if (hasDraft && !draftIsBoardLayoutDocument) {
       syncRegionGeometriesFromLayoutTokens();
     }
+    renderLayoutControls();
     applyLayout();
     renderLayoutRegionGuides();
     renderLayoutRegionEditor();
@@ -3634,14 +4080,24 @@ function layoutTokensFromBoardLayout(boardLayout) {
 }
 
 function layoutTokensForDocument(layout) {
+  return mergeKnownLayoutTokens(layout, {});
+}
+
+function mergeKnownLayoutTokens(layout, existingTokens = {}) {
+  const preservedTokens = existingTokens && typeof existingTokens === "object" && !Array.isArray(existingTokens)
+    ? cloneJson(existingTokens)
+    : {};
   const normalized = normalizeLayout(layout);
-  return {
-    arena: cloneJson(normalized.arena),
-    player: cloneJson(normalized.player),
-    zones: cloneJson(normalized.zones),
-    center: cloneJson(normalized.center),
-    card: cloneJson(normalized.card)
-  };
+  for (const group of ["arena", "player", "zones", "center", "card"]) {
+    const preservedGroup = preservedTokens[group] && typeof preservedTokens[group] === "object" && !Array.isArray(preservedTokens[group])
+      ? preservedTokens[group]
+      : {};
+    preservedTokens[group] = {
+      ...preservedGroup,
+      ...cloneJson(normalized[group])
+    };
+  }
+  return preservedTokens;
 }
 
 function loadBoardLayoutDraft() {
@@ -3687,7 +4143,7 @@ function normalizeBoardLayoutDocument(value, fallback = null) {
   }
 
   if (!isBoardLayoutDocument(value)) {
-    base.tokens = layoutTokensForDocument(normalizeLayout(value, { fitRows: true }));
+    base.tokens = mergeKnownLayoutTokens(normalizeLayout(value, { fitRows: true }), base.tokens);
     return base;
   }
 
@@ -3700,7 +4156,7 @@ function normalizeBoardLayoutDocument(value, fallback = null) {
   next.version = typeof next.version === "string" && next.version ? next.version : base.version;
   next.logicalSize = normalizeLogicalSize(next.logicalSize, base.logicalSize);
   next.scaling = normalizeScaling(next.scaling, base.scaling);
-  next.tokens = layoutTokensForDocument(layoutTokensFromBoardLayout(next));
+  next.tokens = mergeKnownLayoutTokens(layoutTokensFromBoardLayout(next), next.tokens);
   next.regions = Array.isArray(next.regions) ? next.regions.filter((region) => region && typeof region === "object") : [];
   next.widgets = Array.isArray(next.widgets) ? next.widgets.filter((widget) => widget && typeof widget === "object") : [];
   return next;
@@ -3770,7 +4226,7 @@ function exportBoardLayoutDocument() {
     minScale: PLAY_AREA.minScale,
     maxScale: 1
   });
-  document.tokens = layoutTokensForDocument(layoutState);
+  document.tokens = mergeKnownLayoutTokens(layoutState, document.tokens);
   return document;
 }
 
@@ -3781,6 +4237,7 @@ function importBoardLayoutDraft(value) {
   applyPlayAreaFromBoardLayout(nextDocument);
   layoutState = layoutTokensFromBoardLayout(nextDocument);
   ensureSelectedLayoutRegion();
+  renderLayoutControls();
   applyLayout({ syncRegions: !importingBoardLayoutDocument });
   saveLayout();
   syncLayoutEditor();
@@ -3985,6 +4442,7 @@ function resetBoardLayoutDraft() {
   selectedLayoutRegionId = "";
   localStorage.removeItem(LAYOUT_STORAGE_KEY);
   ensureSelectedLayoutRegion();
+  renderLayoutControls();
   applyLayout();
   syncLayoutEditor();
   annotateStaticLayoutRegions();
@@ -4031,7 +4489,7 @@ function applyLayout(options = {}) {
 
 function syncRegionGeometriesFromLayoutTokens() {
   const document = ensureBoardLayoutDocument();
-  document.tokens = layoutTokensForDocument(layoutState);
+  document.tokens = mergeKnownLayoutTokens(layoutState, document.tokens);
   document.regions.forEach((region) => {
     const tokenGeometry = layoutTokenGeometry(region?.id);
     if (tokenGeometry) {

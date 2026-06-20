@@ -85,6 +85,9 @@
                   <input id="snapLayoutToggle" type="checkbox">
                   <span>Snap</span>
                 </label>
+                <select id="layoutRegionPresetSelect" aria-label="Region preset">
+                  <option value="custom">Custom</option>
+                </select>
                 <button id="addLayoutRegionButton" class="ghost" type="button">Add</button>
                 <button id="duplicateLayoutRegionButton" class="ghost" type="button">Copy</button>
                 <button id="mirrorLayoutRegionXButton" class="ghost" type="button" title="Mirror selected region horizontally">Flip X</button>
@@ -97,6 +100,7 @@
               <div class="layout-region-list" id="layoutRegionList" role="listbox" aria-label="Board layout regions"></div>
               <div class="layout-region-detail" id="layoutRegionDetail"></div>
             </div>
+            <div class="layout-diagnostics" id="layoutDiagnostics" aria-live="polite"></div>
           </section>
         </div>
         <div class="layout-editor-actions">
