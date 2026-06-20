@@ -830,6 +830,7 @@ function installAssetLibrary() {
 
 function installCardStudio() {
   renderCardStudio();
+  loadAuthoringStatus();
 
   dom.cardStudioButton?.addEventListener("click", () => toggleCardStudio());
   dom.closeCardStudioButton?.addEventListener("click", () => toggleCardStudio(false));
@@ -972,6 +973,7 @@ function toggleAssetLibrary(open = !assetLibraryOpen) {
     loadAuthoringStatus();
   }
   renderAssetLibrary();
+  renderCardStudio();
 }
 
 function toggleCardStudio(open = !cardStudioOpen) {
@@ -994,6 +996,9 @@ function toggleCardStudio(open = !cardStudioOpen) {
   hideTooltip();
   dom.cardStudio.hidden = !cardStudioOpen;
   dom.cardStudioButton?.classList.toggle("selected", cardStudioOpen);
+  if (cardStudioOpen) {
+    loadAuthoringStatus();
+  }
   renderCardStudio();
 }
 
@@ -1407,8 +1412,10 @@ function renderCardTemplateDetail(template) {
         <span>${hasDraft ? "Local draft active" : "Ruleset source"}</span>
       </div>
       <textarea class="card-template-json" spellcheck="false" aria-label="Card template JSON">${escapeHtml(JSON.stringify(template, null, 2))}</textarea>
+      ${renderCardCatalogPromotionReview(template)}
       <div class="card-template-actions">
         <button type="button" data-card-action="apply">Apply Template</button>
+        <button class="ghost" type="button" data-card-action="promote">Promote Catalog</button>
         <button class="ghost" type="button" data-card-action="copy">Copy Catalog</button>
         <button class="ghost" type="button" data-card-action="reset">Reset</button>
       </div>
@@ -1577,6 +1584,116 @@ function cleanupPresentationEntry(entry) {
       delete entry[key];
     }
   }
+}
+
+function renderCardCatalogPromotionReview(template) {
+  const hasDraft = Boolean(localStorage.getItem(CARD_CATALOG_STORAGE_KEY));
+  const authoredTemplate = authoredCardCatalog?.templates?.find((entry) => entry?.templateId === template.templateId) ?? null;
+  const diffRows = cardTemplateDiffRows(authoredTemplate, template);
+  const summary = cardCatalogDiffSummary(authoredCardCatalog, cardCatalog);
+  const status = authoringStatus ?? { gitAvailable: false, dirty: false, changedFiles: [] };
+  const dirtyLabel = status.gitAvailable
+    ? (status.dirty ? `${status.changedFiles.length} uncommitted change${status.changedFiles.length === 1 ? "" : "s"}` : "Clean worktree")
+    : "Git status unavailable";
+
+  return `
+    <div class="asset-promotion-review card-catalog-promotion-review ${hasDraft ? "ready" : "idle"}">
+      <div class="asset-review-head">
+        <strong>Promotion Review</strong>
+        <span class="${status.dirty ? "dirty" : "clean"}">${escapeHtml(dirtyLabel)}</span>
+      </div>
+      <div class="asset-review-grid">
+        <span>Target</span>
+        <strong>${escapeHtml(`packages/rulesets/${RULESET_ID}/card-catalog.json`)}</strong>
+        <span>Mode</span>
+        <strong>${escapeHtml(hasDraft ? "Replace card catalog" : "Waiting for local card catalog draft")}</strong>
+        <span>Catalog</span>
+        <strong>${escapeHtml(cardCatalogDiffLabel(summary))}</strong>
+      </div>
+      ${status.dirty ? `<p class="asset-review-warning">Promotion will add more workspace changes on top of the current dirty tree.</p>` : ""}
+      ${diffRows.length > 0 ? `
+        <div class="asset-diff-list">
+          ${diffRows.map((row) => `
+            <div>
+              <span>${escapeHtml(row.field)}</span>
+              <code>${escapeHtml(row.before)}</code>
+              <code>${escapeHtml(row.after)}</code>
+            </div>
+          `).join("")}
+        </div>
+      ` : `<p class="asset-review-empty">No selected-template field changes yet.</p>`}
+    </div>
+  `;
+}
+
+function cardCatalogDiffSummary(beforeCatalog, afterCatalog) {
+  const beforeTemplates = new Map((beforeCatalog?.templates ?? []).map((template) => [template?.templateId, template]).filter(([id]) => typeof id === "string"));
+  const afterTemplates = new Map((afterCatalog?.templates ?? []).map((template) => [template?.templateId, template]).filter(([id]) => typeof id === "string"));
+  let added = 0;
+  let changed = 0;
+  let removed = 0;
+
+  afterTemplates.forEach((after, templateId) => {
+    const before = beforeTemplates.get(templateId);
+    if (!before) {
+      added += 1;
+    } else if (JSON.stringify(before) !== JSON.stringify(after)) {
+      changed += 1;
+    }
+  });
+  beforeTemplates.forEach((_, templateId) => {
+    if (!afterTemplates.has(templateId)) {
+      removed += 1;
+    }
+  });
+
+  return { added, changed, removed, total: afterTemplates.size };
+}
+
+function cardCatalogDiffLabel(summary) {
+  const parts = [
+    summary.changed ? `${summary.changed} changed` : "",
+    summary.added ? `${summary.added} added` : "",
+    summary.removed ? `${summary.removed} removed` : ""
+  ].filter(Boolean);
+  return parts.length > 0 ? `${parts.join(", ")} / ${summary.total} templates` : `${summary.total} templates unchanged`;
+}
+
+function cardTemplateDiffRows(before, after) {
+  if (!after) {
+    return [];
+  }
+  const fields = ["version", "objectType", "nameKey", "descriptionKey", "manaCost", "stats", "tags", "behaviorIds", "assetRefs", "display", "metadata"];
+  if (!before) {
+    return fields
+      .filter((field) => after[field] !== undefined)
+      .map((field) => ({
+        field,
+        before: "-",
+        after: summarizeCardDiffValue(after[field])
+      }));
+  }
+
+  return fields
+    .filter((field) => JSON.stringify(before[field]) !== JSON.stringify(after[field]))
+    .map((field) => ({
+      field,
+      before: summarizeCardDiffValue(before[field]),
+      after: summarizeCardDiffValue(after[field])
+    }));
+}
+
+function summarizeCardDiffValue(value) {
+  if (value === undefined) {
+    return "-";
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(", ") : "[]";
+  }
+  if (value && typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  return String(value);
 }
 
 function renderCardDisplayEditor(template) {
@@ -2004,6 +2121,8 @@ function findPresentationEntryRecord(catalog, templateId) {
 function handleCardTemplateAction(action) {
   if (action === "apply") {
     applyCardTemplateDraft();
+  } else if (action === "promote") {
+    promoteCardCatalogDraft();
   } else if (action === "copy") {
     copyCardCatalogDraft();
   } else if (action === "reset") {
@@ -2139,6 +2258,43 @@ function applyCardTemplateValue(selected, draftTemplate, message) {
   selectedCardTemplateId = draftTemplate.templateId;
   renderCardStudio();
   setCardStudioStatus(message);
+}
+
+async function promoteCardCatalogDraft() {
+  if (!cardCatalog) {
+    setCardStudioStatus("No card catalog loaded.");
+    return;
+  }
+
+  try {
+    validateCardCatalogDraft(cardCatalog);
+    if (!localStorage.getItem(CARD_CATALOG_STORAGE_KEY)) {
+      throw new Error("Promote requires a local card catalog draft.");
+    }
+
+    const response = await fetch("/authoring/cards/promote", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        rulesetId: RULESET_ID,
+        catalog: cardCatalog
+      })
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message ?? result.error ?? "Card catalog promotion failed.");
+    }
+
+    authoredCardCatalog = result.catalog;
+    cardCatalog = cloneJson(result.catalog);
+    localStorage.removeItem(CARD_CATALOG_STORAGE_KEY);
+    selectedCardTemplateId = currentSelectedCardTemplate()?.templateId ?? firstVisibleCardTemplate()?.templateId ?? "";
+    renderCardStudio();
+    loadAuthoringStatus();
+    setCardStudioStatus(`Promoted card catalog to ${result.path}.`);
+  } catch (error) {
+    setCardStudioStatus(error instanceof Error ? error.message : "Could not promote card catalog draft.");
+  }
 }
 
 async function copyCardCatalogDraft() {

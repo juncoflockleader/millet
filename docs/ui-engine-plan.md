@@ -28,7 +28,7 @@ Current implemented slice:
 - Ember Duel runtime consumes the ruleset presentation catalog for card, hero, equipment, and minion art/text/action/property display definitions.
 - `sample-duel` asset manifest now covers the demo board background, card portraits, VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
 - Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, shows manifest/presentation/effect usage references, supports local manifest entry JSON drafts with apply/copy/reset, can create brand-new local asset entry drafts, can import image files into local drafts with computed content hash, dimensions, media type, data URL preview/publicPath, can promote imported drafts through the demo authoring server into durable public assets plus updated ruleset manifests, and shows promotion target/create-or-replace mode/diff/worktree-dirty warnings before promotion.
-- Ember Duel `Cards` panel reads the ruleset card catalog, filters templates by object type, renders local card template previews from catalog and presentation data, shows behavior/asset dependency health, compares presentation text with generated behavior text/UX hints, supports applying generated text to local presentation drafts, edits presentation art/frame/crop fields, supports local template JSON drafts with apply/copy/reset, and edits card property badge layouts from the active board layout slot/icon registry.
+- Ember Duel `Cards` panel reads the ruleset card catalog, filters templates by object type, renders local card template previews from catalog and presentation data, shows behavior/asset dependency health, compares presentation text with generated behavior text/UX hints, supports applying generated text to local presentation drafts, edits presentation art/frame/crop fields, supports local template JSON drafts with apply/copy/reset, shows guarded promotion review diffs, can promote reviewed card catalog drafts through the demo authoring server, and edits card property badge layouts from the active board layout slot/icon registry.
 - Ember Duel `Presentation` panel lets designers inspect, locally edit, copy, apply, and reset presentation catalog entries while live previews re-render from the draft catalog.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
 - Ember Duel renders projected `objectType: "hidden"` objects through a generic hidden-card surface with no template id, stats, owner, art, rules text, action, or object id in visible UI.
@@ -517,7 +517,7 @@ Validation should cover:
 
 - Build card list/detail editor for identity, assets, layout, properties, behavior, preview, and validation.
 - Acceptance: Firebolt-like spell and Sanguosha-like trick card can be authored without changing client code.
-- Current slice: Ember Duel `Cards` panel lists `card-catalog.json` templates for both sample rulesets, filters by object type, renders a preview and dependency health for the selected template, validates local JSON edits, stores browser-local catalog drafts, supports copy/reset, compares presentation text against generated behavior text/UX hints, can apply generated text to a browser-local presentation draft, edits presentation art/frame/crop fields, and provides display layout controls for adding/removing property badges and choosing source/slot/icon/label/priority from the active board layout registry.
+- Current slice: Ember Duel `Cards` panel lists `card-catalog.json` templates for both sample rulesets, filters by object type, renders a preview and dependency health for the selected template, validates local JSON edits, stores browser-local catalog drafts, supports copy/reset, compares presentation text against generated behavior text/UX hints, can apply generated text to a browser-local presentation draft, edits presentation art/frame/crop fields, shows catalog promotion diffs/dirty-state, can promote reviewed catalog drafts to ruleset content, and provides display layout controls for adding/removing property badges and choosing source/slot/icon/label/priority from the active board layout registry.
 
 ### UI-M4: Hero Studio
 
@@ -541,6 +541,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add a guarded card catalog promote/publish flow after local card drafts have review diffs.
-2. Add a runtime widget registry layer for custom board widgets beyond the demo's built-in components.
-3. Add specialized hero studio controls for hero art/frame, resources, ability presentation, and behavior refs.
+1. Add a runtime widget registry layer for custom board widgets beyond the demo's built-in components.
+2. Add specialized hero studio controls for hero art/frame, resources, ability presentation, and behavior refs.
+3. Add equipment studio controls for equipment slot, frame/icon, stats, replacement behavior, and granted actions.

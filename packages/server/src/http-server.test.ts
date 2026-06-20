@@ -285,6 +285,93 @@ test("HTTP asset promotion can create a new manifest entry", async () => {
   }
 });
 
+test("HTTP card catalog promotion writes a guarded catalog draft", async () => {
+  const root = mkdtempSync(join(tmpdir(), "millet-card-catalog-promotion-"));
+  try {
+    const rulesetRoot = join(root, "rulesets");
+    mkdirSync(join(rulesetRoot, "sample-duel"), { recursive: true });
+    writeFileSync(join(rulesetRoot, "sample-duel", "card-catalog.json"), JSON.stringify({
+      id: "sample-duel-cards",
+      version: "0.1.0",
+      templates: [
+        {
+          templateId: "firebolt",
+          version: "0.1.0",
+          objectType: "card",
+          nameKey: "card.firebolt.name"
+        }
+      ]
+    }, null, 2));
+
+    const catalog = {
+      id: "sample-duel-cards",
+      version: "0.1.1",
+      templates: [
+        {
+          templateId: "firebolt",
+          version: "0.1.1",
+          objectType: "card",
+          nameKey: "card.firebolt.name",
+          manaCost: 3
+        },
+        {
+          templateId: "new_spell",
+          version: "0.1.0",
+          objectType: "card",
+          nameKey: "card.new_spell.name"
+        }
+      ]
+    };
+    const server = createMilletHttpServer(new InMemoryMatchService(), { rulesetRoot });
+    const response = await dispatch(server, {
+      method: "POST",
+      url: "/authoring/cards/promote",
+      body: {
+        rulesetId: "sample-duel",
+        catalog
+      }
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json.path, "sample-duel/card-catalog.json");
+    assert.equal((response.json.catalog as Record<string, unknown>).version, "0.1.1");
+    const written = JSON.parse(readFileSync(join(rulesetRoot, "sample-duel", "card-catalog.json"), "utf8")) as Record<string, unknown>;
+    assert.equal(written.version, "0.1.1");
+    assert.equal((written.templates as unknown[]).length, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("HTTP card catalog promotion rejects duplicate template ids", async () => {
+  const root = mkdtempSync(join(tmpdir(), "millet-card-catalog-promotion-invalid-"));
+  try {
+    const rulesetRoot = join(root, "rulesets");
+    mkdirSync(join(rulesetRoot, "sample-duel"), { recursive: true });
+    const server = createMilletHttpServer(new InMemoryMatchService(), { rulesetRoot });
+    const response = await dispatch(server, {
+      method: "POST",
+      url: "/authoring/cards/promote",
+      body: {
+        rulesetId: "sample-duel",
+        catalog: {
+          id: "bad-cards",
+          version: "0.1.0",
+          templates: [
+            { templateId: "duplicate", version: "0.1.0", objectType: "card", nameKey: "a" },
+            { templateId: "duplicate", version: "0.1.0", objectType: "card", nameKey: "b" }
+          ]
+        }
+      }
+    });
+
+    assert.equal(response.statusCode, 400);
+    assert.match(String(response.json.message), /Duplicate card template id duplicate/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("HTTP authoring status reports git dirty-state shape", async () => {
   const server = createMilletHttpServer(new InMemoryMatchService(), {
     staticRoot: join("packages", "demo-basic-duel", "public"),

@@ -243,6 +243,17 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
         return;
       }
 
+      if (req.method === "POST" && url.pathname === "/authoring/cards/promote") {
+        if (!options.rulesetRoot) {
+          send(res, 400, { error: "authoring_unavailable", message: "Card catalog promotion requires rulesetRoot." });
+          return;
+        }
+        const body = (await readJson(req)) as { rulesetId?: string; catalog?: Record<string, unknown> };
+        const result = promoteCardCatalogDraft(options.rulesetRoot, body);
+        send(res, 200, result);
+        return;
+      }
+
       if (req.method === "GET" && url.pathname === "/authoring/status") {
         send(res, 200, readAuthoringStatus());
         return;
@@ -405,6 +416,68 @@ function promoteAssetDraft(
   manifest.assets = assets;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   return { asset: promotedAsset, manifest, publicPath };
+}
+
+function promoteCardCatalogDraft(
+  rulesetRoot: string,
+  body: { rulesetId?: string; catalog?: Record<string, unknown> }
+): { catalog: Record<string, unknown>; path: string } {
+  const rulesetId = body.rulesetId;
+  if (typeof rulesetId !== "string" || !PROMOTABLE_RULESET_IDS.has(rulesetId)) {
+    throw new BadRequestError("Unsupported ruleset for card catalog promotion.");
+  }
+  const catalog = body.catalog;
+  validatePromotedCardCatalog(catalog);
+
+  const catalogPath = join(rulesetRoot, rulesetId, "card-catalog.json");
+  const normalizedRoot = normalize(rulesetRoot);
+  const normalizedCatalogPath = normalize(catalogPath);
+  const relativeCatalogPath = relative(normalizedRoot, normalizedCatalogPath);
+  if (relativeCatalogPath.startsWith("..") || relativeCatalogPath.includes("..")) {
+    throw new BadRequestError("Card catalog path escaped ruleset root.");
+  }
+
+  writeFileSync(normalizedCatalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
+  return {
+    catalog,
+    path: relativeCatalogPath
+  };
+}
+
+function validatePromotedCardCatalog(catalog: unknown): asserts catalog is Record<string, unknown> {
+  if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) {
+    throw new BadRequestError("Card catalog promotion requires a catalog object.");
+  }
+  const record = catalog as Record<string, unknown>;
+  if (typeof record.id !== "string" || record.id.length === 0) {
+    throw new BadRequestError("Card catalog requires a non-empty id.");
+  }
+  if (typeof record.version !== "string" || record.version.length === 0) {
+    throw new BadRequestError("Card catalog requires a non-empty version.");
+  }
+  if (!Array.isArray(record.templates) || record.templates.length === 0) {
+    throw new BadRequestError("Card catalog requires at least one template.");
+  }
+
+  const ids = new Set<string>();
+  record.templates.forEach((template, index) => {
+    if (!template || typeof template !== "object" || Array.isArray(template)) {
+      throw new BadRequestError(`Template ${index + 1} must be an object.`);
+    }
+    const templateId = (template as Record<string, unknown>).templateId;
+    if (typeof templateId !== "string" || templateId.length === 0) {
+      throw new BadRequestError(`Template ${index + 1} requires a non-empty templateId.`);
+    }
+    for (const field of ["version", "objectType", "nameKey"]) {
+      if (typeof (template as Record<string, unknown>)[field] !== "string" || ((template as Record<string, unknown>)[field] as string).length === 0) {
+        throw new BadRequestError(`Template ${templateId} requires non-empty ${field}.`);
+      }
+    }
+    if (ids.has(templateId)) {
+      throw new BadRequestError(`Duplicate card template id ${templateId}.`);
+    }
+    ids.add(templateId);
+  });
 }
 
 function decodePromotedAssetDataUrl(dataUrl: string): { mediaType: string; bytes: Buffer } {

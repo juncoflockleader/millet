@@ -89,7 +89,7 @@ The frame/art editor writes to the browser-local presentation draft rather than 
 
 The property layout editor reads the active board layout's `propertyDisplay.slots` and `propertyDisplay.icons` registry, filtered by the selected template object type. Designers can add/remove badges and edit property, source, slot, icon, label, and priority fields without hand-editing JSON. The preview updates from the same template data. Multiple badges in one slot stack visibly, which supports Sanguosha-like `suit-point` displays where suit and rank share the same corner.
 
-Local edits are stored under `ember-duel.cards.<rulesetId>.v1` in browser `localStorage`. Applying a draft validates required template fields, display property shape, duplicate ids in the active catalog, and preserves the selected `templateId`. Designers can copy the active catalog JSON or reset back to the authored ruleset source. This slice intentionally does not write the card catalog back to disk yet; it establishes the same safe draft workflow used by the layout, asset, and presentation panels before adding publish/promote controls.
+Local edits are stored under `ember-duel.cards.<rulesetId>.v1` in browser `localStorage`. Applying a draft validates required template fields, display property shape, duplicate ids in the active catalog, and preserves the selected `templateId`. Designers can copy the active catalog JSON, reset back to the authored ruleset source, or promote the active catalog through `/authoring/cards/promote`. The promotion review shows the target `card-catalog.json`, current git dirty-state, catalog-level added/changed/removed counts, and selected-template field diffs before the local authoring server replaces the ruleset catalog.
 
 ## UI Preview Fixtures
 

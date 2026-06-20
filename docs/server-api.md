@@ -28,6 +28,13 @@ GET /content/rulesets/:rulesetId/behavior-summaries.json
 
 The response has `kind: "behavior_summaries"` and maps behavior ids to `canonicalText`, generated `uxHints`, and `templateIssues`. The browser card studio uses this to compare card presentation text against structured behavior definitions.
 
+```http
+POST /authoring/cards/promote
+content-type: application/json
+```
+
+Development-only card catalog promotion endpoint. The body contains `rulesetId` and a full `catalog` object. For supported sample rulesets, the server validates the catalog id/version/templates shape, rejects duplicate template ids, and writes `packages/rulesets/:rulesetId/card-catalog.json`.
+
 ## Sessions And Authorization
 
 The prototype uses headers to model sessions:
