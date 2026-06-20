@@ -2596,6 +2596,39 @@ p,
   background: rgba(255, 112, 96, 0.08);
 }
 
+.equipment-studio {
+  display: grid;
+  gap: 9px;
+  padding: 9px;
+  border: 1px solid rgba(105, 211, 154, 0.24);
+  border-radius: 7px;
+  background: rgba(105, 211, 154, 0.045);
+}
+
+.equipment-studio-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.equipment-studio-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.equipment-action-editor {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.equipment-studio textarea {
+  min-height: 58px;
+  resize: vertical;
+  font: inherit;
+}
+
 .card-display-editor {
   display: grid;
   gap: 8px;
@@ -2675,6 +2708,7 @@ p,
 .card-display-layout-field input,
 .card-frame-field input,
 .card-frame-field select,
+.card-frame-field textarea,
 .card-display-row input,
 .card-display-row select {
   min-width: 0;
@@ -2684,6 +2718,10 @@ p,
   border-radius: 6px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.06);
+}
+
+.card-frame-field textarea {
+  padding-block: 7px;
 }
 
 .card-display-rows {

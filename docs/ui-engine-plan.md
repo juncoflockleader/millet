@@ -30,6 +30,7 @@ Current implemented slice:
 - `sample-duel` asset manifest now covers the demo board background, card portraits, VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
 - Ember Duel `Assets` panel reads the ruleset asset manifest, previews browser-facing image assets, filters by kind, shows manifest/presentation/effect usage references, supports local manifest entry JSON drafts with apply/copy/reset, can create brand-new local asset entry drafts, can import image files into local drafts with computed content hash, dimensions, media type, data URL preview/publicPath, can promote imported drafts through the demo authoring server into durable public assets plus updated ruleset manifests, and shows promotion target/create-or-replace mode/diff/worktree-dirty warnings before promotion.
 - Ember Duel `Cards` panel reads the ruleset card catalog, filters templates by object type, renders local card template previews from catalog and presentation data, shows behavior/asset dependency health, compares presentation text with generated behavior text/UX hints, supports applying generated text to local presentation drafts, edits presentation art/frame/crop fields, supports local template JSON drafts with apply/copy/reset, shows guarded promotion review diffs, can promote reviewed card catalog drafts through the demo authoring server, and edits card property badge layouts from the active board layout slot/icon registry.
+- Ember Duel `Cards` panel exposes an Equipment Studio for equipment templates, with structured controls for equipment slot, replacement mode, attack/durability stats, frame/icon assets, granted action text, behavior id, target mode, selector, and rules text.
 - Ember Duel `Presentation` panel lets designers inspect, locally edit, copy, apply, and reset presentation catalog entries while live previews re-render from the draft catalog.
 - Ember Duel `Presentation` panel now exposes a Hero Studio view for hero entries, with structured controls for hero name/title, art/frame/crop, layout variant, ability name/action/text, behavior id, target mode, mana cost, and live hero-card preview.
 - Ember Duel `Preview` panel reads ruleset preview fixtures and renders read-only card, hero, equipment, and minion projected states through the same board renderer used by live matches.
@@ -531,6 +532,7 @@ Validation should cover:
 
 - Build equipment editor for slots, stats, replacement, passive modifiers, and granted actions.
 - Acceptance: weapon, armor, and mount-style equipment can be authored and previewed.
+- Current slice: Ember Duel `Cards` panel renders an Equipment Studio for selected equipment templates, writes browser-local card catalog and presentation drafts, mirrors stat edits into presentation stats, previews granted actions, and re-renders live equipped cards from draft presentation actions.
 
 ### UI-M6: Minion Studio
 
@@ -544,6 +546,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add equipment studio controls for equipment slot, frame/icon, stats, replacement behavior, and granted actions.
-2. Add minion studio controls for board-entity frame, combat stats, death triggers, token variants, and runtime modifier display.
-3. Add hero studio promotion/validation hardening for required ability fields, behavior availability, and hero ability display-slot editing.
+1. Add minion studio controls for board-entity frame, combat stats, death triggers, token variants, and runtime modifier display.
+2. Add hero studio promotion/validation hardening for required ability fields, behavior availability, and hero ability display-slot editing.
+3. Add equipment studio validation/promotion hardening for behavior availability, slot compatibility, and schema-safe replacement metadata.

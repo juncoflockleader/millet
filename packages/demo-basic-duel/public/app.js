@@ -901,6 +901,11 @@ function installCardStudio() {
     handleCardTemplateAction(button.dataset.cardAction);
   });
   dom.cardTemplateDetail?.addEventListener("change", (event) => {
+    const equipmentInput = event.target.closest("[data-equipment-field]");
+    if (equipmentInput) {
+      updateEquipmentStudioDraftFromInput(equipmentInput);
+      return;
+    }
     const frameInput = event.target.closest("[data-card-frame-field]");
     if (frameInput) {
       updateCardFrameDraftFromInput(frameInput);
@@ -1601,6 +1606,7 @@ function renderCardTemplateDetail(template) {
       ${renderCardTemplateValidation(validation)}
     </div>
     ${renderCardBehaviorSync(template)}
+    ${renderEquipmentStudio(template)}
     ${renderCardFrameEditor(template)}
     ${renderCardDisplayEditor(template)}
     <div class="card-template-editor">
@@ -1966,6 +1972,140 @@ function renderCardDisplayEditor(template) {
       </div>
     </div>
   `;
+}
+
+function renderEquipmentStudio(template) {
+  if (template.objectType !== "equipment") {
+    return "";
+  }
+
+  const presentation = presentationEntryForTemplate(template.templateId) ?? {};
+  const behavior = presentation.behavior && typeof presentation.behavior === "object" ? presentation.behavior : {};
+  const assets = presentation.assets && typeof presentation.assets === "object" ? presentation.assets : {};
+  const stats = template.stats && typeof template.stats === "object" ? template.stats : {};
+  const slot = equipmentSlotValue(template, presentation);
+  const replacementMode = equipmentReplacementMode(template);
+  const datalistId = `equipment-assets-${safeDomId(template.templateId)}`;
+  const behaviorDatalistId = `equipment-behaviors-${safeDomId(template.templateId)}`;
+
+  return `
+    <div class="equipment-studio">
+      <div class="card-display-head">
+        <div>
+          <strong>Equipment Studio</strong>
+          <span>${escapeHtml(labelFromId(slot))} · ${escapeHtml(replacementModeLabel(replacementMode))}</span>
+        </div>
+      </div>
+      <div class="equipment-studio-grid">
+        <label class="card-frame-field">
+          <span>Slot</span>
+          <select data-equipment-field="slot">
+            ${renderSelectOptions(["weapon", "armor", "mount", "treasure", "custom"], slot)}
+          </select>
+        </label>
+        <label class="card-frame-field">
+          <span>Replacement</span>
+          <select data-equipment-field="metadata.replacementMode">
+            ${renderSelectOptions(["replace", "reject", "stack", "custom"], replacementMode)}
+          </select>
+        </label>
+        ${renderEquipmentNumberField("stats.attack", "Attack", stats.attack ?? "", -20, 20, 1)}
+        ${renderEquipmentNumberField("stats.durability", "Durability", stats.durability ?? "", 0, 20, 1)}
+        <label class="card-frame-field wide">
+          <span>Frame path</span>
+          <input type="text" list="${escapeAttr(datalistId)}" value="${escapeAttr(assets.frame ?? "")}" data-equipment-field="presentation.assets.frame">
+        </label>
+        <label class="card-frame-field wide">
+          <span>Icon path</span>
+          <input type="text" list="${escapeAttr(datalistId)}" value="${escapeAttr(assets.icon ?? "")}" data-equipment-field="presentation.assets.icon">
+        </label>
+      </div>
+      <div class="equipment-action-editor">
+        <div class="card-display-head">
+          <div>
+            <strong>Granted Action</strong>
+            <span>${escapeHtml(behavior.behaviorId ?? template.behaviorIds?.[0] ?? "No behavior")}</span>
+          </div>
+        </div>
+        <div class="equipment-studio-grid">
+          <label class="card-frame-field">
+            <span>Action</span>
+            <input type="text" value="${escapeAttr(presentation.action ?? "")}" data-equipment-field="presentation.action">
+          </label>
+          <label class="card-frame-field">
+            <span>Behavior</span>
+            <input type="text" list="${escapeAttr(behaviorDatalistId)}" value="${escapeAttr(behavior.behaviorId ?? template.behaviorIds?.[0] ?? "")}" data-equipment-field="behavior.behaviorId">
+          </label>
+          <label class="card-frame-field">
+            <span>Target</span>
+            <select data-equipment-field="behavior.targetMode">
+              ${renderSelectOptions(["enemyHero", "selfHero", "battlefield", "targeted"], behavior.targetMode ?? "enemyHero")}
+            </select>
+          </label>
+          <label class="card-frame-field">
+            <span>Selector</span>
+            <input type="text" value="${escapeAttr(behavior.targetSelector ?? "target")}" data-equipment-field="behavior.targetSelector">
+          </label>
+          <label class="card-frame-field wide">
+            <span>Text</span>
+            <textarea data-equipment-field="presentation.text" rows="3">${escapeHtml(presentation.text ?? "")}</textarea>
+          </label>
+        </div>
+      </div>
+      ${renderAssetPathDatalist(datalistId)}
+      ${renderEquipmentBehaviorDatalist(behaviorDatalistId)}
+    </div>
+  `;
+}
+
+function renderEquipmentNumberField(field, label, value, min, max, step) {
+  return `
+    <label class="card-frame-field">
+      <span>${escapeHtml(label)}</span>
+      <input
+        type="number"
+        min="${escapeAttr(min)}"
+        max="${escapeAttr(max)}"
+        step="${escapeAttr(step)}"
+        value="${escapeAttr(value)}"
+        data-equipment-field="${escapeAttr(field)}"
+      >
+    </label>
+  `;
+}
+
+function renderEquipmentBehaviorDatalist(datalistId) {
+  const behaviorIds = Object.keys(behaviorSummaryDocument?.behaviors ?? {}).sort();
+  return `
+    <datalist id="${escapeAttr(datalistId)}">
+      ${behaviorIds.map((behaviorId) => `<option value="${escapeAttr(behaviorId)}"></option>`).join("")}
+    </datalist>
+  `;
+}
+
+function equipmentSlotValue(template, presentation = {}) {
+  const metadataSlot = typeof template.metadata?.slotId === "string" ? template.metadata.slotId : "";
+  const tagSlot = (template.tags ?? []).find((tag) => ["weapon", "armor", "mount", "treasure"].includes(tag));
+  const variant = typeof presentation.layout?.variant === "string" ? presentation.layout.variant : "";
+  return metadataSlot || tagSlot || variant || "weapon";
+}
+
+function equipmentReplacementMode(template) {
+  const value = template.metadata?.replacementMode;
+  return typeof value === "string" && value.length > 0 ? value : "replace";
+}
+
+function replacementModeLabel(value) {
+  if (value === "replace") {
+    return "Replaces occupied slot";
+  }
+  if (value === "reject") {
+    return "Requires empty slot";
+  }
+  if (value === "stack") {
+    return "Allows stacked attachments";
+  }
+  return "Custom replacement";
 }
 
 function renderCardDisplayRow(property, index, slots, icons) {
@@ -2397,6 +2537,140 @@ function handleCardDisplayAction(action, button) {
     }
     display.properties.splice(index, 1);
     applyCardTemplateValue(selected, draftTemplate, `Removed display badge from ${draftTemplate.templateId}.`);
+  }
+}
+
+function updateEquipmentStudioDraftFromInput(input) {
+  const selected = currentSelectedCardTemplate();
+  if (!selected || selected.objectType !== "equipment" || !cardCatalog) {
+    setCardStudioStatus("No equipment template selected.");
+    return;
+  }
+
+  const field = input.dataset.equipmentField;
+  const value = equipmentStudioInputValue(input);
+  const draftTemplate = cloneJson(selected);
+  const nextCatalog = cloneJson(cardCatalog);
+  let nextPresentationCatalog = presentationCatalog ? cloneJson(presentationCatalog) : null;
+  let presentationEntry = nextPresentationCatalog ? findPresentationEntryRecord(nextPresentationCatalog, selected.templateId) : null;
+
+  if (field === "slot") {
+    setEquipmentSlotDraft(draftTemplate, value || "weapon");
+    if (presentationEntry) {
+      setNestedPresentationValue(presentationEntry, "layout.variant", value || "weapon");
+    }
+  } else if (field === "metadata.replacementMode") {
+    setEquipmentMetadataValue(draftTemplate, "replacementMode", value || "replace");
+  } else if (field?.startsWith("stats.")) {
+    setEquipmentStatDraft(draftTemplate, field.slice("stats.".length), value);
+    if (presentationEntry) {
+      setNestedPresentationValue(presentationEntry, `properties.stats.${field.slice("stats.".length)}`, value);
+    }
+  } else if (field?.startsWith("presentation.")) {
+    if (!presentationEntry) {
+      setCardStudioStatus("No presentation entry available for this equipment.");
+      return;
+    }
+    setNestedPresentationValue(presentationEntry, field.slice("presentation.".length), value);
+  } else if (field?.startsWith("behavior.")) {
+    if (!presentationEntry) {
+      setCardStudioStatus("No presentation entry available for this equipment behavior.");
+      return;
+    }
+    const behaviorField = field.slice("behavior.".length);
+    setNestedPresentationValue(presentationEntry, `behavior.${behaviorField}`, value);
+    if (behaviorField === "behaviorId") {
+      setEquipmentBehaviorIdDraft(draftTemplate, value);
+    }
+  } else {
+    return;
+  }
+
+  cleanupCardTemplateDraft(draftTemplate);
+  validateCardTemplateDraft(selected, draftTemplate);
+  const replacedCatalog = replaceCardTemplate(nextCatalog, selected.templateId, draftTemplate);
+  validateCardCatalogDraft(replacedCatalog);
+  cardCatalog = replacedCatalog;
+  localStorage.setItem(CARD_CATALOG_STORAGE_KEY, JSON.stringify(replacedCatalog));
+  selectedCardTemplateId = draftTemplate.templateId;
+
+  if (presentationEntry && nextPresentationCatalog) {
+    cleanupPresentationEntry(presentationEntry);
+    localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextPresentationCatalog));
+    applyPresentationCatalog(nextPresentationCatalog);
+  }
+
+  renderCardStudio();
+  renderPresentationEditor();
+  render();
+  setCardStudioStatus(`Updated equipment studio field for ${draftTemplate.templateId}.`);
+}
+
+function equipmentStudioInputValue(input) {
+  if (input.type === "number") {
+    if (input.value === "") {
+      return undefined;
+    }
+    const value = Number(input.value);
+    return Number.isFinite(value) ? value : undefined;
+  }
+  const value = input.value.trim();
+  if (input.dataset.equipmentField === "presentation.text") {
+    return input.value;
+  }
+  return value ? value : undefined;
+}
+
+function setEquipmentSlotDraft(template, slot) {
+  const normalizedSlot = slot || "weapon";
+  const tags = Array.isArray(template.tags) ? template.tags.filter((tag) => !["weapon", "armor", "mount", "treasure", "custom"].includes(tag)) : [];
+  template.tags = uniqueValues([normalizedSlot, ...tags]);
+  setEquipmentMetadataValue(template, "slotId", normalizedSlot);
+}
+
+function setEquipmentMetadataValue(template, key, value) {
+  if (value === undefined || value === "") {
+    if (template.metadata && typeof template.metadata === "object" && !Array.isArray(template.metadata)) {
+      delete template.metadata[key];
+    }
+  } else {
+    template.metadata = template.metadata && typeof template.metadata === "object" && !Array.isArray(template.metadata)
+      ? template.metadata
+      : {};
+    template.metadata[key] = value;
+  }
+}
+
+function setEquipmentStatDraft(template, stat, value) {
+  template.stats = template.stats && typeof template.stats === "object" && !Array.isArray(template.stats) ? template.stats : {};
+  if (value === undefined) {
+    delete template.stats[stat];
+  } else {
+    template.stats[stat] = value;
+  }
+}
+
+function setEquipmentBehaviorIdDraft(template, behaviorId) {
+  if (!behaviorId) {
+    delete template.behaviorIds;
+    return;
+  }
+  const rest = Array.isArray(template.behaviorIds) ? template.behaviorIds.filter((id) => id !== behaviorId) : [];
+  template.behaviorIds = uniqueValues([behaviorId, ...rest]);
+}
+
+function cleanupCardTemplateDraft(template) {
+  if (template.metadata && typeof template.metadata === "object" && !Array.isArray(template.metadata) && Object.keys(template.metadata).length === 0) {
+    delete template.metadata;
+  }
+  if (template.stats && typeof template.stats === "object" && !Array.isArray(template.stats) && Object.keys(template.stats).length === 0) {
+    delete template.stats;
+  }
+  if (Array.isArray(template.tags) && template.tags.length === 0) {
+    delete template.tags;
+  }
+  if (Array.isArray(template.behaviorIds) && template.behaviorIds.length === 0) {
+    delete template.behaviorIds;
   }
 }
 
