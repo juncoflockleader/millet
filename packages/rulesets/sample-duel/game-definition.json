@@ -32,6 +32,14 @@
     "turn_end"
   ],
   "cardCatalog": "card-catalog.json",
+  "ui": {
+    "defaultBoardLayout": "ui/ember-duel-board-layout.json",
+    "boardLayouts": ["ui/ember-duel-board-layout.json"],
+    "defaultPresentationCatalog": "ui/ember-duel-presentation.json",
+    "presentationCatalogs": ["ui/ember-duel-presentation.json"],
+    "defaultPreviewFixture": "ui/ember-duel-preview-fixtures.json",
+    "previewFixtures": ["ui/ember-duel-preview-fixtures.json"]
+  },
   "behaviors": [
     "firebolt",
     "minion_attack",

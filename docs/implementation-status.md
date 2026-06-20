@@ -11,7 +11,7 @@ Goal: implement M0-M8 from `docs/milestones.md`.
 
 Latest local result:
 
-- 125 tests passing.
+- 128 tests passing.
 
 Basic 1v1 demo smoke:
 
@@ -26,6 +26,23 @@ Latest local result:
 - Multi-viewport browser smoke confirmed the scaled play area remains inside desktop, tablet, mobile, and tiny viewports, with no document scrolling beyond the window and no page errors.
 - Tooltip smoke confirmed whole-card inspection and keyword tooltip rendering for card rules text.
 - Interaction smoke confirmed legacy action buttons, click-to-select targeting, drag-to-target targeting, hero card ability targeting, hero ability button execution, display-slot property badges, and viewport fit at `1280 x 720`.
+- Layout editor smoke confirmed the `Layout` panel opens, sliders update CSS variables, row handles update exported JSON/localStorage, edited card width applies to rendered cards, and the existing Firebolt action flow still works.
+- Layout region smoke confirmed the editor overlay renders authored board layout regions and widget components, while layout handles remain active.
+- Runtime region smoke confirmed hero, battlefield, equipment, hand, action, and history surfaces carry authored region/widget metadata and battlefield drops bind to battlefield regions.
+- Runtime region renderer smoke confirmed player-side `HeroCard`, `CardRow`, `EquipmentSlot`, and `DeckStack` containers are selected through region/widget dispatch, center-lane system widgets expose `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` surfaces, and `ActionPanel` renders live open prompt summaries.
+- Asset library smoke confirmed the `Assets` panel opens, reads 12 assets from the ruleset manifest, filters VFX sheets, loads an image preview, reports usage labels, and closes when the `Layout` panel opens.
+- Preview fixture smoke confirmed the `Preview` panel opens, reads 4 ruleset fixtures, renders equipment/minion projected states, disables live refresh/end-turn controls, and reports read-only action attempts in the log.
+- Hidden-object preview smoke confirmed projected hidden cards render as generic `Hidden Card` surfaces and do not leak the redacted template or object id in visible UI.
+- UI engine implementation has started with schema-backed board layout content, ruleset `ui.defaultBoardLayout` discovery, read-only ruleset content serving, and Ember Duel consuming ruleset layout tokens as authored defaults.
+- The next layout-editor slice added board layout region geometry bounds validation and a schema-backed region/widget guide overlay in Ember Duel.
+- The next runtime-layout slice threaded schema-backed board region/widget metadata into live Ember Duel DOM surfaces and target validation.
+- The next runtime-region-renderer slice moved player-side hero, battlefield, equipment, hand, and deck surfaces onto a small widget-component dispatch layer, added the disabled ChatWindow center-lane surface, and connected ActionPanel prompt summaries to projected prompt state.
+- The next UI slice added schema-backed presentation catalogs, ruleset `ui.defaultPresentationCatalog` discovery, validation for presentation/template/behavior references, and Ember Duel consumption for card, hero, equipment, and minion presentation.
+- The next asset slice expanded `sample-duel` asset metadata for board background, card portraits, and VFX sheets, added browser `publicPath` and generation metadata fields, and exposed the manifest through the Ember Duel `Assets` panel.
+- The next display-validation slice added semantic checks for unsupported default property display slots/icons in card catalogs, presentation catalogs, hero displays, and hero ability displays.
+- The next preview-fixture slice added schema-backed read-only UI preview states for card, hero, equipment, and minion rendering, plus demo consumption through the `Preview` panel.
+- The next hidden-rendering slice made UI preview fixtures projection-safe for hidden objects and added a generic hidden-card renderer for redacted projected cards.
+- The next identity-layout slice added a schema-backed Sanguosha-like eight-seat board layout for `sample-identity`, including seat ring, role summary, shared deck/discard, active hand, judgment, equipment, action/response, and history regions.
 
 CLI smoke checks:
 
@@ -217,6 +234,7 @@ Implemented:
 
 - `sample-identity` ruleset files in `packages/rulesets/sample-identity`.
 - Versioned `sample-identity` card catalog with basic, trick, delayed trick, equipment, judgment, and identity templates.
+- Schema-backed `sample-identity` board layout for 6-8 player identity tables.
 - Six and eight player role presets.
 - Public lord role and hidden non-lord roles.
 - Shared deck/discard and per-player hand/equipment zones.
@@ -284,8 +302,10 @@ Implemented:
 - Semantic validation that `game-definition.json` behavior references match `behaviors.json`.
 - Behaviors manifest validation.
 - Card catalog validation for duplicate template ids plus behavior, asset, and localization references.
+- Card and presentation display validation for unsupported default property slots and icons.
+- UI preview fixture validation for missing refs, duplicate fixture ids, unknown player refs, unknown object refs, unknown template refs, hidden-object leaks, visible objects missing template ids, and map key/id drift.
 - Asset manifest validation.
-- Asset compatibility validation for SHA-256 hashes, approved URI schemes, approved license identifiers, image media types, and image dimensions.
+- Asset compatibility validation for SHA-256 hashes, approved URI schemes, approved license identifiers, browser public paths, image media types, and image dimensions.
 - Localization validation.
 - Bundle hashing with stable hashes.
 - Ruleset dependency graph reports for files, behaviors, card templates, zones, assets, localization strings, and declaration/reference edges.
@@ -295,6 +315,8 @@ Implemented:
 - Immutable in-memory content registry with validate, publish, deprecate, and rollback states.
 - Published bundle severity gate rejects validation warnings as well as errors.
 - Asset, localization, and card catalog manifests for both sample rulesets.
+- `sample-duel` asset manifest metadata for the demo board background, six card portraits, four VFX sheets, generated prompt summaries, generation ids, public paths, and usage labels.
+- `sample-duel` UI preview fixtures for card, hero, equipment, and minion rendering states.
 - CLI `validate` and `bundle` commands.
 
 Evidence:

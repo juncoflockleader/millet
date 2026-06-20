@@ -45,6 +45,14 @@ export interface GameDefinitionJson {
   "turnGraph"?: string[];
   "behaviors"?: string[];
   "cardCatalog"?: string;
+  "ui"?: {
+    "defaultBoardLayout"?: string;
+    "boardLayouts"?: string[];
+    "defaultPresentationCatalog"?: string;
+    "presentationCatalogs"?: string[];
+    "defaultPreviewFixture"?: string;
+    "previewFixtures"?: string[];
+  };
 }
 
 export interface BehaviorManifestJson {
@@ -87,6 +95,279 @@ export interface CardCatalogJson {
   }[];
 }
 
+export interface BoardLayoutJson {
+  "id": string;
+  "version": string;
+  "kind": "board_layout";
+  "metadata"?: {
+    [key: string]: unknown;
+  };
+  "logicalSize": {
+    "width": number;
+    "height": number;
+  };
+  "scaling": {
+    "mode": "fit_viewport" | "fixed" | "responsive";
+    "minScale"?: number;
+    "maxScale"?: number;
+  };
+  "tokens"?: {
+    [key: string]: unknown;
+  };
+  "regions": {
+    "id": string;
+    "kind": "hero" | "hand" | "deck" | "discard" | "graveyard" | "battlefield" | "equipment" | "judgment" | "prompt" | "action_window" | "chat" | "history_log" | "opponent_summary" | "spectator_overlay" | "debug_overlay" | "custom";
+    "ownerScope": "player" | "opponent" | "shared" | "match" | "spectator";
+    "label"?: string;
+    "geometry": {
+      "x": number;
+      "y": number;
+      "width": number;
+      "height": number;
+    };
+    "widgetId": string;
+    "accepts"?: string[];
+    "targetable"?: boolean;
+    "dropBehavior"?: string;
+    "overflow"?: "fan" | "scroll" | "stack" | "compact" | "hidden";
+    "visibleTo"?: "owner" | "opponent" | "public" | "admin";
+  }[];
+  "widgets": {
+    "id": string;
+    "kind": "card_collection" | "single_object" | "system" | "debug" | "custom";
+    "component": string;
+    "config"?: {
+      [key: string]: unknown;
+    };
+  }[];
+}
+
+export interface PresentationCatalogJson {
+  "id": string;
+  "version": string;
+  "kind": "presentation_catalog";
+  "metadata"?: {
+    [key: string]: unknown;
+  };
+  "cards"?: {
+    "templateId": string;
+    "name": string;
+    "text": string;
+    "action"?: string;
+    "assets"?: {
+      "art"?: string;
+      "frame"?: string;
+      "icon"?: string;
+    };
+    "layout"?: {
+      "variant"?: string;
+      [key: string]: unknown;
+    };
+    "properties"?: {
+      "manaCost"?: number;
+      "stats"?: {
+        [key: string]: number;
+      };
+      "display"?: {
+        "property": string;
+        "source"?: "template" | "stats" | "counter" | "resource" | "metadata" | "computed";
+        "slot": string;
+        "icon"?: string;
+        "label"?: string;
+        "priority"?: number;
+      }[];
+      [key: string]: unknown;
+    };
+    "behavior"?: {
+      "behaviorId"?: string;
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetSelector"?: string;
+    };
+  }[];
+  "equipment"?: {
+    "templateId": string;
+    "name": string;
+    "text": string;
+    "action"?: string;
+    "assets"?: {
+      "art"?: string;
+      "frame"?: string;
+      "icon"?: string;
+    };
+    "layout"?: {
+      "variant"?: string;
+      [key: string]: unknown;
+    };
+    "properties"?: {
+      "manaCost"?: number;
+      "stats"?: {
+        [key: string]: number;
+      };
+      "display"?: {
+        "property": string;
+        "source"?: "template" | "stats" | "counter" | "resource" | "metadata" | "computed";
+        "slot": string;
+        "icon"?: string;
+        "label"?: string;
+        "priority"?: number;
+      }[];
+      [key: string]: unknown;
+    };
+    "behavior"?: {
+      "behaviorId"?: string;
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetSelector"?: string;
+    };
+  }[];
+  "minions"?: {
+    "templateId": string;
+    "name": string;
+    "text": string;
+    "action"?: string;
+    "assets"?: {
+      "art"?: string;
+      "frame"?: string;
+      "icon"?: string;
+    };
+    "layout"?: {
+      "variant"?: string;
+      [key: string]: unknown;
+    };
+    "properties"?: {
+      "manaCost"?: number;
+      "stats"?: {
+        [key: string]: number;
+      };
+      "display"?: {
+        "property": string;
+        "source"?: "template" | "stats" | "counter" | "resource" | "metadata" | "computed";
+        "slot": string;
+        "icon"?: string;
+        "label"?: string;
+        "priority"?: number;
+      }[];
+      [key: string]: unknown;
+    };
+    "behavior"?: {
+      "behaviorId"?: string;
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetSelector"?: string;
+    };
+  }[];
+  "heroes"?: {
+    "playerId": string;
+    "templateId"?: string;
+    "name": string;
+    "title": string;
+    "assets"?: {
+      "art"?: string;
+      "frame"?: string;
+      "icon"?: string;
+    };
+    "layout"?: {
+      "variant"?: string;
+      [key: string]: unknown;
+    };
+    "properties"?: {
+      "display"?: {
+        "property": string;
+        "source"?: "template" | "stats" | "counter" | "resource" | "metadata" | "computed";
+        "slot": string;
+        "icon"?: string;
+        "label"?: string;
+        "priority"?: number;
+      }[];
+      [key: string]: unknown;
+    };
+    "ability"?: {
+      "name": string;
+      "behaviorId": string;
+      "text": string;
+      "action": string;
+      "targetMode": "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "manaCost"?: number;
+      "display"?: {
+        "property": string;
+        "source"?: "template" | "stats" | "counter" | "resource" | "metadata" | "computed";
+        "slot": string;
+        "icon"?: string;
+        "label"?: string;
+        "priority"?: number;
+      }[];
+    };
+  }[];
+}
+
+export interface UiPreviewFixtureJson {
+  "id": string;
+  "version": string;
+  "kind": "ui_preview_fixture";
+  "metadata"?: {
+    [key: string]: unknown;
+  };
+  "fixtures": {
+    "id": string;
+    "label": string;
+    "description"?: string;
+    "focus": "card" | "hero" | "equipment" | "minion" | "full-board";
+    "viewerId"?: string;
+    "selectedPlayerId"?: string;
+    "state": {
+      "status": string;
+      "lastSequence": number;
+      "players": {
+        [key: string]: {
+          "id": string;
+          "status": string;
+          "resources": {
+            [key: string]: {
+              "current": number;
+              "max"?: number;
+              [key: string]: unknown;
+            };
+          };
+          [key: string]: unknown;
+        };
+      };
+      "zones": {
+        [key: string]: {
+          "id": string;
+          "objectIds": string[];
+          [key: string]: unknown;
+        };
+      };
+      "objects": {
+        [key: string]: {
+          "id": string;
+          "objectType": string;
+          "templateId"?: string;
+          "ownerId"?: string;
+          "exhausted"?: boolean;
+          "stats"?: {
+            [key: string]: number;
+          };
+          "counters"?: {
+            [key: string]: number;
+          };
+          [key: string]: unknown;
+        };
+      };
+      "turn": {
+        "activePlayerId": string;
+        "phaseId"?: string;
+        [key: string]: unknown;
+      };
+      "outcomes": {
+        [key: string]: unknown;
+      }[];
+      [key: string]: unknown;
+    };
+    "events"?: {
+      [key: string]: unknown;
+    }[];
+  }[];
+}
+
 export interface AssetManifestJson {
   "id": string;
   "version": string;
@@ -98,10 +379,16 @@ export interface AssetManifestJson {
     "sourceUri": string;
     "license": string;
     "owner": string;
+    "publicPath"?: string;
     "mediaType"?: string;
     "width"?: number;
     "height"?: number;
     "durationMs"?: number;
+    "frameCount"?: number;
+    "generationId"?: string;
+    "prompt"?: string;
+    "previewRole"?: string;
+    "usage"?: string[];
   }[];
 }
 

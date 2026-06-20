@@ -23,6 +23,10 @@
   ],
   "turnGraph": ["prepare", "judgment", "draw", "play", "discard", "finish"],
   "cardCatalog": "card-catalog.json",
+  "ui": {
+    "defaultBoardLayout": "ui/sanguosha-eight-player-board-layout.json",
+    "boardLayouts": ["ui/sanguosha-eight-player-board-layout.json"]
+  },
   "behaviors": [
     "attack",
     "attack_with_dodge_prompt",

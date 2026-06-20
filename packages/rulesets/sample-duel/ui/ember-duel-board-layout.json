@@ -1,0 +1,279 @@
+{
+  "id": "ember-duel-default-board",
+  "version": "0.1.0",
+  "kind": "board_layout",
+  "metadata": {
+    "name": "Ember Duel Default Board",
+    "description": "Schema-backed default layout tokens and semantic regions for the Ember Duel runtime demo."
+  },
+  "logicalSize": {
+    "width": 1120,
+    "height": 620
+  },
+  "scaling": {
+    "mode": "fit_viewport",
+    "minScale": 0.2,
+    "maxScale": 1
+  },
+  "tokens": {
+    "arena": {
+      "padding": 12,
+      "rowGap": 10,
+      "opponentRow": 214,
+      "centerRow": 96,
+      "playerRow": 254
+    },
+    "player": {
+      "heroWidth": 172,
+      "gap": 8
+    },
+    "zones": {
+      "boardWidth": 292,
+      "gap": 8
+    },
+    "center": {
+      "turnWidth": 420,
+      "gap": 8
+    },
+    "card": {
+      "width": 118,
+      "artHeight": 50
+    }
+  },
+  "regions": [
+    {
+      "id": "opponent_hero",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Opponent Hero",
+      "geometry": { "x": 12, "y": 12, "width": 172, "height": 214 },
+      "widgetId": "hero-card",
+      "accepts": ["hero", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_battlefield",
+      "kind": "battlefield",
+      "ownerScope": "opponent",
+      "label": "Opponent Battlefield",
+      "geometry": { "x": 192, "y": 12, "width": 292, "height": 214 },
+      "widgetId": "card-row",
+      "accepts": ["minion"],
+      "targetable": true,
+      "dropBehavior": "select_object_target",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_equipment",
+      "kind": "equipment",
+      "ownerScope": "opponent",
+      "label": "Opponent Equipment",
+      "geometry": { "x": 492, "y": 12, "width": 88, "height": 214 },
+      "widgetId": "equipment-slot",
+      "accepts": ["weapon", "equipment"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_hand",
+      "kind": "hand",
+      "ownerScope": "opponent",
+      "label": "Opponent Hand",
+      "geometry": { "x": 588, "y": 12, "width": 520, "height": 214 },
+      "widgetId": "card-row",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "admin"
+    },
+    {
+      "id": "opponent_deck",
+      "kind": "deck",
+      "ownerScope": "opponent",
+      "label": "Opponent Deck",
+      "geometry": { "x": 1032, "y": 24, "width": 64, "height": 92 },
+      "widgetId": "deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    },
+    {
+      "id": "turn_action_window",
+      "kind": "action_window",
+      "ownerScope": "shared",
+      "label": "Turn Action Window",
+      "geometry": { "x": 12, "y": 236, "width": 420, "height": 96 },
+      "widgetId": "action-panel",
+      "accepts": ["command"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "history_log",
+      "kind": "history_log",
+      "ownerScope": "shared",
+      "label": "History Log",
+      "geometry": { "x": 440, "y": 236, "width": 668, "height": 96 },
+      "widgetId": "history-log",
+      "accepts": ["event"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "scroll",
+      "visibleTo": "public"
+    },
+    {
+      "id": "chat_window",
+      "kind": "chat",
+      "ownerScope": "shared",
+      "label": "Chat Window",
+      "geometry": { "x": 936, "y": 236, "width": 172, "height": 96 },
+      "widgetId": "chat-window",
+      "accepts": ["message"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "scroll",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_hero",
+      "kind": "hero",
+      "ownerScope": "player",
+      "label": "Player Hero",
+      "geometry": { "x": 12, "y": 342, "width": 172, "height": 254 },
+      "widgetId": "hero-card",
+      "accepts": ["hero", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_battlefield",
+      "kind": "battlefield",
+      "ownerScope": "player",
+      "label": "Player Battlefield",
+      "geometry": { "x": 192, "y": 342, "width": 292, "height": 254 },
+      "widgetId": "card-row",
+      "accepts": ["minion"],
+      "targetable": true,
+      "dropBehavior": "select_object_target",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_equipment",
+      "kind": "equipment",
+      "ownerScope": "player",
+      "label": "Player Equipment",
+      "geometry": { "x": 492, "y": 342, "width": 88, "height": 254 },
+      "widgetId": "equipment-slot",
+      "accepts": ["weapon", "equipment"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_hand",
+      "kind": "hand",
+      "ownerScope": "player",
+      "label": "Player Hand",
+      "geometry": { "x": 588, "y": 342, "width": 520, "height": 254 },
+      "widgetId": "card-row",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "owner"
+    },
+    {
+      "id": "player_deck",
+      "kind": "deck",
+      "ownerScope": "player",
+      "label": "Player Deck",
+      "geometry": { "x": 1032, "y": 492, "width": 64, "height": 92 },
+      "widgetId": "deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "hero-card",
+      "kind": "single_object",
+      "component": "HeroCard",
+      "config": {
+        "supportsSourceActions": true,
+        "supportsTargetHighlight": true
+      }
+    },
+    {
+      "id": "card-row",
+      "kind": "card_collection",
+      "component": "CardRow",
+      "config": {
+        "supportsDragSource": true,
+        "supportsFanOverflow": true
+      }
+    },
+    {
+      "id": "equipment-slot",
+      "kind": "single_object",
+      "component": "EquipmentSlot",
+      "config": {
+        "supportsDragSource": true,
+        "showEmptySlot": true
+      }
+    },
+    {
+      "id": "deck-stack",
+      "kind": "card_collection",
+      "component": "DeckStack",
+      "config": {
+        "showCount": true,
+        "showTopCard": false
+      }
+    },
+    {
+      "id": "action-panel",
+      "kind": "system",
+      "component": "ActionPanel",
+      "config": {
+        "showsActivePlayer": true,
+        "showsEndTurn": true
+      }
+    },
+    {
+      "id": "history-log",
+      "kind": "system",
+      "component": "HistoryLog",
+      "config": {
+        "source": "replay",
+        "maxRows": 24
+      }
+    },
+    {
+      "id": "chat-window",
+      "kind": "system",
+      "component": "ChatWindow",
+      "config": {
+        "enabled": false,
+        "placeholder": "Chat is a planned widget surface."
+      }
+    }
+  ]
+}

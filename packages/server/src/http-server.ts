@@ -8,6 +8,7 @@ import { handleMilletWebSocketUpgrade } from "./websocket.ts";
 
 export interface MilletHttpServerOptions {
   staticRoot?: string;
+  rulesetRoot?: string;
 }
 
 async function readJson(req: IncomingMessage): Promise<unknown> {
@@ -193,6 +194,15 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
         return;
       }
 
+      const rulesetContent = url.pathname.match(/^\/content\/rulesets\/([^/]+)\/(.+)$/);
+      if (req.method === "GET" && options.rulesetRoot && rulesetContent) {
+        const rulesetId = decodeURIComponent(rulesetContent[1]!);
+        const contentPath = decodeURIComponent(rulesetContent[2]!);
+        if (tryServeRulesetContent(options.rulesetRoot, rulesetId, contentPath, res)) {
+          return;
+        }
+      }
+
       if (req.method === "GET" && options.staticRoot && tryServeStatic(options.staticRoot, url.pathname, res)) {
         return;
       }
@@ -217,6 +227,14 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
   });
 
   return server;
+}
+
+function tryServeRulesetContent(rulesetRoot: string, rulesetId: string, contentPath: string, res: ServerResponse): boolean {
+  if (!/^[A-Za-z0-9_-]+$/.test(rulesetId) || !contentPath.endsWith(".json")) {
+    return false;
+  }
+
+  return tryServeStatic(rulesetRoot, `/${rulesetId}/${contentPath}`, res);
 }
 
 function tryServeStatic(staticRoot: string, pathname: string, res: ServerResponse): boolean {
@@ -253,6 +271,8 @@ function contentTypeForPath(path: string): string {
       return "text/css; charset=utf-8";
     case ".js":
       return "text/javascript; charset=utf-8";
+    case ".json":
+      return "application/json";
     case ".png":
       return "image/png";
     case ".jpg":

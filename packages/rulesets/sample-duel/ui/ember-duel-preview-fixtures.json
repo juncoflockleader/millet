@@ -1,0 +1,225 @@
+{
+  "id": "ember-duel-preview-fixtures",
+  "version": "0.1.0",
+  "kind": "ui_preview_fixture",
+  "metadata": {
+    "name": "Ember Duel UI Preview Fixtures",
+    "description": "Projected state fixtures for previewing cards, heroes, equipment, and minions without creating a live match."
+  },
+  "fixtures": [
+    {
+      "id": "card-hand-preview",
+      "label": "Cards In Hand",
+      "description": "Spell and resource cards with costs, keyword text, and button affordances.",
+      "focus": "card",
+      "viewerId": "p1",
+      "selectedPlayerId": "p1",
+      "state": {
+        "status": "active",
+        "lastSequence": 12,
+        "turn": { "activePlayerId": "p1", "phaseId": "main" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 10, "max": 10 },
+              "mana": { "current": 3, "max": 3 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 10, "max": 10 },
+              "mana": { "current": 2, "max": 2 }
+            }
+          }
+        },
+        "zones": {
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": ["preview_firebolt", "preview_nova", "preview_coin"] },
+          "zone_board_p1": { "id": "zone_board_p1", "objectIds": [] },
+          "zone_weapon_p1": { "id": "zone_weapon_p1", "objectIds": [] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": ["preview_hidden_opponent_card"] },
+          "zone_board_p2": { "id": "zone_board_p2", "objectIds": [] },
+          "zone_weapon_p2": { "id": "zone_weapon_p2", "objectIds": [] }
+        },
+        "objects": {
+          "preview_firebolt": { "id": "preview_firebolt", "objectType": "card", "templateId": "firebolt", "ownerId": "p1" },
+          "preview_nova": { "id": "preview_nova", "objectType": "card", "templateId": "nova", "ownerId": "p1" },
+          "preview_coin": { "id": "preview_coin", "objectType": "card", "templateId": "coin", "ownerId": "p1" },
+          "preview_hidden_opponent_card": { "id": "preview_hidden_opponent_card", "objectType": "hidden" }
+        },
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 10, "type": "phase_entered", "payload": { "activePlayerId": "p1", "phaseId": "main" } },
+        { "sequence": 11, "type": "card_moved", "payload": { "objectId": "preview_firebolt", "toZoneId": "zone_hand_p1" } },
+        { "sequence": 12, "type": "card_moved", "payload": { "objectId": "preview_coin", "toZoneId": "zone_hand_p1" } }
+      ]
+    },
+    {
+      "id": "hero-ability-preview",
+      "label": "Hero Ability",
+      "description": "Hero resources, low-health styling, and the Focus Flame ability.",
+      "focus": "hero",
+      "viewerId": "p1",
+      "selectedPlayerId": "p1",
+      "state": {
+        "status": "active",
+        "lastSequence": 18,
+        "turn": { "activePlayerId": "p1", "phaseId": "main" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 3, "max": 10 },
+              "mana": { "current": 2, "max": 5 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 4, "max": 10 },
+              "mana": { "current": 0, "max": 4 }
+            }
+          }
+        },
+        "zones": {
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": [] },
+          "zone_board_p1": { "id": "zone_board_p1", "objectIds": [] },
+          "zone_weapon_p1": { "id": "zone_weapon_p1", "objectIds": [] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": [] },
+          "zone_board_p2": { "id": "zone_board_p2", "objectIds": [] },
+          "zone_weapon_p2": { "id": "zone_weapon_p2", "objectIds": [] }
+        },
+        "objects": {},
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 17, "type": "resource_changed", "payload": { "playerId": "p1", "resource": "health", "current": 3 } },
+        { "sequence": 18, "type": "resource_changed", "payload": { "playerId": "p1", "resource": "mana", "current": 2 } }
+      ]
+    },
+    {
+      "id": "equipment-preview",
+      "label": "Equipment",
+      "description": "Weapon attack and durability counters in the equipment slot.",
+      "focus": "equipment",
+      "viewerId": "p1",
+      "selectedPlayerId": "p1",
+      "state": {
+        "status": "active",
+        "lastSequence": 24,
+        "turn": { "activePlayerId": "p1", "phaseId": "main" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 8, "max": 10 },
+              "mana": { "current": 1, "max": 6 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 6, "max": 10 },
+              "mana": { "current": 3, "max": 6 }
+            }
+          }
+        },
+        "zones": {
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": ["preview_coin_equipment"] },
+          "zone_board_p1": { "id": "zone_board_p1", "objectIds": [] },
+          "zone_weapon_p1": { "id": "zone_weapon_p1", "objectIds": ["preview_training_axe"] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": [] },
+          "zone_board_p2": { "id": "zone_board_p2", "objectIds": [] },
+          "zone_weapon_p2": { "id": "zone_weapon_p2", "objectIds": [] }
+        },
+        "objects": {
+          "preview_coin_equipment": { "id": "preview_coin_equipment", "objectType": "card", "templateId": "coin", "ownerId": "p1" },
+          "preview_training_axe": {
+            "id": "preview_training_axe",
+            "objectType": "equipment",
+            "templateId": "training_axe",
+            "ownerId": "p1",
+            "stats": { "attack": 2, "durability": 2 },
+            "counters": { "durability": 1 }
+          }
+        },
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 23, "type": "card_moved", "payload": { "objectId": "preview_training_axe", "toZoneId": "zone_weapon_p1" } },
+        { "sequence": 24, "type": "resource_changed", "payload": { "playerId": "p2", "resource": "health", "current": 6 } }
+      ]
+    },
+    {
+      "id": "minion-preview",
+      "label": "Minion Board",
+      "description": "Board minion with attack/health badges and exhausted state comparison.",
+      "focus": "minion",
+      "viewerId": "p1",
+      "selectedPlayerId": "p1",
+      "state": {
+        "status": "active",
+        "lastSequence": 31,
+        "turn": { "activePlayerId": "p1", "phaseId": "main" },
+        "players": {
+          "p1": {
+            "id": "p1",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 9, "max": 10 },
+              "mana": { "current": 4, "max": 4 }
+            }
+          },
+          "p2": {
+            "id": "p2",
+            "status": "alive",
+            "resources": {
+              "health": { "current": 7, "max": 10 },
+              "mana": { "current": 2, "max": 4 }
+            }
+          }
+        },
+        "zones": {
+          "zone_hand_p1": { "id": "zone_hand_p1", "objectIds": ["preview_firebolt_minion"] },
+          "zone_board_p1": { "id": "zone_board_p1", "objectIds": ["preview_loot_minion_ready"] },
+          "zone_weapon_p1": { "id": "zone_weapon_p1", "objectIds": [] },
+          "zone_hand_p2": { "id": "zone_hand_p2", "objectIds": [] },
+          "zone_board_p2": { "id": "zone_board_p2", "objectIds": ["preview_loot_minion_exhausted"] },
+          "zone_weapon_p2": { "id": "zone_weapon_p2", "objectIds": [] }
+        },
+        "objects": {
+          "preview_firebolt_minion": { "id": "preview_firebolt_minion", "objectType": "card", "templateId": "firebolt", "ownerId": "p1" },
+          "preview_loot_minion_ready": {
+            "id": "preview_loot_minion_ready",
+            "objectType": "minion",
+            "templateId": "loot_minion",
+            "ownerId": "p1",
+            "stats": { "attack": 1, "health": 1 },
+            "exhausted": false
+          },
+          "preview_loot_minion_exhausted": {
+            "id": "preview_loot_minion_exhausted",
+            "objectType": "minion",
+            "templateId": "loot_minion",
+            "ownerId": "p2",
+            "stats": { "attack": 1, "health": 1 },
+            "exhausted": true
+          }
+        },
+        "outcomes": []
+      },
+      "events": [
+        { "sequence": 30, "type": "card_moved", "payload": { "objectId": "preview_loot_minion_ready", "toZoneId": "zone_board_p1" } },
+        { "sequence": 31, "type": "phase_entered", "payload": { "activePlayerId": "p1", "phaseId": "main" } }
+      ]
+    }
+  ]
+}

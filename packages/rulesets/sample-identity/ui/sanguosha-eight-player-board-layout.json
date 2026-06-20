@@ -1,0 +1,331 @@
+{
+  "id": "sanguosha-eight-player-board",
+  "version": "0.1.0",
+  "kind": "board_layout",
+  "metadata": {
+    "name": "Sanguosha Eight Player Board",
+    "description": "Schema-backed 6-8 player identity-game table layout with seat ring, shared deck/discard, judgment, equipment, and active-player hand regions."
+  },
+  "logicalSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "scaling": {
+    "mode": "fit_viewport",
+    "minScale": 0.18,
+    "maxScale": 1
+  },
+  "tokens": {
+    "table": {
+      "seatWidth": 172,
+      "seatHeight": 104,
+      "sideSeatWidth": 150,
+      "sideSeatHeight": 120,
+      "centerWidth": 304,
+      "centerHeight": 164
+    },
+    "player": {
+      "handHeight": 136,
+      "equipmentHeight": 74,
+      "judgmentHeight": 44
+    },
+    "card": {
+      "width": 88,
+      "artHeight": 42
+    }
+  },
+  "regions": [
+    {
+      "id": "seat_1_lord",
+      "kind": "hero",
+      "ownerScope": "player",
+      "label": "Seat 1 / Lord",
+      "geometry": { "x": 554, "y": 596, "width": 172, "height": 104 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_2",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 2",
+      "geometry": { "x": 820, "y": 548, "width": 172, "height": 104 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_3",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 3",
+      "geometry": { "x": 1074, "y": 322, "width": 150, "height": 120 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_4",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 4",
+      "geometry": { "x": 820, "y": 68, "width": 172, "height": 104 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_5",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 5",
+      "geometry": { "x": 554, "y": 20, "width": 172, "height": 104 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_6",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 6",
+      "geometry": { "x": 288, "y": 68, "width": 172, "height": 104 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_7",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 7",
+      "geometry": { "x": 56, "y": 322, "width": 150, "height": 120 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "seat_8",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Seat 8",
+      "geometry": { "x": 288, "y": 548, "width": 172, "height": 104 },
+      "widgetId": "identity-player-panel",
+      "accepts": ["character", "identity", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "shared_deck",
+      "kind": "deck",
+      "ownerScope": "match",
+      "label": "Shared Deck",
+      "geometry": { "x": 520, "y": 278, "width": 88, "height": 128 },
+      "widgetId": "shared-deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    },
+    {
+      "id": "discard_pile",
+      "kind": "discard",
+      "ownerScope": "match",
+      "label": "Discard Pile",
+      "geometry": { "x": 672, "y": 278, "width": 88, "height": 128 },
+      "widgetId": "discard-pile",
+      "accepts": ["card", "equipment", "delayed_trick"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    },
+    {
+      "id": "table_prompt",
+      "kind": "action_window",
+      "ownerScope": "shared",
+      "label": "Action / Response",
+      "geometry": { "x": 488, "y": 438, "width": 304, "height": 92 },
+      "widgetId": "identity-action-panel",
+      "accepts": ["command", "response"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "active_judgment",
+      "kind": "judgment",
+      "ownerScope": "player",
+      "label": "Active Judgment",
+      "geometry": { "x": 392, "y": 540, "width": 188, "height": 44 },
+      "widgetId": "judgment-strip",
+      "accepts": ["delayed_trick", "judgment"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "active_equipment",
+      "kind": "equipment",
+      "ownerScope": "player",
+      "label": "Active Equipment",
+      "geometry": { "x": 588, "y": 532, "width": 252, "height": 60 },
+      "widgetId": "equipment-strip",
+      "accepts": ["weapon", "armor", "mount_minus", "mount_plus", "equipment"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "active_hand",
+      "kind": "hand",
+      "ownerScope": "player",
+      "label": "Active Hand",
+      "geometry": { "x": 284, "y": 584, "width": 712, "height": 116 },
+      "widgetId": "hand-fan",
+      "accepts": ["card", "equipment", "trick"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "owner"
+    },
+    {
+      "id": "role_summary",
+      "kind": "opponent_summary",
+      "ownerScope": "match",
+      "label": "Role Summary",
+      "geometry": { "x": 32, "y": 36, "width": 196, "height": 116 },
+      "widgetId": "role-summary",
+      "accepts": ["identity", "player"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "history_log",
+      "kind": "history_log",
+      "ownerScope": "shared",
+      "label": "History Log",
+      "geometry": { "x": 1016, "y": 36, "width": 232, "height": 196 },
+      "widgetId": "identity-history-log",
+      "accepts": ["event"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "scroll",
+      "visibleTo": "public"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "identity-player-panel",
+      "kind": "single_object",
+      "component": "IdentityPlayerPanel",
+      "config": {
+        "showHealth": true,
+        "showRoleBadge": true,
+        "showHandCount": true,
+        "showEquipmentSummary": true
+      }
+    },
+    {
+      "id": "hand-fan",
+      "kind": "card_collection",
+      "component": "CardRow",
+      "config": {
+        "supportsFanOverflow": true,
+        "ownerOnly": true
+      }
+    },
+    {
+      "id": "equipment-strip",
+      "kind": "card_collection",
+      "component": "EquipmentStrip",
+      "config": {
+        "slots": ["weapon", "armor", "mount_minus", "mount_plus", "treasure"]
+      }
+    },
+    {
+      "id": "judgment-strip",
+      "kind": "card_collection",
+      "component": "JudgmentStrip",
+      "config": {
+        "resolveOrder": "oldest_first"
+      }
+    },
+    {
+      "id": "shared-deck-stack",
+      "kind": "card_collection",
+      "component": "DeckStack",
+      "config": {
+        "showCount": true,
+        "showTopCard": false
+      }
+    },
+    {
+      "id": "discard-pile",
+      "kind": "card_collection",
+      "component": "DiscardPile",
+      "config": {
+        "showCount": true,
+        "showTopCard": true
+      }
+    },
+    {
+      "id": "identity-action-panel",
+      "kind": "system",
+      "component": "ActionPanel",
+      "config": {
+        "showsActivePlayer": true,
+        "showsResponseStack": true,
+        "supportsPromptDefaults": true
+      }
+    },
+    {
+      "id": "role-summary",
+      "kind": "system",
+      "component": "RoleSummary",
+      "config": {
+        "showKnownRoles": true,
+        "hideUnknownRoles": true
+      }
+    },
+    {
+      "id": "identity-history-log",
+      "kind": "system",
+      "component": "HistoryLog",
+      "config": {
+        "source": "replay",
+        "maxRows": 36
+      }
+    }
+  ]
+}

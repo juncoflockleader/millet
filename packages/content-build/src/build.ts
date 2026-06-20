@@ -3,9 +3,12 @@ import { join, relative } from "node:path";
 import {
   assetManifestSchema,
   behaviorManifestSchema,
+  boardLayoutSchema,
   cardCatalogSchema,
   gameDefinitionSchema,
   localizationBundleSchema,
+  presentationCatalogSchema,
+  uiPreviewFixtureSchema,
   validateJsonSchema,
   type JsonSchema
 } from "../../content-schema/src/index.ts";
@@ -81,10 +84,20 @@ function addLocalizationPlaceholderIssues(issues: ValidationIssue[], file: strin
 
 const ALLOWED_ASSET_LICENSES = new Set(["first-party-dev", "cc0-1.0", "cc-by-4.0", "mit", "apache-2.0"]);
 const ALLOWED_ASSET_URI_SCHEMES = new Set(["memory:", "file:", "https:"]);
-const IMAGE_ASSET_KINDS = new Set(["card_art", "card_back", "card_frame", "avatar", "icon"]);
+const IMAGE_ASSET_KINDS = new Set([
+  "avatar",
+  "board_background",
+  "card_art",
+  "card_back",
+  "card_frame",
+  "icon",
+  "vfx_sheet"
+]);
 const ALLOWED_IMAGE_MEDIA_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
 const MIN_CARD_ASSET_DIMENSION = 64;
 const MAX_CARD_ASSET_DIMENSION = 8192;
+const SUPPORTED_PROPERTY_DISPLAY_SLOTS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
+const SUPPORTED_PROPERTY_DISPLAY_ICONS = new Set(["durability", "heart", "mana", "sword"]);
 
 function addAssetCompatibilityIssues(issues: ValidationIssue[], file: string, manifest: Record<string, unknown>): void {
   if (!Array.isArray(manifest.assets)) {
@@ -134,6 +147,14 @@ function addAssetCompatibilityIssues(issues: ValidationIssue[], file: string, ma
       });
     }
 
+    if (typeof record.publicPath === "string" && !record.publicPath.startsWith("/")) {
+      issues.push({
+        severity: "error",
+        file,
+        message: `${prefix} publicPath must start with /`
+      });
+    }
+
     if (typeof record.kind === "string" && IMAGE_ASSET_KINDS.has(record.kind)) {
       if (typeof record.mediaType !== "string") {
         issues.push({
@@ -169,13 +190,50 @@ function addAssetCompatibilityIssues(issues: ValidationIssue[], file: string, ma
   });
 }
 
+function addPropertyDisplayIssues(
+  issues: ValidationIssue[],
+  file: string,
+  displays: unknown,
+  context: string
+): void {
+  if (!Array.isArray(displays)) {
+    return;
+  }
+
+  displays.forEach((display, index) => {
+    if (typeof display !== "object" || display === null || Array.isArray(display)) {
+      return;
+    }
+
+    const record = display as Record<string, unknown>;
+    const property = typeof record.property === "string" && record.property.length > 0 ? record.property : String(index);
+
+    if (typeof record.slot === "string" && !SUPPORTED_PROPERTY_DISPLAY_SLOTS.has(record.slot)) {
+      issues.push({
+        severity: "error",
+        file,
+        message: `${context} display property ${property} uses unsupported slot ${record.slot}`
+      });
+    }
+
+    if (typeof record.icon === "string" && !SUPPORTED_PROPERTY_DISPLAY_ICONS.has(record.icon)) {
+      issues.push({
+        severity: "error",
+        file,
+        message: `${context} display property ${property} uses unsupported icon ${record.icon}`
+      });
+    }
+  });
+}
+
 function addCardCatalogIssues(
   issues: ValidationIssue[],
   file: string,
   catalog: Record<string, unknown>,
   behaviorIds: Set<string>,
   assetIds: Set<string>,
-  localizationKeys: Set<string>
+  localizationKeys: Set<string>,
+  cardTemplateIds: Set<string>
 ): void {
   if (!Array.isArray(catalog.templates)) {
     return;
@@ -197,6 +255,7 @@ function addCardCatalogIssues(
         issues.push({ severity: "error", file, message: `Duplicate card template id ${record.templateId}` });
       }
       templateIds.add(record.templateId);
+      cardTemplateIds.add(record.templateId);
     }
 
     for (const keyField of ["nameKey", "descriptionKey"]) {
@@ -217,6 +276,310 @@ function addCardCatalogIssues(
         issues.push({ severity: "error", file, message: `${prefix} references unknown asset ${assetId}` });
       }
     }
+
+    const display = record.display;
+    if (typeof display === "object" && display !== null && !Array.isArray(display)) {
+      addPropertyDisplayIssues(issues, file, (display as Record<string, unknown>).properties, prefix);
+    }
+  });
+}
+
+function addPresentationCatalogIssues(
+  issues: ValidationIssue[],
+  file: string,
+  catalog: Record<string, unknown>,
+  cardTemplateIds: Set<string>,
+  behaviorIds: Set<string>
+): void {
+  const presentationTemplateIds = new Set<string>();
+
+  for (const section of ["cards", "equipment", "minions"] as const) {
+    const entries = catalog[section];
+    if (!Array.isArray(entries)) {
+      continue;
+    }
+
+    entries.forEach((entry, index) => {
+      if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+        return;
+      }
+
+      const record = entry as Record<string, unknown>;
+      const templateId = typeof record.templateId === "string" ? record.templateId : `${section}[${index}]`;
+      if (typeof record.templateId === "string") {
+        if (presentationTemplateIds.has(record.templateId)) {
+          issues.push({ severity: "error", file, message: `Duplicate presentation template id ${record.templateId}` });
+        }
+        presentationTemplateIds.add(record.templateId);
+
+        if (cardTemplateIds.size > 0 && !cardTemplateIds.has(record.templateId)) {
+          issues.push({ severity: "error", file, message: `Presentation ${templateId} references unknown card template ${record.templateId}` });
+        }
+      }
+
+      const behavior = record.behavior;
+      if (typeof behavior === "object" && behavior !== null && !Array.isArray(behavior)) {
+        const behaviorId = (behavior as Record<string, unknown>).behaviorId;
+        if (typeof behaviorId === "string" && behaviorIds.size > 0 && !behaviorIds.has(behaviorId)) {
+          issues.push({ severity: "error", file, message: `Presentation ${templateId} references unknown behavior ${behaviorId}` });
+        }
+      }
+
+      const properties = record.properties;
+      if (typeof properties === "object" && properties !== null && !Array.isArray(properties)) {
+        addPropertyDisplayIssues(issues, file, (properties as Record<string, unknown>).display, `Presentation ${templateId}`);
+      }
+    });
+  }
+
+  const heroIds = new Set<string>();
+  const heroes = catalog.heroes;
+  if (Array.isArray(heroes)) {
+    heroes.forEach((hero, index) => {
+      if (typeof hero !== "object" || hero === null || Array.isArray(hero)) {
+        return;
+      }
+
+      const record = hero as Record<string, unknown>;
+      const playerId = typeof record.playerId === "string" ? record.playerId : `heroes[${index}]`;
+      if (typeof record.playerId === "string") {
+        if (heroIds.has(record.playerId)) {
+          issues.push({ severity: "error", file, message: `Duplicate hero presentation player id ${record.playerId}` });
+        }
+        heroIds.add(record.playerId);
+      }
+
+      if (typeof record.templateId === "string" && cardTemplateIds.size > 0 && !cardTemplateIds.has(record.templateId)) {
+        issues.push({ severity: "error", file, message: `Hero ${playerId} references unknown card template ${record.templateId}` });
+      }
+
+      const ability = record.ability;
+      if (typeof ability === "object" && ability !== null && !Array.isArray(ability)) {
+        const abilityRecord = ability as Record<string, unknown>;
+        const behaviorId = abilityRecord.behaviorId;
+        if (typeof behaviorId === "string" && behaviorIds.size > 0 && !behaviorIds.has(behaviorId)) {
+          issues.push({ severity: "error", file, message: `Hero ${playerId} ability references unknown behavior ${behaviorId}` });
+        }
+        addPropertyDisplayIssues(issues, file, abilityRecord.display, `Hero ${playerId} ability`);
+      }
+
+      const properties = record.properties;
+      if (typeof properties === "object" && properties !== null && !Array.isArray(properties)) {
+        addPropertyDisplayIssues(issues, file, (properties as Record<string, unknown>).display, `Hero ${playerId}`);
+      }
+    });
+  }
+}
+
+function addBoardLayoutIssues(issues: ValidationIssue[], file: string, layout: Record<string, unknown>): void {
+  const widgetIds = new Set<string>();
+  const regionIds = new Set<string>();
+  const logicalSize =
+    typeof layout.logicalSize === "object" && layout.logicalSize !== null && !Array.isArray(layout.logicalSize)
+      ? (layout.logicalSize as Record<string, unknown>)
+      : null;
+  const boardWidth = finiteNumber(logicalSize?.width) ? logicalSize.width : null;
+  const boardHeight = finiteNumber(logicalSize?.height) ? logicalSize.height : null;
+
+  if (Array.isArray(layout.widgets)) {
+    layout.widgets.forEach((widget, index) => {
+      if (typeof widget !== "object" || widget === null || Array.isArray(widget)) {
+        return;
+      }
+
+      const widgetId = (widget as Record<string, unknown>).id;
+      if (typeof widgetId !== "string" || widgetId.length === 0) {
+        return;
+      }
+
+      if (widgetIds.has(widgetId)) {
+        issues.push({ severity: "error", file, message: `Duplicate board layout widget id ${widgetId}` });
+      }
+      widgetIds.add(widgetId);
+    });
+  }
+
+  if (Array.isArray(layout.regions)) {
+    layout.regions.forEach((region, index) => {
+      if (typeof region !== "object" || region === null || Array.isArray(region)) {
+        return;
+      }
+
+      const record = region as Record<string, unknown>;
+      const regionId = typeof record.id === "string" ? record.id : String(index);
+      if (typeof record.id === "string") {
+        if (regionIds.has(record.id)) {
+          issues.push({ severity: "error", file, message: `Duplicate board layout region id ${record.id}` });
+        }
+        regionIds.add(record.id);
+      }
+
+      const widgetId = record.widgetId;
+      if (typeof widgetId === "string" && widgetIds.size > 0 && !widgetIds.has(widgetId)) {
+        issues.push({ severity: "error", file, message: `Region ${regionId} references unknown widget ${widgetId}` });
+      }
+
+      const geometry = record.geometry;
+      if (
+        boardWidth !== null &&
+        boardHeight !== null &&
+        typeof geometry === "object" &&
+        geometry !== null &&
+        !Array.isArray(geometry)
+      ) {
+        const geometryRecord = geometry as Record<string, unknown>;
+        const { x, y, width, height } = geometryRecord;
+        if (finiteNumber(x) && finiteNumber(y) && finiteNumber(width) && finiteNumber(height)) {
+          if (x + width > boardWidth || y + height > boardHeight) {
+            issues.push({
+              severity: "error",
+              file,
+              message: `Region ${regionId} geometry exceeds logical board bounds ${boardWidth}x${boardHeight}`
+            });
+          }
+        }
+      }
+    });
+  }
+}
+
+function finiteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function addUiPreviewFixtureIssues(
+  issues: ValidationIssue[],
+  file: string,
+  document: Record<string, unknown>,
+  cardTemplateIds: Set<string>
+): void {
+  if (!Array.isArray(document.fixtures)) {
+    return;
+  }
+
+  const fixtureIds = new Set<string>();
+
+  document.fixtures.forEach((fixture, index) => {
+    if (typeof fixture !== "object" || fixture === null || Array.isArray(fixture)) {
+      return;
+    }
+
+    const record = fixture as Record<string, unknown>;
+    const fixtureId = typeof record.id === "string" ? record.id : `fixtures[${index}]`;
+
+    if (typeof record.id === "string") {
+      if (fixtureIds.has(record.id)) {
+        issues.push({ severity: "error", file, message: `Duplicate UI preview fixture id ${record.id}` });
+      }
+      fixtureIds.add(record.id);
+    }
+
+    const state = record.state;
+    if (typeof state !== "object" || state === null || Array.isArray(state)) {
+      return;
+    }
+
+    const stateRecord = state as Record<string, unknown>;
+    const players = stateRecord.players;
+    const zones = stateRecord.zones;
+    const objects = stateRecord.objects;
+    const playerIds =
+      typeof players === "object" && players !== null && !Array.isArray(players)
+        ? new Set(Object.keys(players))
+        : new Set<string>();
+    const objectIds =
+      typeof objects === "object" && objects !== null && !Array.isArray(objects)
+        ? new Set(Object.keys(objects))
+        : new Set<string>();
+
+    for (const playerField of ["viewerId", "selectedPlayerId"] as const) {
+      const playerId = record[playerField];
+      if (typeof playerId === "string" && playerIds.size > 0 && !playerIds.has(playerId)) {
+        issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} ${playerField} references unknown player ${playerId}` });
+      }
+    }
+
+    const turn = stateRecord.turn;
+    if (typeof turn === "object" && turn !== null && !Array.isArray(turn)) {
+      const activePlayerId = (turn as Record<string, unknown>).activePlayerId;
+      if (typeof activePlayerId === "string" && playerIds.size > 0 && !playerIds.has(activePlayerId)) {
+        issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} turn references unknown active player ${activePlayerId}` });
+      }
+    }
+
+    if (typeof objects === "object" && objects !== null && !Array.isArray(objects)) {
+      for (const [objectKey, object] of Object.entries(objects)) {
+        if (typeof object !== "object" || object === null || Array.isArray(object)) {
+          continue;
+        }
+
+        const objectRecord = object as Record<string, unknown>;
+        const objectId = typeof objectRecord.id === "string" ? objectRecord.id : objectKey;
+        if (typeof objectRecord.id === "string" && objectRecord.id !== objectKey) {
+          issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} object key ${objectKey} does not match id ${objectRecord.id}` });
+        }
+
+        const objectType = objectRecord.objectType;
+        const templateId = objectRecord.templateId;
+        if (objectType === "hidden") {
+          if (typeof templateId === "string") {
+            issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} hidden object ${objectId} must not expose templateId` });
+          }
+          if (typeof objectRecord.ownerId === "string") {
+            issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} hidden object ${objectId} must not expose ownerId` });
+          }
+          for (const field of ["controllerId", "creatorId", "exhausted"] as const) {
+            if (field in objectRecord) {
+              issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} hidden object ${objectId} must not expose ${field}` });
+            }
+          }
+          for (const field of ["stats", "counters", "tags", "keywords", "attachments", "modifiers"] as const) {
+            const value = objectRecord[field];
+            const count = Array.isArray(value)
+              ? value.length
+              : typeof value === "object" && value !== null
+                ? Object.keys(value).length
+                : 0;
+            if (count > 0) {
+              issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} hidden object ${objectId} must not expose ${field}` });
+            }
+          }
+          continue;
+        }
+
+        if (typeof templateId !== "string") {
+          issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} object ${objectId} must declare templateId unless it is hidden` });
+        }
+        if (typeof templateId === "string" && cardTemplateIds.size > 0 && !cardTemplateIds.has(templateId)) {
+          issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} object ${objectId} references unknown card template ${templateId}` });
+        }
+
+        const ownerId = objectRecord.ownerId;
+        if (typeof ownerId === "string" && playerIds.size > 0 && !playerIds.has(ownerId)) {
+          issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} object ${objectId} references unknown owner ${ownerId}` });
+        }
+      }
+    }
+
+    if (typeof zones === "object" && zones !== null && !Array.isArray(zones)) {
+      for (const [zoneKey, zone] of Object.entries(zones)) {
+        if (typeof zone !== "object" || zone === null || Array.isArray(zone)) {
+          continue;
+        }
+
+        const zoneRecord = zone as Record<string, unknown>;
+        const zoneId = typeof zoneRecord.id === "string" ? zoneRecord.id : zoneKey;
+        if (typeof zoneRecord.id === "string" && zoneRecord.id !== zoneKey) {
+          issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} zone key ${zoneKey} does not match id ${zoneRecord.id}` });
+        }
+
+        for (const objectId of Array.isArray(zoneRecord.objectIds) ? zoneRecord.objectIds : []) {
+          if (typeof objectId === "string" && !objectIds.has(objectId)) {
+            issues.push({ severity: "error", file, message: `Preview fixture ${fixtureId} zone ${zoneId} references unknown object ${objectId}` });
+          }
+        }
+      }
+    }
   });
 }
 
@@ -226,6 +589,7 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
   const fileNames = new Set(jsonFiles.map((file) => relative(dir, file)));
   const behaviorIds = new Set<string>();
   const assetIds = new Set<string>();
+  const cardTemplateIds = new Set<string>();
   const localizationKeys = new Set<string>();
 
   if (!fileNames.has("game-definition.json")) {
@@ -249,6 +613,60 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
 
   if (typeof gameDefinition.cardCatalog === "string" && !fileNames.has(gameDefinition.cardCatalog)) {
     issues.push({ severity: "error", file: gameDefinitionPath, message: `Card catalog ${gameDefinition.cardCatalog} is missing` });
+  }
+
+  if (typeof gameDefinition.ui === "object" && gameDefinition.ui !== null && !Array.isArray(gameDefinition.ui)) {
+    const uiConfig = gameDefinition.ui as Record<string, unknown>;
+    const referencedLayouts = new Set<string>();
+    if (typeof uiConfig.defaultBoardLayout === "string") {
+      referencedLayouts.add(uiConfig.defaultBoardLayout);
+    }
+    if (Array.isArray(uiConfig.boardLayouts)) {
+      for (const layoutRef of uiConfig.boardLayouts) {
+        if (typeof layoutRef === "string") {
+          referencedLayouts.add(layoutRef);
+        }
+      }
+    }
+    for (const layoutRef of referencedLayouts) {
+      if (!fileNames.has(layoutRef)) {
+        issues.push({ severity: "error", file: gameDefinitionPath, message: `Board layout ${layoutRef} is missing` });
+      }
+    }
+
+    const referencedPresentationCatalogs = new Set<string>();
+    if (typeof uiConfig.defaultPresentationCatalog === "string") {
+      referencedPresentationCatalogs.add(uiConfig.defaultPresentationCatalog);
+    }
+    if (Array.isArray(uiConfig.presentationCatalogs)) {
+      for (const catalogRef of uiConfig.presentationCatalogs) {
+        if (typeof catalogRef === "string") {
+          referencedPresentationCatalogs.add(catalogRef);
+        }
+      }
+    }
+    for (const catalogRef of referencedPresentationCatalogs) {
+      if (!fileNames.has(catalogRef)) {
+        issues.push({ severity: "error", file: gameDefinitionPath, message: `Presentation catalog ${catalogRef} is missing` });
+      }
+    }
+
+    const referencedPreviewFixtures = new Set<string>();
+    if (typeof uiConfig.defaultPreviewFixture === "string") {
+      referencedPreviewFixtures.add(uiConfig.defaultPreviewFixture);
+    }
+    if (Array.isArray(uiConfig.previewFixtures)) {
+      for (const fixtureRef of uiConfig.previewFixtures) {
+        if (typeof fixtureRef === "string") {
+          referencedPreviewFixtures.add(fixtureRef);
+        }
+      }
+    }
+    for (const fixtureRef of referencedPreviewFixtures) {
+      if (!fileNames.has(fixtureRef)) {
+        issues.push({ severity: "error", file: gameDefinitionPath, message: `UI preview fixture ${fixtureRef} is missing` });
+      }
+    }
   }
 
   if (fileNames.has("behaviors.json")) {
@@ -339,7 +757,24 @@ export function validateRulesetDir(dir: string): ValidationIssue[] {
     const cardCatalogPath = join(dir, cardCatalogFile);
     const catalog = readJson(cardCatalogPath) as Record<string, unknown>;
     addSchemaIssues(issues, cardCatalogPath, catalog, cardCatalogSchema);
-    addCardCatalogIssues(issues, cardCatalogPath, catalog, behaviorIds, assetIds, localizationKeys);
+    addCardCatalogIssues(issues, cardCatalogPath, catalog, behaviorIds, assetIds, localizationKeys, cardTemplateIds);
+  }
+
+  for (const uiFile of [...fileNames].filter((fileName) => fileName.startsWith("ui/") && fileName.endsWith(".json")).sort()) {
+    const uiPath = join(dir, uiFile);
+    const uiDocument = readJson(uiPath) as Record<string, unknown>;
+    if (uiDocument.kind === "board_layout") {
+      addSchemaIssues(issues, uiPath, uiDocument, boardLayoutSchema);
+      addBoardLayoutIssues(issues, uiPath, uiDocument);
+    } else if (uiDocument.kind === "presentation_catalog") {
+      addSchemaIssues(issues, uiPath, uiDocument, presentationCatalogSchema);
+      addPresentationCatalogIssues(issues, uiPath, uiDocument, cardTemplateIds, behaviorIds);
+    } else if (uiDocument.kind === "ui_preview_fixture") {
+      addSchemaIssues(issues, uiPath, uiDocument, uiPreviewFixtureSchema);
+      addUiPreviewFixtureIssues(issues, uiPath, uiDocument, cardTemplateIds);
+    } else {
+      issues.push({ severity: "error", file: uiPath, message: `Unsupported UI document kind ${String(uiDocument.kind)}` });
+    }
   }
 
   return issues;

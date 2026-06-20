@@ -4,8 +4,9 @@ import { createMilletHttpServer } from "../packages/server/src/http-server.ts";
 const port = Number(process.env.PORT ?? "8787");
 const host = process.env.HOST ?? "127.0.0.1";
 const staticRoot = join(process.cwd(), "packages", "demo-basic-duel", "public");
+const rulesetRoot = join(process.cwd(), "packages", "rulesets");
 
-const server = createMilletHttpServer(undefined, { staticRoot });
+const server = createMilletHttpServer(undefined, { staticRoot, rulesetRoot });
 
 server.listen(port, host, () => {
   console.log(`Ember Duel demo: http://${host}:${port}/`);

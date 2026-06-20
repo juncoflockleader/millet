@@ -58,7 +58,8 @@ test("HTTP server can be constructed around the match API handler", () => {
 
 test("HTTP server can serve the basic duel demo shell and assets", async () => {
   const server = createMilletHttpServer(new InMemoryMatchService(), {
-    staticRoot: join("packages", "demo-basic-duel", "public")
+    staticRoot: join("packages", "demo-basic-duel", "public"),
+    rulesetRoot: join("packages", "rulesets")
   });
 
   const html = await dispatch(server, {
@@ -92,6 +93,22 @@ test("HTTP server can serve the basic duel demo shell and assets", async () => {
   assert.equal(effectSheet.statusCode, 200);
   assert.equal(effectSheet.headers["content-type"], "image/png");
   assert.match(effectSheet.body, /^\uFFFDPNG/);
+
+  const boardLayout = await dispatch(server, {
+    method: "GET",
+    url: "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json"
+  });
+  assert.equal(boardLayout.statusCode, 200);
+  assert.equal(boardLayout.headers["content-type"], "application/json");
+  assert.equal(boardLayout.json.kind, "board_layout");
+
+  const presentation = await dispatch(server, {
+    method: "GET",
+    url: "/content/rulesets/sample-duel/ui/ember-duel-presentation.json"
+  });
+  assert.equal(presentation.statusCode, 200);
+  assert.equal(presentation.headers["content-type"], "application/json");
+  assert.equal(presentation.json.kind, "presentation_catalog");
 });
 
 test("HTTP state endpoint returns viewer-projected match state", async () => {

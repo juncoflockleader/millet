@@ -28,8 +28,8 @@ node scripts/run-tests.mjs
 Expected result:
 
 ```text
-tests 125
-pass 125
+tests 128
+pass 128
 fail 0
 ```
 
@@ -56,6 +56,8 @@ Play loop:
 5. Try `Firebolt`, `Nova`, a minion attack, a weapon swing, or the hero `Focus Flame` ability.
 6. Select `End Turn` to advance to the other player.
 7. Use the battle log to confirm the engine events produced by each action.
+
+Use `Preview` to inspect read-only UI fixture states, `Assets` to inspect the ruleset asset manifest, and `Layout` to adjust the viewport-fitted board layout with authored region/widget guides.
 
 The browser demo is hotseat and intentionally uses an admin projection so both hands are visible on one screen. A networked client should use player projections instead.
 
@@ -131,7 +133,7 @@ Use this when changing cards, behaviors, localization, or assets. It helps catch
 | --- | --- |
 | Demo UI | `packages/demo-basic-duel/public/` |
 | Two-player ruleset | `packages/rulesets/sample-duel/` |
-| Six/eight-player ruleset | `packages/rulesets/sample-identity/` |
+| Six/eight-player ruleset | `packages/rulesets/sample-identity/`, including `ui/sanguosha-eight-player-board-layout.json` |
 | Engine reducer and behavior runtime | `packages/engine-core/src/` |
 | HTTP/SSE/WebSocket server | `packages/server/src/` |
 | Content validation and bundle tools | `packages/content-build/src/` |

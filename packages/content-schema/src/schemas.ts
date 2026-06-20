@@ -104,6 +104,27 @@ export const gameDefinitionSchema = {
     cardCatalog: {
       type: "string",
       minLength: 1
+    },
+    ui: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        defaultBoardLayout: { type: "string", minLength: 1 },
+        boardLayouts: {
+          type: "array",
+          items: { type: "string", minLength: 1 }
+        },
+        defaultPresentationCatalog: { type: "string", minLength: 1 },
+        presentationCatalogs: {
+          type: "array",
+          items: { type: "string", minLength: 1 }
+        },
+        defaultPreviewFixture: { type: "string", minLength: 1 },
+        previewFixtures: {
+          type: "array",
+          items: { type: "string", minLength: 1 }
+        }
+      }
     }
   }
 } as const;
@@ -196,6 +217,408 @@ export const cardCatalogSchema = {
   }
 } as const;
 
+export const boardLayoutSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://millet.dev/schemas/board-layout.schema.json",
+  type: "object",
+  required: ["id", "version", "kind", "logicalSize", "scaling", "regions", "widgets"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    version: { type: "string", minLength: 1 },
+    kind: { enum: ["board_layout"] },
+    metadata: {
+      type: "object",
+      additionalProperties: true
+    },
+    logicalSize: {
+      type: "object",
+      required: ["width", "height"],
+      additionalProperties: false,
+      properties: {
+        width: { type: "integer", minimum: 1 },
+        height: { type: "integer", minimum: 1 }
+      }
+    },
+    scaling: {
+      type: "object",
+      required: ["mode"],
+      additionalProperties: false,
+      properties: {
+        mode: { enum: ["fit_viewport", "fixed", "responsive"] },
+        minScale: { type: "number", minimum: 0 },
+        maxScale: { type: "number", minimum: 0 }
+      }
+    },
+    tokens: {
+      type: "object",
+      additionalProperties: true
+    },
+    regions: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        required: ["id", "kind", "ownerScope", "geometry", "widgetId"],
+        additionalProperties: false,
+        properties: {
+          id: { type: "string", minLength: 1 },
+          kind: {
+            enum: [
+              "hero",
+              "hand",
+              "deck",
+              "discard",
+              "graveyard",
+              "battlefield",
+              "equipment",
+              "judgment",
+              "prompt",
+              "action_window",
+              "chat",
+              "history_log",
+              "opponent_summary",
+              "spectator_overlay",
+              "debug_overlay",
+              "custom"
+            ]
+          },
+          ownerScope: { enum: ["player", "opponent", "shared", "match", "spectator"] },
+          label: { type: "string", minLength: 1 },
+          geometry: {
+            type: "object",
+            required: ["x", "y", "width", "height"],
+            additionalProperties: false,
+            properties: {
+              x: { type: "number", minimum: 0 },
+              y: { type: "number", minimum: 0 },
+              width: { type: "number", minimum: 1 },
+              height: { type: "number", minimum: 1 }
+            }
+          },
+          widgetId: { type: "string", minLength: 1 },
+          accepts: {
+            type: "array",
+            items: { type: "string", minLength: 1 }
+          },
+          targetable: { type: "boolean" },
+          dropBehavior: { type: "string", minLength: 1 },
+          overflow: { enum: ["fan", "scroll", "stack", "compact", "hidden"] },
+          visibleTo: { enum: ["owner", "opponent", "public", "admin"] }
+        }
+      }
+    },
+    widgets: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        required: ["id", "kind", "component"],
+        additionalProperties: false,
+        properties: {
+          id: { type: "string", minLength: 1 },
+          kind: { enum: ["card_collection", "single_object", "system", "debug", "custom"] },
+          component: { type: "string", minLength: 1 },
+          config: {
+            type: "object",
+            additionalProperties: true
+          }
+        }
+      }
+    }
+  }
+} as const;
+
+const previewResourceSchema = {
+  type: "object",
+  required: ["current"],
+  additionalProperties: true,
+  properties: {
+    current: { type: "number" },
+    max: { type: "number" }
+  }
+} as const satisfies JsonSchema;
+
+const previewPlayerSchema = {
+  type: "object",
+  required: ["id", "status", "resources"],
+  additionalProperties: true,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    status: { type: "string", minLength: 1 },
+    resources: {
+      type: "object",
+      additionalProperties: previewResourceSchema
+    }
+  }
+} as const satisfies JsonSchema;
+
+const previewObjectSchema = {
+  type: "object",
+  required: ["id", "objectType"],
+  additionalProperties: true,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    objectType: { type: "string", minLength: 1 },
+    templateId: { type: "string", minLength: 1 },
+    ownerId: { type: "string", minLength: 1 },
+    exhausted: { type: "boolean" },
+    stats: {
+      type: "object",
+      additionalProperties: { type: "number" }
+    },
+    counters: {
+      type: "object",
+      additionalProperties: { type: "number" }
+    }
+  }
+} as const satisfies JsonSchema;
+
+const previewZoneSchema = {
+  type: "object",
+  required: ["id", "objectIds"],
+  additionalProperties: true,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    objectIds: {
+      type: "array",
+      items: { type: "string", minLength: 1 }
+    }
+  }
+} as const satisfies JsonSchema;
+
+const previewStateSchema = {
+  type: "object",
+  required: ["status", "lastSequence", "players", "zones", "objects", "turn", "outcomes"],
+  additionalProperties: true,
+  properties: {
+    status: { type: "string", minLength: 1 },
+    lastSequence: { type: "integer", minimum: 0 },
+    players: {
+      type: "object",
+      additionalProperties: previewPlayerSchema
+    },
+    zones: {
+      type: "object",
+      additionalProperties: previewZoneSchema
+    },
+    objects: {
+      type: "object",
+      additionalProperties: previewObjectSchema
+    },
+    turn: {
+      type: "object",
+      required: ["activePlayerId"],
+      additionalProperties: true,
+      properties: {
+        activePlayerId: { type: "string", minLength: 1 },
+        phaseId: { type: "string", minLength: 1 }
+      }
+    },
+    outcomes: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: true
+      }
+    }
+  }
+} as const satisfies JsonSchema;
+
+export const uiPreviewFixtureSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://millet.dev/schemas/ui-preview-fixture.schema.json",
+  type: "object",
+  required: ["id", "version", "kind", "fixtures"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    version: { type: "string", minLength: 1 },
+    kind: { enum: ["ui_preview_fixture"] },
+    metadata: {
+      type: "object",
+      additionalProperties: true
+    },
+    fixtures: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        required: ["id", "label", "focus", "state"],
+        additionalProperties: false,
+        properties: {
+          id: { type: "string", minLength: 1 },
+          label: { type: "string", minLength: 1 },
+          description: { type: "string", minLength: 1 },
+          focus: { enum: ["card", "hero", "equipment", "minion", "full-board"] },
+          viewerId: { type: "string", minLength: 1 },
+          selectedPlayerId: { type: "string", minLength: 1 },
+          state: previewStateSchema,
+          events: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: true
+            }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
+const propertyDisplaySchema = {
+  type: "object",
+  required: ["property", "slot"],
+  additionalProperties: false,
+  properties: {
+    property: { type: "string", minLength: 1 },
+    source: { enum: ["template", "stats", "counter", "resource", "metadata", "computed"] },
+    slot: { type: "string", minLength: 1 },
+    icon: { type: "string", minLength: 1 },
+    label: { type: "string", minLength: 1 },
+    priority: { type: "integer" }
+  }
+} as const satisfies JsonSchema;
+
+const presentationObjectSchema = {
+  type: "object",
+  required: ["templateId", "name", "text"],
+  additionalProperties: false,
+  properties: {
+    templateId: { type: "string", minLength: 1 },
+    name: { type: "string", minLength: 1 },
+    text: { type: "string" },
+    action: { type: "string" },
+    assets: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        art: { type: "string", minLength: 1 },
+        frame: { type: "string", minLength: 1 },
+        icon: { type: "string", minLength: 1 }
+      }
+    },
+    layout: {
+      type: "object",
+      additionalProperties: true,
+      properties: {
+        variant: { type: "string", minLength: 1 }
+      }
+    },
+    properties: {
+      type: "object",
+      additionalProperties: true,
+      properties: {
+        manaCost: { type: "integer", minimum: 0 },
+        stats: {
+          type: "object",
+          additionalProperties: { type: "number" }
+        },
+        display: {
+          type: "array",
+          items: propertyDisplaySchema
+        }
+      }
+    },
+    behavior: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        behaviorId: { type: "string", minLength: 1 },
+        targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targeted"] },
+        targetSelector: { type: "string", minLength: 1 }
+      }
+    }
+  }
+} as const satisfies JsonSchema;
+
+export const presentationCatalogSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://millet.dev/schemas/presentation-catalog.schema.json",
+  type: "object",
+  required: ["id", "version", "kind"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string", minLength: 1 },
+    version: { type: "string", minLength: 1 },
+    kind: { enum: ["presentation_catalog"] },
+    metadata: {
+      type: "object",
+      additionalProperties: true
+    },
+    cards: {
+      type: "array",
+      items: presentationObjectSchema
+    },
+    equipment: {
+      type: "array",
+      items: presentationObjectSchema
+    },
+    minions: {
+      type: "array",
+      items: presentationObjectSchema
+    },
+    heroes: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["playerId", "name", "title"],
+        additionalProperties: false,
+        properties: {
+          playerId: { type: "string", minLength: 1 },
+          templateId: { type: "string", minLength: 1 },
+          name: { type: "string", minLength: 1 },
+          title: { type: "string", minLength: 1 },
+          assets: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              art: { type: "string", minLength: 1 },
+              frame: { type: "string", minLength: 1 },
+              icon: { type: "string", minLength: 1 }
+            }
+          },
+          layout: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              variant: { type: "string", minLength: 1 }
+            }
+          },
+          properties: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              display: {
+                type: "array",
+                items: propertyDisplaySchema
+              }
+            }
+          },
+          ability: {
+            type: "object",
+            required: ["name", "behaviorId", "text", "action", "targetMode"],
+            additionalProperties: false,
+            properties: {
+              name: { type: "string", minLength: 1 },
+              behaviorId: { type: "string", minLength: 1 },
+              text: { type: "string" },
+              action: { type: "string", minLength: 1 },
+              targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targeted"] },
+              manaCost: { type: "integer", minimum: 0 },
+              display: {
+                type: "array",
+                items: propertyDisplaySchema
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 export const assetManifestSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: "https://millet.dev/schemas/asset-manifest.schema.json",
@@ -219,10 +642,19 @@ export const assetManifestSchema = {
           sourceUri: { type: "string", minLength: 1 },
           license: { type: "string", minLength: 1 },
           owner: { type: "string", minLength: 1 },
+          publicPath: { type: "string", minLength: 1 },
           mediaType: { type: "string", minLength: 1 },
           width: { type: "integer", minimum: 1 },
           height: { type: "integer", minimum: 1 },
-          durationMs: { type: "integer", minimum: 1 }
+          durationMs: { type: "integer", minimum: 1 },
+          frameCount: { type: "integer", minimum: 1 },
+          generationId: { type: "string", minLength: 1 },
+          prompt: { type: "string", minLength: 1 },
+          previewRole: { type: "string", minLength: 1 },
+          usage: {
+            type: "array",
+            items: { type: "string", minLength: 1 }
+          }
         }
       }
     }

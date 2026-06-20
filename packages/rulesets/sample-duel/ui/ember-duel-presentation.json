@@ -1,0 +1,200 @@
+{
+  "id": "ember-duel-presentation",
+  "version": "0.1.0",
+  "kind": "presentation_catalog",
+  "metadata": {
+    "name": "Ember Duel Presentation",
+    "description": "Runtime presentation definitions for the Ember Duel demo card, hero, equipment, and minion surfaces."
+  },
+  "cards": [
+    {
+      "templateId": "firebolt",
+      "name": "Firebolt",
+      "text": "Deal 3 damage to the enemy hero.",
+      "action": "Cast",
+      "assets": {
+        "art": "/assets/cards/firebolt.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "firebolt",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "nova",
+      "name": "Nova",
+      "text": "Deal 2 damage to both heroes.",
+      "action": "Cast",
+      "assets": {
+        "art": "/assets/cards/nova.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "nova",
+        "targetMode": "battlefield"
+      }
+    },
+    {
+      "templateId": "coin",
+      "name": "Coin",
+      "text": "Gain 1 mana this turn.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/coin.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 0,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "coin",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "reward",
+      "name": "Reward",
+      "text": "A drawn test card.",
+      "action": "",
+      "assets": {
+        "art": "/assets/cards/reward.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 0,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      }
+    }
+  ],
+  "equipment": [
+    {
+      "templateId": "training_axe",
+      "name": "Training Axe",
+      "text": "Attack for 2 damage. Loses durability.",
+      "action": "Swing",
+      "assets": {
+        "art": "/assets/cards/training-axe.png"
+      },
+      "layout": {
+        "variant": "weapon"
+      },
+      "properties": {
+        "stats": {
+          "attack": 2,
+          "durability": 2
+        },
+        "display": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Attack" },
+          { "property": "durability", "source": "counter", "slot": "bottom-right", "icon": "durability", "label": "Durability" }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "weapon_attack",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    }
+  ],
+  "minions": [
+    {
+      "templateId": "loot_minion",
+      "name": "Loot Minion",
+      "text": "Attack for 1 damage.",
+      "action": "Attack",
+      "assets": {
+        "art": "/assets/cards/loot-minion.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "stats": {
+          "attack": 1,
+          "health": 1
+        },
+        "display": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Attack" },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Health" }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "minion_attack",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    }
+  ],
+  "heroes": [
+    {
+      "playerId": "p1",
+      "name": "Player 1",
+      "title": "Ember Adept",
+      "assets": {
+        "art": "/assets/cards/firebolt.png"
+      },
+      "layout": {
+        "variant": "duel-hero-card"
+      },
+      "ability": {
+        "name": "Focus Flame",
+        "behaviorId": "hero_focus",
+        "text": "Spend 2 mana to deal 1 damage to the enemy hero.",
+        "action": "Focus",
+        "targetMode": "enemyHero",
+        "manaCost": 2,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      }
+    },
+    {
+      "playerId": "p2",
+      "name": "Player 2",
+      "title": "Ash Warden",
+      "assets": {
+        "art": "/assets/cards/nova.png"
+      },
+      "layout": {
+        "variant": "duel-hero-card"
+      },
+      "ability": {
+        "name": "Focus Flame",
+        "behaviorId": "hero_focus",
+        "text": "Spend 2 mana to deal 1 damage to the enemy hero.",
+        "action": "Focus",
+        "targetMode": "enemyHero",
+        "manaCost": 2,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      }
+    }
+  ]
+}

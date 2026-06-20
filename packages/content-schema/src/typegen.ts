@@ -1,11 +1,14 @@
 import {
   assetManifestSchema,
   behaviorManifestSchema,
+  boardLayoutSchema,
   cardCatalogSchema,
   gameDefinitionSchema,
   localizationBundleSchema,
   matchEventSchema,
+  presentationCatalogSchema,
   replayFixtureSchema,
+  uiPreviewFixtureSchema,
   type JsonSchema
 } from "./schemas.ts";
 
@@ -19,6 +22,9 @@ const DEFAULT_SCHEMA_TYPES: SchemaTypeDefinition[] = [
   { name: "GameDefinitionJson", schema: gameDefinitionSchema },
   { name: "BehaviorManifestJson", schema: behaviorManifestSchema },
   { name: "CardCatalogJson", schema: cardCatalogSchema },
+  { name: "BoardLayoutJson", schema: boardLayoutSchema },
+  { name: "PresentationCatalogJson", schema: presentationCatalogSchema },
+  { name: "UiPreviewFixtureJson", schema: uiPreviewFixtureSchema },
   { name: "AssetManifestJson", schema: assetManifestSchema },
   { name: "LocalizationBundleJson", schema: localizationBundleSchema },
   { name: "ReplayFixtureJson", schema: replayFixtureSchema }

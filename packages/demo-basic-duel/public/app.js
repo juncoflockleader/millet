@@ -1,4 +1,4 @@
-const CARD_DEFS = {
+let CARD_DEFS = {
   firebolt: {
     name: "Firebolt",
     manaCost: 2,
@@ -55,7 +55,7 @@ const CARD_DEFS = {
   }
 };
 
-const HERO_DEFS = {
+let HERO_DEFS = {
   p1: {
     name: "Player 1",
     title: "Ember Adept",
@@ -99,6 +99,79 @@ const PLAY_AREA = {
   minScale: 0.2
 };
 
+const LAYOUT_STORAGE_KEY = "ember-duel.layout.v1";
+const GAME_DEFINITION_URL = "/content/rulesets/sample-duel/game-definition.json";
+const ASSET_MANIFEST_URL = "/content/rulesets/sample-duel/asset-manifest.json";
+const FALLBACK_BOARD_LAYOUT_URL = "/content/rulesets/sample-duel/ui/ember-duel-board-layout.json";
+const FALLBACK_PRESENTATION_CATALOG_URL = "/content/rulesets/sample-duel/ui/ember-duel-presentation.json";
+const FALLBACK_PREVIEW_FIXTURES_URL = "/content/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json";
+
+const DEFAULT_LAYOUT = {
+  version: 1,
+  arena: {
+    padding: 12,
+    rowGap: 10,
+    opponentRow: 214,
+    centerRow: 96,
+    playerRow: 254
+  },
+  player: {
+    heroWidth: 172,
+    gap: 8
+  },
+  zones: {
+    boardWidth: 292,
+    gap: 8
+  },
+  center: {
+    turnWidth: 420,
+    gap: 8
+  },
+  card: {
+    width: 118,
+    artHeight: 50
+  }
+};
+
+const LAYOUT_LIMITS = {
+  arena: {
+    padding: [6, 24],
+    rowGap: [4, 22],
+    opponentRow: [140, 330],
+    centerRow: [72, 180],
+    playerRow: [160, 360]
+  },
+  player: {
+    heroWidth: [128, 260],
+    gap: [4, 20]
+  },
+  zones: {
+    boardWidth: [220, 520],
+    gap: [4, 20]
+  },
+  center: {
+    turnWidth: [320, 650],
+    gap: [4, 20]
+  },
+  card: {
+    width: [94, 150],
+    artHeight: [40, 76]
+  }
+};
+
+const LAYOUT_CONTROLS = [
+  { path: "arena.opponentRow", label: "Opponent row", min: 140, max: 330, step: 1, unit: "px" },
+  { path: "arena.centerRow", label: "Center lane", min: 72, max: 180, step: 1, unit: "px" },
+  { path: "arena.playerRow", label: "Player row", min: 160, max: 360, step: 1, unit: "px" },
+  { path: "player.heroWidth", label: "Hero column", min: 128, max: 260, step: 1, unit: "px" },
+  { path: "zones.boardWidth", label: "Board zone", min: 220, max: 520, step: 1, unit: "px" },
+  { path: "center.turnWidth", label: "Turn panel", min: 320, max: 650, step: 1, unit: "px" },
+  { path: "card.width", label: "Card width", min: 94, max: 150, step: 1, unit: "px" },
+  { path: "card.artHeight", label: "Card art", min: 40, max: 76, step: 1, unit: "px" },
+  { path: "arena.rowGap", label: "Row gap", min: 4, max: 22, step: 1, unit: "px" },
+  { path: "arena.padding", label: "Board padding", min: 6, max: 24, step: 1, unit: "px" }
+];
+
 const KEYWORDS = {
   attack: {
     title: "Attack",
@@ -138,6 +211,22 @@ let events = [];
 let commandCounter = 0;
 let effectCounter = 0;
 let selectedAction = null;
+let authoredDefaultLayout = cloneLayout(DEFAULT_LAYOUT);
+let boardLayoutDocument = null;
+let layoutState = loadLayout();
+let layoutEditorOpen = false;
+let activeLayoutDrag = null;
+let presentationCatalogId = "fallback";
+let presentationCatalog = null;
+let assetManifest = null;
+let assetLibraryOpen = false;
+let selectedAssetId = "";
+let assetFilterKind = "all";
+let assetUsageIndex = {};
+let previewFixtureDocument = null;
+let previewPanelOpen = false;
+let activePreviewFixture = null;
+let previewMode = false;
 
 const dom = {
   matchLine: document.querySelector("#matchLine"),
@@ -145,6 +234,36 @@ const dom = {
   arenaScaleBox: document.querySelector("#arenaScaleBox"),
   arena: document.querySelector("#arena"),
   effectLayer: document.querySelector("#effectLayer"),
+  centerLane: document.querySelector("#centerLane"),
+  turnPanel: document.querySelector("#turnPanel"),
+  promptSummary: document.querySelector("#promptSummary"),
+  chatWindow: document.querySelector("#chatWindow"),
+  previewPanel: document.querySelector("#previewPanel"),
+  previewPanelButton: document.querySelector("#previewPanelButton"),
+  closePreviewPanelButton: document.querySelector("#closePreviewPanelButton"),
+  previewFixtureCount: document.querySelector("#previewFixtureCount"),
+  previewFixtureList: document.querySelector("#previewFixtureList"),
+  previewPanelStatus: document.querySelector("#previewPanelStatus"),
+  assetLibrary: document.querySelector("#assetLibrary"),
+  assetLibraryButton: document.querySelector("#assetLibraryButton"),
+  closeAssetLibraryButton: document.querySelector("#closeAssetLibraryButton"),
+  assetFilter: document.querySelector("#assetFilter"),
+  assetCount: document.querySelector("#assetCount"),
+  assetList: document.querySelector("#assetList"),
+  assetDetail: document.querySelector("#assetDetail"),
+  assetLibraryStatus: document.querySelector("#assetLibraryStatus"),
+  layoutGuides: document.querySelector("#layoutGuides"),
+  layoutRegionLayer: document.querySelector("#layoutRegionLayer"),
+  layoutEditor: document.querySelector("#layoutEditor"),
+  layoutEditorButton: document.querySelector("#layoutEditorButton"),
+  closeLayoutEditorButton: document.querySelector("#closeLayoutEditorButton"),
+  layoutControls: document.querySelector("#layoutControls"),
+  layoutJson: document.querySelector("#layoutJson"),
+  layoutEditorStatus: document.querySelector("#layoutEditorStatus"),
+  fitLayoutButton: document.querySelector("#fitLayoutButton"),
+  resetLayoutButton: document.querySelector("#resetLayoutButton"),
+  copyLayoutButton: document.querySelector("#copyLayoutButton"),
+  importLayoutButton: document.querySelector("#importLayoutButton"),
   tooltipLayer: document.querySelector("#tooltipLayer"),
   newMatchButton: document.querySelector("#newMatchButton"),
   refreshButton: document.querySelector("#refreshButton"),
@@ -161,13 +280,37 @@ const dom = {
 dom.newMatchButton.addEventListener("click", () => startMatch());
 dom.refreshButton.addEventListener("click", () => refresh());
 dom.endTurnButton.addEventListener("click", () => submitCommand("end_turn", {}));
+dom.promptSummary?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-prompt-action]");
+  if (!button || button.disabled) {
+    return;
+  }
+  if (button.dataset.promptAction === "end_turn") {
+    submitCommand("end_turn", {});
+  }
+});
 dom.selectP1.addEventListener("click", () => selectPlayer("p1"));
 dom.selectP2.addEventListener("click", () => selectPlayer("p2"));
 
+installLayoutEditor();
+installAssetLibrary();
+installPreviewPanel();
+applyLayout();
+annotateStaticLayoutRegions();
 installViewportFitter();
 render();
+loadAuthoredBoardLayout();
+loadAuthoredPresentationCatalog();
+loadAssetManifest();
+loadPreviewFixtures();
 
 async function startMatch() {
+  if (previewPanelOpen) {
+    togglePreviewPanel(false);
+  }
+  previewMode = false;
+  activePreviewFixture = null;
+  dom.previewPanelButton?.classList.remove("selected");
   const response = await fetch("/matches", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -214,6 +357,10 @@ async function readJson(response) {
 }
 
 async function submitCommand(type, payload, playerId = selectedPlayerId) {
+  if (previewMode) {
+    showError("Preview fixture is read-only.");
+    return;
+  }
   if (!state || !matchId) {
     return;
   }
@@ -255,11 +402,1223 @@ function selectPlayer(playerId) {
   render();
 }
 
+function installLayoutEditor() {
+  renderLayoutControls();
+  syncLayoutEditor();
+
+  dom.layoutEditorButton?.addEventListener("click", () => toggleLayoutEditor());
+  dom.closeLayoutEditorButton?.addEventListener("click", () => toggleLayoutEditor(false));
+  dom.fitLayoutButton?.addEventListener("click", () => {
+    layoutState = normalizeLayout(layoutState, { fitRows: true });
+    commitLayoutChange("Rows fitted to the board.");
+  });
+  dom.resetLayoutButton?.addEventListener("click", () => {
+    layoutState = cloneLayout(authoredDefaultLayout);
+    commitLayoutChange("Layout reset.");
+  });
+  dom.copyLayoutButton?.addEventListener("click", async () => {
+    const text = JSON.stringify(layoutState, null, 2);
+    dom.layoutJson.value = text;
+    try {
+      await navigator.clipboard.writeText(text);
+      setLayoutStatus("Copied layout JSON.");
+    } catch {
+      dom.layoutJson.select();
+      setLayoutStatus("Select the JSON field to copy.");
+    }
+  });
+  dom.importLayoutButton?.addEventListener("click", () => {
+    try {
+      layoutState = normalizeLayout(JSON.parse(dom.layoutJson.value), { fitRows: true });
+      commitLayoutChange("Imported layout JSON.");
+    } catch (error) {
+      setLayoutStatus(error instanceof Error ? error.message : "Invalid layout JSON.");
+    }
+  });
+  dom.layoutControls?.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-layout-path]");
+    if (!input) {
+      return;
+    }
+    setLayoutValue(input.dataset.layoutPath, Number(input.value));
+    commitLayoutChange();
+  });
+  dom.layoutGuides?.querySelectorAll("[data-layout-handle]").forEach((handle) => {
+    handle.addEventListener("pointerdown", startLayoutDrag);
+  });
+  document.addEventListener("pointermove", updateLayoutDrag);
+  document.addEventListener("pointerup", finishLayoutDrag);
+  document.addEventListener("pointercancel", finishLayoutDrag);
+}
+
+function installAssetLibrary() {
+  renderAssetLibrary();
+
+  dom.assetLibraryButton?.addEventListener("click", () => toggleAssetLibrary());
+  dom.closeAssetLibraryButton?.addEventListener("click", () => toggleAssetLibrary(false));
+  dom.assetFilter?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-asset-filter]");
+    if (!button) {
+      return;
+    }
+    assetFilterKind = button.dataset.assetFilter;
+    renderAssetLibrary();
+  });
+  dom.assetList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-asset-id]");
+    if (!button) {
+      return;
+    }
+    selectedAssetId = button.dataset.assetId;
+    renderAssetLibrary();
+  });
+}
+
+function installPreviewPanel() {
+  renderPreviewPanel();
+
+  dom.previewPanelButton?.addEventListener("click", () => togglePreviewPanel());
+  dom.closePreviewPanelButton?.addEventListener("click", () => togglePreviewPanel(false));
+  dom.previewFixtureList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-preview-fixture-id]");
+    if (!button) {
+      return;
+    }
+
+    const fixture = previewFixtures().find((candidate) => candidate.id === button.dataset.previewFixtureId);
+    if (fixture) {
+      applyPreviewFixture(fixture);
+    }
+  });
+}
+
+function togglePreviewPanel(open = !previewPanelOpen) {
+  previewPanelOpen = open;
+  if (previewPanelOpen) {
+    if (layoutEditorOpen) {
+      toggleLayoutEditor(false);
+    }
+    if (assetLibraryOpen) {
+      toggleAssetLibrary(false);
+    }
+  }
+
+  hideTooltip();
+  dom.previewPanel.hidden = !previewPanelOpen;
+  dom.previewPanelButton?.classList.toggle("selected", previewPanelOpen || previewMode);
+  renderPreviewPanel();
+}
+
+function toggleAssetLibrary(open = !assetLibraryOpen) {
+  assetLibraryOpen = open;
+  if (assetLibraryOpen && layoutEditorOpen) {
+    toggleLayoutEditor(false);
+  }
+  if (assetLibraryOpen && previewPanelOpen) {
+    togglePreviewPanel(false);
+  }
+
+  hideTooltip();
+  dom.assetLibrary.hidden = !assetLibraryOpen;
+  dom.assetLibraryButton?.classList.toggle("selected", assetLibraryOpen);
+  renderAssetLibrary();
+}
+
+async function loadPreviewFixtures() {
+  try {
+    const response = await fetch(await resolvePreviewFixturesUrl());
+    if (!response.ok) {
+      throw new Error(`Preview fixture request failed: ${response.status}`);
+    }
+
+    previewFixtureDocument = await response.json();
+    renderPreviewPanel();
+    setPreviewPanelStatus(`Loaded ${previewFixtures().length} fixtures.`);
+  } catch (error) {
+    setPreviewPanelStatus(error instanceof Error ? error.message : "Could not load preview fixtures.");
+  }
+}
+
+function renderPreviewPanel() {
+  if (!dom.previewPanel) {
+    return;
+  }
+
+  const fixtures = previewFixtures();
+  if (dom.previewFixtureCount) {
+    dom.previewFixtureCount.textContent = previewFixtureDocument ? `${fixtures.length} fixtures` : "Loading";
+  }
+
+  if (dom.previewFixtureList) {
+    dom.previewFixtureList.innerHTML = fixtures.length > 0
+      ? fixtures.map((fixture) => renderPreviewFixtureRow(fixture)).join("")
+      : `<div class="asset-empty">No fixtures</div>`;
+  }
+}
+
+function renderPreviewFixtureRow(fixture) {
+  const selected = activePreviewFixture?.id === fixture.id;
+  return `
+    <button
+      class="preview-row ${selected ? "selected" : ""}"
+      type="button"
+      role="option"
+      aria-selected="${selected ? "true" : "false"}"
+      data-preview-fixture-id="${escapeAttr(fixture.id)}"
+    >
+      <span class="preview-focus">${escapeHtml(labelFromId(fixture.focus))}</span>
+      <span class="preview-copy">
+        <strong>${escapeHtml(fixture.label)}</strong>
+        <span>${escapeHtml(fixture.description ?? fixture.id)}</span>
+      </span>
+    </button>
+  `;
+}
+
+function applyPreviewFixture(fixture) {
+  previewMode = true;
+  activePreviewFixture = fixture;
+  matchId = "";
+  selectedAction = null;
+  selectedPlayerId = fixture.selectedPlayerId ?? fixture.viewerId ?? "p1";
+  state = cloneJson(fixture.state);
+  events = cloneJson(fixture.events ?? []);
+  togglePreviewPanel(false);
+  dom.previewPanelButton?.classList.add("selected");
+  render();
+}
+
+function previewFixtures() {
+  return Array.isArray(previewFixtureDocument?.fixtures) ? previewFixtureDocument.fixtures : [];
+}
+
+async function loadAssetManifest() {
+  try {
+    const response = await fetch(ASSET_MANIFEST_URL);
+    if (!response.ok) {
+      throw new Error(`Asset manifest request failed: ${response.status}`);
+    }
+
+    assetManifest = await response.json();
+    assetUsageIndex = buildAssetUsageIndex();
+    selectedAssetId = selectedAssetId || firstVisibleAsset()?.assetId || "";
+    renderAssetLibrary();
+    setAssetLibraryStatus(`Loaded ${assetManifest.assets?.length ?? 0} assets.`);
+  } catch (error) {
+    setAssetLibraryStatus(error instanceof Error ? error.message : "Could not load asset manifest.");
+  }
+}
+
+function renderAssetLibrary() {
+  if (!dom.assetLibrary) {
+    return;
+  }
+
+  const assets = assetManifest?.assets ?? [];
+  const visibleAssets = filteredAssets();
+  const selected = visibleAssets.find((asset) => asset.assetId === selectedAssetId) ?? visibleAssets[0] ?? null;
+  selectedAssetId = selected?.assetId ?? "";
+
+  renderAssetFilters(assets);
+  if (dom.assetCount) {
+    dom.assetCount.textContent = assetManifest ? `${visibleAssets.length}/${assets.length} assets` : "Loading";
+  }
+
+  if (dom.assetList) {
+    dom.assetList.innerHTML = visibleAssets.length > 0
+      ? visibleAssets.map((asset) => renderAssetRow(asset, asset.assetId === selectedAssetId)).join("")
+      : `<div class="asset-empty">No assets</div>`;
+  }
+
+  if (dom.assetDetail) {
+    dom.assetDetail.innerHTML = selected ? renderAssetDetail(selected) : `<div class="asset-empty">No selection</div>`;
+  }
+}
+
+function renderAssetFilters(assets) {
+  if (!dom.assetFilter) {
+    return;
+  }
+
+  const kinds = ["all", ...Array.from(new Set(assets.map((asset) => asset.kind).filter(Boolean))).sort()];
+  if (!kinds.includes(assetFilterKind)) {
+    assetFilterKind = "all";
+  }
+
+  dom.assetFilter.innerHTML = kinds
+    .map((kind) => {
+      const count = kind === "all" ? assets.length : assets.filter((asset) => asset.kind === kind).length;
+      const label = kind === "all" ? "All" : labelFromId(kind);
+      return `
+        <button
+          class="ghost ${assetFilterKind === kind ? "selected" : ""}"
+          type="button"
+          role="tab"
+          aria-selected="${assetFilterKind === kind ? "true" : "false"}"
+          data-asset-filter="${escapeAttr(kind)}"
+        >${escapeHtml(label)} ${count}</button>
+      `;
+    })
+    .join("");
+}
+
+function renderAssetRow(asset, selected) {
+  const usageCount = assetUsageIndex[asset.assetId]?.length ?? 0;
+  const thumb = asset.publicPath
+    ? `<span class="asset-thumb" style="--asset-thumb: url('${escapeHtml(asset.publicPath)}')" aria-hidden="true"></span>`
+    : `<span class="asset-thumb no-preview" aria-hidden="true"></span>`;
+  return `
+    <button
+      class="asset-row ${selected ? "selected" : ""}"
+      type="button"
+      role="option"
+      aria-selected="${selected ? "true" : "false"}"
+      data-asset-id="${escapeAttr(asset.assetId)}"
+    >
+      ${thumb}
+      <span class="asset-row-copy">
+        <strong>${escapeHtml(asset.assetId)}</strong>
+        <span>${escapeHtml(labelFromId(asset.kind))} · ${asset.width ?? "?"}x${asset.height ?? "?"} · ${usageCount}</span>
+      </span>
+    </button>
+  `;
+}
+
+function renderAssetDetail(asset) {
+  const usage = assetUsageIndex[asset.assetId] ?? [];
+  const preview = asset.publicPath
+    ? `<div class="asset-preview"><img src="${escapeAttr(asset.publicPath)}" alt="${escapeAttr(asset.assetId)} preview"></div>`
+    : `<div class="asset-preview no-preview">No preview</div>`;
+  const hash = typeof asset.contentHash === "string" ? `${asset.contentHash.slice(0, 18)}...${asset.contentHash.slice(-8)}` : "";
+  const rows = [
+    ["Kind", labelFromId(asset.kind)],
+    ["Size", asset.width && asset.height ? `${asset.width} x ${asset.height}` : ""],
+    ["Frames", asset.frameCount],
+    ["Path", asset.publicPath],
+    ["Hash", hash],
+    ["License", asset.license],
+    ["Gen", asset.generationId]
+  ].filter(([, value]) => value !== undefined && value !== "");
+
+  return `
+    ${preview}
+    <div class="asset-detail-copy">
+      <h3>${escapeHtml(asset.assetId)}</h3>
+      <dl class="asset-meta">
+        ${rows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}
+      </dl>
+      <div class="asset-usage">
+        ${usage.length > 0 ? usage.map((item) => `<span>${escapeHtml(item)}</span>`).join("") : `<span>unused</span>`}
+      </div>
+      ${asset.prompt ? `<p class="asset-prompt">${escapeHtml(asset.prompt)}</p>` : ""}
+    </div>
+  `;
+}
+
+function filteredAssets() {
+  const assets = assetManifest?.assets ?? [];
+  return assetFilterKind === "all" ? assets : assets.filter((asset) => asset.kind === assetFilterKind);
+}
+
+function firstVisibleAsset() {
+  return filteredAssets()[0] ?? null;
+}
+
+function buildAssetUsageIndex() {
+  const index = {};
+  const assets = assetManifest?.assets ?? [];
+  const byPublicPath = new Map(assets.filter((asset) => asset.publicPath).map((asset) => [asset.publicPath, asset]));
+
+  assets.forEach((asset) => {
+    (asset.usage ?? []).forEach((usage) => addAssetUsage(index, asset.assetId, usage));
+  });
+
+  collectPresentationAssetUsage(index, byPublicPath);
+  collectEffectAssetUsage(index, byPublicPath);
+  addAssetUsageForPath(index, byPublicPath, "/assets/ember-duel-board.png", "demo background");
+
+  return Object.fromEntries(
+    Object.entries(index).map(([assetId, usages]) => [assetId, Array.from(new Set(usages)).sort()])
+  );
+}
+
+function collectPresentationAssetUsage(index, byPublicPath) {
+  if (!presentationCatalog) {
+    return;
+  }
+
+  [
+    ["cards", "card"],
+    ["equipment", "equipment"],
+    ["minions", "minion"]
+  ].forEach(([section, label]) => {
+    (presentationCatalog[section] ?? []).forEach((entry) => {
+      Object.entries(entry.assets ?? {}).forEach(([role, path]) => {
+        addAssetUsageForPath(index, byPublicPath, path, `${label} ${entry.templateId} ${role}`);
+      });
+    });
+  });
+
+  (presentationCatalog.heroes ?? []).forEach((hero) => {
+    Object.entries(hero.assets ?? {}).forEach(([role, path]) => {
+      addAssetUsageForPath(index, byPublicPath, path, `hero ${hero.playerId} ${role}`);
+    });
+  });
+}
+
+function collectEffectAssetUsage(index, byPublicPath) {
+  Object.entries(EFFECTS).forEach(([effectId, effect]) => {
+    addAssetUsageForPath(index, byPublicPath, effect.sheet, `effect ${effectId}`);
+  });
+}
+
+function addAssetUsageForPath(index, byPublicPath, path, usage) {
+  if (typeof path !== "string") {
+    return;
+  }
+
+  const asset = byPublicPath.get(path);
+  if (asset) {
+    addAssetUsage(index, asset.assetId, usage);
+  }
+}
+
+function addAssetUsage(index, assetId, usage) {
+  if (!assetId || !usage) {
+    return;
+  }
+  index[assetId] ??= [];
+  index[assetId].push(usage);
+}
+
+function setAssetLibraryStatus(message) {
+  if (dom.assetLibraryStatus) {
+    dom.assetLibraryStatus.textContent = message;
+  }
+}
+
+function setPreviewPanelStatus(message) {
+  if (dom.previewPanelStatus) {
+    dom.previewPanelStatus.textContent = message;
+  }
+}
+
+function labelFromId(value) {
+  return String(value ?? "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function renderLayoutControls() {
+  if (!dom.layoutControls) {
+    return;
+  }
+
+  dom.layoutControls.innerHTML = LAYOUT_CONTROLS.map((control) => `
+    <label class="layout-control">
+      <span>
+        <strong>${escapeHtml(control.label)}</strong>
+        <output data-layout-output="${escapeAttr(control.path)}"></output>
+      </span>
+      <input
+        type="range"
+        min="${control.min}"
+        max="${control.max}"
+        step="${control.step}"
+        data-layout-path="${escapeAttr(control.path)}"
+      >
+      <input
+        type="number"
+        min="${control.min}"
+        max="${control.max}"
+        step="${control.step}"
+        data-layout-path="${escapeAttr(control.path)}"
+        aria-label="${escapeAttr(control.label)}"
+      >
+    </label>
+  `).join("");
+}
+
+function renderLayoutRegionGuides() {
+  if (!dom.layoutRegionLayer) {
+    return;
+  }
+
+  const regions = Array.isArray(boardLayoutDocument?.regions) ? boardLayoutDocument.regions : [];
+  if (regions.length === 0) {
+    dom.layoutRegionLayer.innerHTML = "";
+    return;
+  }
+
+  const widgetsById = new Map(
+    (Array.isArray(boardLayoutDocument?.widgets) ? boardLayoutDocument.widgets : [])
+      .filter((widget) => widget && typeof widget === "object" && typeof widget.id === "string")
+      .map((widget) => [widget.id, widget])
+  );
+
+  dom.layoutRegionLayer.innerHTML = regions.map((region, index) => {
+    if (!region || typeof region !== "object") {
+      return "";
+    }
+
+    const geometry = layoutGuideGeometry(region);
+    if (!geometry) {
+      return "";
+    }
+
+    const id = typeof region.id === "string" ? region.id : `region-${index}`;
+    const kind = typeof region.kind === "string" ? region.kind : "custom";
+    const ownerScope = typeof region.ownerScope === "string" ? region.ownerScope : "shared";
+    const label = typeof region.label === "string" ? region.label : labelFromId(id);
+    const widgetId = typeof region.widgetId === "string" ? region.widgetId : "";
+    const widget = widgetsById.get(widgetId);
+    const component = widget && typeof widget.component === "string" ? widget.component : widgetId || "Widget";
+    const summary = [labelFromId(kind), component, labelFromId(ownerScope)].filter(Boolean).join(" · ");
+
+    return `
+      <div
+        class="layout-region-box"
+        data-region-id="${escapeAttr(id)}"
+        data-region-kind="${escapeAttr(kind)}"
+        data-owner-scope="${escapeAttr(ownerScope)}"
+        style="left: ${geometry.x}px; top: ${geometry.y}px; width: ${geometry.width}px; height: ${geometry.height}px;"
+        title="${escapeAttr(`${label} · ${summary}`)}"
+      >
+        <strong>${escapeHtml(label)}</strong>
+        <span>${escapeHtml(summary)}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function countLayoutRegions() {
+  return Array.isArray(boardLayoutDocument?.regions) ? boardLayoutDocument.regions.length : 0;
+}
+
+function layoutRegionById(regionId) {
+  if (!regionId || !Array.isArray(boardLayoutDocument?.regions)) {
+    return null;
+  }
+  return boardLayoutDocument.regions.find((region) => region && typeof region === "object" && region.id === regionId) ?? null;
+}
+
+function layoutWidgetById(widgetId) {
+  if (!widgetId || !Array.isArray(boardLayoutDocument?.widgets)) {
+    return null;
+  }
+  return boardLayoutDocument.widgets.find((widget) => widget && typeof widget === "object" && widget.id === widgetId) ?? null;
+}
+
+function runtimeRegionIdForPlayer(playerId, kind) {
+  const side = playerId === "p2" ? "opponent" : "player";
+  return `${side}_${kind}`;
+}
+
+function layoutRegionMetadata(regionId) {
+  const region = layoutRegionById(regionId);
+  const widget = layoutWidgetById(region?.widgetId);
+  const inferred = inferRegionMetadata(regionId);
+  const kind = typeof region?.kind === "string" ? region.kind : inferred.kind;
+  const component = typeof widget?.component === "string" ? widget.component : componentForRegionKind(kind);
+
+  return {
+    id: regionId,
+    kind,
+    ownerScope: typeof region?.ownerScope === "string" ? region.ownerScope : inferred.ownerScope,
+    label: typeof region?.label === "string" ? region.label : labelFromId(regionId),
+    widgetId: typeof region?.widgetId === "string" ? region.widgetId : "",
+    component,
+    targetable: typeof region?.targetable === "boolean" ? region.targetable : inferred.targetable,
+    dropBehavior: typeof region?.dropBehavior === "string" ? region.dropBehavior : "",
+    accepts: Array.isArray(region?.accepts) ? region.accepts.filter((value) => typeof value === "string") : [],
+    visibleTo: typeof region?.visibleTo === "string" ? region.visibleTo : ""
+  };
+}
+
+function componentForRegionKind(kind) {
+  if (kind === "hero") {
+    return "HeroCard";
+  }
+  if (kind === "battlefield" || kind === "hand") {
+    return "CardRow";
+  }
+  if (kind === "equipment") {
+    return "EquipmentSlot";
+  }
+  if (kind === "deck") {
+    return "DeckStack";
+  }
+  if (kind === "action_window") {
+    return "ActionPanel";
+  }
+  if (kind === "history_log") {
+    return "HistoryLog";
+  }
+  if (kind === "chat") {
+    return "ChatWindow";
+  }
+  return "UnknownRegion";
+}
+
+function inferRegionMetadata(regionId) {
+  const id = String(regionId ?? "");
+  const ownerScope = id.startsWith("opponent_") ? "opponent" : id.startsWith("player_") ? "player" : "shared";
+  const kind = id.endsWith("_hero")
+    ? "hero"
+    : id.endsWith("_battlefield")
+      ? "battlefield"
+      : id.endsWith("_equipment")
+        ? "equipment"
+      : id.endsWith("_hand")
+        ? "hand"
+        : id.endsWith("_deck")
+          ? "deck"
+          : id === "turn_action_window"
+            ? "action_window"
+            : id === "history_log"
+              ? "history_log"
+              : id === "chat_window"
+                ? "chat"
+                : "custom";
+  return {
+    kind,
+    ownerScope,
+    targetable: kind === "hero" || kind === "battlefield"
+  };
+}
+
+function layoutRegionAttributeMap(regionId, options = {}) {
+  const metadata = layoutRegionMetadata(regionId);
+  const map = {
+    "data-region-id": metadata.id,
+    "data-region-kind": metadata.kind,
+    "data-region-owner-scope": metadata.ownerScope,
+    "data-region-label": metadata.label,
+    "data-region-targetable": String(metadata.targetable),
+    "data-region-renderer": metadata.component
+  };
+
+  if (metadata.widgetId) {
+    map["data-region-widget"] = metadata.widgetId;
+  }
+  if (metadata.component) {
+    map["data-region-component"] = metadata.component;
+  }
+  if (metadata.dropBehavior) {
+    map["data-drop-behavior"] = metadata.dropBehavior;
+  }
+  if (metadata.accepts.length > 0) {
+    map["data-region-accepts"] = metadata.accepts.join(" ");
+  }
+  if (metadata.visibleTo) {
+    map["data-region-visible-to"] = metadata.visibleTo;
+  }
+  if (options.targetArea) {
+    map["data-target-area"] = options.targetArea;
+  }
+
+  return map;
+}
+
+function layoutRegionAttrs(regionId, options = {}) {
+  return Object.entries(layoutRegionAttributeMap(regionId, options))
+    .map(([name, value]) => `${name}="${escapeAttr(value)}"`)
+    .join(" ");
+}
+
+function applyLayoutRegionAttrs(element, regionId, options = {}) {
+  if (!element) {
+    return;
+  }
+
+  const attrs = layoutRegionAttributeMap(regionId, options);
+  const managedAttrs = [
+    "data-region-id",
+    "data-region-kind",
+    "data-region-owner-scope",
+    "data-region-label",
+    "data-region-targetable",
+    "data-region-widget",
+    "data-region-component",
+    "data-region-renderer",
+    "data-drop-behavior",
+    "data-region-accepts",
+    "data-region-visible-to",
+    "data-target-area"
+  ];
+  managedAttrs.forEach((name) => element.removeAttribute(name));
+  Object.entries(attrs).forEach(([name, value]) => element.setAttribute(name, value));
+  if (!element.getAttribute("aria-label")) {
+    element.setAttribute("aria-label", attrs["data-region-label"]);
+  }
+}
+
+function annotateStaticLayoutRegions() {
+  renderStaticRuntimeRegion(dom.turnPanel, "turn_action_window", "ActionPanel");
+  renderStaticRuntimeRegion(dom.battleLog, "history_log", "HistoryLog");
+  renderStaticRuntimeRegion(dom.chatWindow, "chat_window", "ChatWindow");
+  renderChatWindow();
+}
+
+function renderStaticRuntimeRegion(element, regionId, expectedComponent) {
+  if (!element) {
+    return;
+  }
+
+  const region = layoutRegionMetadata(regionId);
+  applyLayoutRegionAttrs(element, region.id);
+  element.dataset.regionRendererExpected = expectedComponent;
+  element.dataset.regionRendererStatus = region.component === expectedComponent ? "ready" : "fallback";
+}
+
+function renderChatWindow() {
+  if (!dom.chatWindow) {
+    return;
+  }
+
+  const region = layoutRegionMetadata("chat_window");
+  const widget = layoutWidgetById(region.widgetId);
+  const config = widget && typeof widget.config === "object" && widget.config !== null ? widget.config : {};
+  const enabled = config.enabled === true;
+  const placeholder = typeof config.placeholder === "string" ? config.placeholder : "Chat unavailable.";
+  dom.chatWindow.dataset.tooltipTitle = region.label;
+  dom.chatWindow.dataset.tooltipBody = placeholder;
+  dom.chatWindow.tabIndex = 0;
+  dom.chatWindow.innerHTML = `
+    <strong>${escapeHtml(region.label)}</strong>
+    <span>${enabled ? "Online" : "Offline"}</span>
+    <small>0 messages</small>
+  `;
+}
+
+function layoutGuideGeometry(region) {
+  if (!region || typeof region !== "object") {
+    return null;
+  }
+
+  const tokenGeometry = layoutTokenGeometry(region.id);
+  if (tokenGeometry) {
+    return clampGuideGeometry(tokenGeometry);
+  }
+
+  return clampGuideGeometry(region.geometry);
+}
+
+function layoutTokenGeometry(regionId) {
+  const { arena, player, zones, center } = layoutState;
+  const boardWidth = PLAY_AREA.width;
+  const boardHeight = PLAY_AREA.height;
+  const opponentTop = arena.padding;
+  const centerTop = arena.padding + arena.opponentRow + arena.rowGap;
+  const playerTop = centerTop + arena.centerRow + arena.rowGap;
+  const heroX = arena.padding;
+  const boardX = heroX + player.heroWidth + player.gap;
+  const equipmentWidth = Math.min(118, Math.max(78, player.heroWidth * 0.52));
+  const equipmentX = boardX + zones.boardWidth + zones.gap;
+  const handX = equipmentX + equipmentWidth + zones.gap;
+  const handWidth = Math.max(1, boardWidth - arena.padding - handX);
+  const deckWidth = Math.min(64, Math.max(44, handWidth - zones.gap * 2));
+  const opponentDeckHeight = Math.min(92, Math.max(52, arena.opponentRow - 24));
+  const playerDeckHeight = Math.min(92, Math.max(52, arena.playerRow - 24));
+  const chatWidth = Math.min(220, Math.max(128, player.heroWidth));
+  const chatX = boardWidth - arena.padding - chatWidth;
+  const historyX = arena.padding + center.turnWidth + center.gap;
+
+  const geometries = {
+    opponent_hero: { x: heroX, y: opponentTop, width: player.heroWidth, height: arena.opponentRow },
+    opponent_battlefield: { x: boardX, y: opponentTop, width: zones.boardWidth, height: arena.opponentRow },
+    opponent_equipment: { x: equipmentX, y: opponentTop, width: equipmentWidth, height: arena.opponentRow },
+    opponent_hand: { x: handX, y: opponentTop, width: handWidth, height: arena.opponentRow },
+    opponent_deck: {
+      x: boardWidth - arena.padding - deckWidth,
+      y: opponentTop + 12,
+      width: deckWidth,
+      height: opponentDeckHeight
+    },
+    turn_action_window: { x: arena.padding, y: centerTop, width: center.turnWidth, height: arena.centerRow },
+    history_log: {
+      x: historyX,
+      y: centerTop,
+      width: Math.max(1, chatX - center.gap - historyX),
+      height: arena.centerRow
+    },
+    chat_window: { x: chatX, y: centerTop, width: chatWidth, height: arena.centerRow },
+    player_hero: { x: heroX, y: playerTop, width: player.heroWidth, height: arena.playerRow },
+    player_battlefield: { x: boardX, y: playerTop, width: zones.boardWidth, height: arena.playerRow },
+    player_equipment: { x: equipmentX, y: playerTop, width: equipmentWidth, height: arena.playerRow },
+    player_hand: { x: handX, y: playerTop, width: handWidth, height: arena.playerRow },
+    player_deck: {
+      x: boardWidth - arena.padding - deckWidth,
+      y: Math.max(playerTop + 12, boardHeight - arena.padding - playerDeckHeight - 12),
+      width: deckWidth,
+      height: playerDeckHeight
+    }
+  };
+
+  return geometries[regionId] ?? null;
+}
+
+function clampGuideGeometry(geometry) {
+  if (!geometry || typeof geometry !== "object") {
+    return null;
+  }
+
+  const rawX = Number(geometry.x);
+  const rawY = Number(geometry.y);
+  const rawWidth = Number(geometry.width);
+  const rawHeight = Number(geometry.height);
+  if (![rawX, rawY, rawWidth, rawHeight].every(Number.isFinite)) {
+    return null;
+  }
+
+  const x = clampNumber(rawX, 0, PLAY_AREA.width - 1, 0);
+  const y = clampNumber(rawY, 0, PLAY_AREA.height - 1, 0);
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(clampNumber(rawWidth, 1, PLAY_AREA.width - x, 1)),
+    height: Math.round(clampNumber(rawHeight, 1, PLAY_AREA.height - y, 1))
+  };
+}
+
+function toggleLayoutEditor(open = !layoutEditorOpen) {
+  layoutEditorOpen = open;
+  if (layoutEditorOpen && assetLibraryOpen) {
+    toggleAssetLibrary(false);
+  }
+  if (layoutEditorOpen && previewPanelOpen) {
+    togglePreviewPanel(false);
+  }
+
+  selectedAction = null;
+  hideTooltip();
+  dom.layoutEditor.hidden = !layoutEditorOpen;
+  dom.layoutGuides?.setAttribute("aria-hidden", String(!layoutEditorOpen));
+  dom.layoutEditorButton?.classList.toggle("selected", layoutEditorOpen);
+  dom.arena?.classList.toggle("layout-editing", layoutEditorOpen);
+  document.body.classList.toggle("layout-editor-open", layoutEditorOpen);
+  paintSelectionState();
+  syncLayoutEditor();
+}
+
+function loadLayout() {
+  try {
+    const stored = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    return normalizeLayout(stored ? JSON.parse(stored) : authoredDefaultLayout);
+  } catch {
+    return cloneLayout(authoredDefaultLayout);
+  }
+}
+
+async function loadAuthoredBoardLayout() {
+  try {
+    const response = await fetch(await resolveBoardLayoutUrl());
+    if (!response.ok) {
+      throw new Error(`Board layout request failed: ${response.status}`);
+    }
+
+    const boardLayout = await response.json();
+    boardLayoutDocument = boardLayout;
+    authoredDefaultLayout = layoutTokensFromBoardLayout(boardLayout);
+    renderLayoutRegionGuides();
+    annotateStaticLayoutRegions();
+    if (!localStorage.getItem(LAYOUT_STORAGE_KEY)) {
+      layoutState = cloneLayout(authoredDefaultLayout);
+      applyLayout();
+      syncLayoutEditor();
+      setLayoutStatus(`Loaded ruleset board layout with ${countLayoutRegions()} regions.`);
+    } else {
+      setLayoutStatus(`Loaded ruleset board layout with ${countLayoutRegions()} regions. Local edits are active.`);
+    }
+    render();
+  } catch (error) {
+    setLayoutStatus(error instanceof Error ? error.message : "Could not load ruleset board layout.");
+  }
+}
+
+async function loadAuthoredPresentationCatalog() {
+  try {
+    const response = await fetch(await resolvePresentationCatalogUrl());
+    if (!response.ok) {
+      throw new Error(`Presentation catalog request failed: ${response.status}`);
+    }
+
+    applyPresentationCatalog(await response.json());
+    render();
+  } catch (error) {
+    console.warn(error instanceof Error ? error.message : "Could not load ruleset presentation catalog.");
+  }
+}
+
+async function resolveBoardLayoutUrl() {
+  try {
+    const response = await fetch(GAME_DEFINITION_URL);
+    if (!response.ok) {
+      return FALLBACK_BOARD_LAYOUT_URL;
+    }
+    const gameDefinition = await response.json();
+    const layoutPath = gameDefinition?.ui?.defaultBoardLayout;
+    return typeof layoutPath === "string" && layoutPath.length > 0
+      ? `/content/rulesets/sample-duel/${layoutPath}`
+      : FALLBACK_BOARD_LAYOUT_URL;
+  } catch {
+    return FALLBACK_BOARD_LAYOUT_URL;
+  }
+}
+
+async function resolvePresentationCatalogUrl() {
+  try {
+    const response = await fetch(GAME_DEFINITION_URL);
+    if (!response.ok) {
+      return FALLBACK_PRESENTATION_CATALOG_URL;
+    }
+    const gameDefinition = await response.json();
+    const catalogPath = gameDefinition?.ui?.defaultPresentationCatalog;
+    return typeof catalogPath === "string" && catalogPath.length > 0
+      ? `/content/rulesets/sample-duel/${catalogPath}`
+      : FALLBACK_PRESENTATION_CATALOG_URL;
+  } catch {
+    return FALLBACK_PRESENTATION_CATALOG_URL;
+  }
+}
+
+async function resolvePreviewFixturesUrl() {
+  try {
+    const response = await fetch(GAME_DEFINITION_URL);
+    if (!response.ok) {
+      return FALLBACK_PREVIEW_FIXTURES_URL;
+    }
+    const gameDefinition = await response.json();
+    const fixturePath = gameDefinition?.ui?.defaultPreviewFixture;
+    return typeof fixturePath === "string" && fixturePath.length > 0
+      ? `/content/rulesets/sample-duel/${fixturePath}`
+      : FALLBACK_PREVIEW_FIXTURES_URL;
+  } catch {
+    return FALLBACK_PREVIEW_FIXTURES_URL;
+  }
+}
+
+function layoutTokensFromBoardLayout(boardLayout) {
+  const tokens = boardLayout && typeof boardLayout === "object" ? boardLayout.tokens : null;
+  return normalizeLayout({
+    version: 1,
+    ...(tokens && typeof tokens === "object" ? tokens : {})
+  });
+}
+
+function applyPresentationCatalog(catalog) {
+  if (!catalog || typeof catalog !== "object") {
+    return;
+  }
+
+  presentationCatalog = catalog;
+  presentationCatalogId = typeof catalog.id === "string" ? catalog.id : "ruleset";
+  dom.arena?.setAttribute("data-presentation-catalog", presentationCatalogId);
+
+  const nextCardDefs = { ...CARD_DEFS };
+  for (const section of ["cards", "equipment", "minions"]) {
+    const entries = Array.isArray(catalog[section]) ? catalog[section] : [];
+    entries.forEach((entry) => {
+      const definition = presentationObjectToCardDef(entry);
+      if (definition) {
+        nextCardDefs[entry.templateId] = definition;
+      }
+    });
+  }
+  CARD_DEFS = nextCardDefs;
+
+  const nextHeroDefs = { ...HERO_DEFS };
+  const heroes = Array.isArray(catalog.heroes) ? catalog.heroes : [];
+  heroes.forEach((hero) => {
+    const definition = presentationHeroToHeroDef(hero);
+    if (definition) {
+      nextHeroDefs[hero.playerId] = definition;
+    }
+  });
+  HERO_DEFS = nextHeroDefs;
+
+  if (assetManifest) {
+    assetUsageIndex = buildAssetUsageIndex();
+    renderAssetLibrary();
+  }
+}
+
+function presentationObjectToCardDef(entry) {
+  if (!entry || typeof entry !== "object" || typeof entry.templateId !== "string") {
+    return null;
+  }
+
+  return {
+    name: entry.name ?? entry.templateId,
+    manaCost: entry.properties?.manaCost,
+    stats: entry.properties?.stats,
+    text: entry.text ?? "",
+    action: entry.action ?? "",
+    art: entry.assets?.art,
+    display: entry.properties?.display ?? []
+  };
+}
+
+function presentationHeroToHeroDef(hero) {
+  if (!hero || typeof hero !== "object" || typeof hero.playerId !== "string") {
+    return null;
+  }
+
+  return {
+    name: hero.name ?? PLAYER_NAMES[hero.playerId] ?? hero.playerId,
+    title: hero.title ?? "Hero",
+    art: hero.assets?.art,
+    ability: hero.ability
+      ? {
+          name: hero.ability.name,
+          behaviorId: hero.ability.behaviorId,
+          text: hero.ability.text ?? "",
+          action: hero.ability.action,
+          targetMode: hero.ability.targetMode,
+          display: hero.ability.display ?? [],
+          manaCost: hero.ability.manaCost ?? 0
+        }
+      : null
+  };
+}
+
+function saveLayout() {
+  localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layoutState));
+}
+
+function cloneLayout(layout) {
+  return cloneJson(layout);
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeLayout(layout, options = {}) {
+  const normalized = mergeLayout(cloneLayout(DEFAULT_LAYOUT), layout && typeof layout === "object" ? layout : {});
+
+  Object.entries(LAYOUT_LIMITS).forEach(([group, limits]) => {
+    Object.entries(limits).forEach(([key, [min, max]]) => {
+      normalized[group][key] = clampNumber(Number(normalized[group][key]), min, max, DEFAULT_LAYOUT[group][key]);
+    });
+  });
+
+  if (options.fitRows || totalRowHeight(normalized) > availableRowHeight(normalized)) {
+    fitRowsToAvailable(normalized);
+  }
+
+  return normalized;
+}
+
+function mergeLayout(target, source) {
+  Object.entries(source).forEach(([key, value]) => {
+    if (value && typeof value === "object" && !Array.isArray(value) && target[key] && typeof target[key] === "object") {
+      mergeLayout(target[key], value);
+      return;
+    }
+    target[key] = value;
+  });
+  return target;
+}
+
+function clampNumber(value, min, max, fallback) {
+  const safeValue = Number.isFinite(value) ? value : fallback;
+  return Math.min(max, Math.max(min, safeValue));
+}
+
+function totalRowHeight(layout) {
+  return layout.arena.opponentRow + layout.arena.centerRow + layout.arena.playerRow;
+}
+
+function availableRowHeight(layout) {
+  return PLAY_AREA.height - layout.arena.padding * 2 - layout.arena.rowGap * 2;
+}
+
+function fitRowsToAvailable(layout) {
+  const rows = ["opponentRow", "centerRow", "playerRow"];
+  const target = availableRowHeight(layout);
+  const minimums = rows.map((row) => LAYOUT_LIMITS.arena[row][0]);
+  const minTotal = minimums.reduce((sum, value) => sum + value, 0);
+  const remaining = Math.max(0, target - minTotal);
+  const flex = rows.map((row, index) => Math.max(0, layout.arena[row] - minimums[index]));
+  const flexTotal = flex.reduce((sum, value) => sum + value, 0) || 1;
+
+  rows.forEach((row, index) => {
+    layout.arena[row] = Math.round(minimums[index] + (flex[index] / flexTotal) * remaining);
+  });
+
+  const drift = Math.round(target - totalRowHeight(layout));
+  layout.arena.playerRow += drift;
+}
+
+function getLayoutValue(path) {
+  return path.split(".").reduce((value, key) => value?.[key], layoutState);
+}
+
+function setLayoutValue(path, value) {
+  const keys = path.split(".");
+  const lastKey = keys.pop();
+  const target = keys.reduce((current, key) => current[key], layoutState);
+  target[lastKey] = value;
+  layoutState = normalizeLayout(layoutState);
+}
+
+function commitLayoutChange(message = "") {
+  applyLayout();
+  saveLayout();
+  syncLayoutEditor();
+  if (message) {
+    setLayoutStatus(message);
+  }
+}
+
+function applyLayout() {
+  if (!dom.arena) {
+    return;
+  }
+
+  layoutState = normalizeLayout(layoutState);
+  const { arena, player, zones, center, card } = layoutState;
+  const setPx = (name, value) => dom.arena.style.setProperty(name, `${Math.round(value)}px`);
+  const handleA = arena.padding + arena.opponentRow + arena.rowGap / 2;
+  const centerTop = arena.padding + arena.opponentRow + arena.rowGap;
+  const handleB = centerTop + arena.centerRow + arena.rowGap / 2;
+
+  setPx("--arena-padding", arena.padding);
+  setPx("--arena-row-gap", arena.rowGap);
+  setPx("--row-opponent", arena.opponentRow);
+  setPx("--row-center", arena.centerRow);
+  setPx("--row-player", arena.playerRow);
+  setPx("--player-hero-width", player.heroWidth);
+  setPx("--player-gap", player.gap);
+  setPx("--zone-board-width", zones.boardWidth);
+  setPx("--zone-gap", zones.gap);
+  setPx("--center-turn-width", center.turnWidth);
+  setPx("--center-gap", center.gap);
+  setPx("--card-width", card.width);
+  setPx("--card-art-height", card.artHeight);
+  setPx("--handle-row-a", handleA);
+  setPx("--handle-row-b", handleB);
+  setPx("--handle-hero-col", arena.padding + player.heroWidth + player.gap / 2);
+  setPx("--handle-center-col", arena.padding + center.turnWidth + center.gap / 2);
+  setPx("--center-row-top", centerTop);
+  setPx("--center-row-height", arena.centerRow);
+  renderLayoutRegionGuides();
+}
+
+function syncLayoutEditor() {
+  if (!dom.layoutJson) {
+    return;
+  }
+
+  LAYOUT_CONTROLS.forEach((control) => {
+    const value = Math.round(getLayoutValue(control.path));
+    document.querySelectorAll(`[data-layout-path="${CSS.escape(control.path)}"]`).forEach((input) => {
+      if (document.activeElement !== input) {
+        input.value = String(value);
+      }
+    });
+    document.querySelectorAll(`[data-layout-output="${CSS.escape(control.path)}"]`).forEach((output) => {
+      output.textContent = `${value}${control.unit}`;
+    });
+  });
+
+  if (document.activeElement !== dom.layoutJson) {
+    dom.layoutJson.value = JSON.stringify(layoutState, null, 2);
+  }
+}
+
+function setLayoutStatus(message) {
+  if (dom.layoutEditorStatus) {
+    dom.layoutEditorStatus.textContent = message;
+  }
+}
+
+function startLayoutDrag(event) {
+  if (!layoutEditorOpen) {
+    return;
+  }
+
+  event.preventDefault();
+  activeLayoutDrag = {
+    handle: event.currentTarget.dataset.layoutHandle
+  };
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+}
+
+function updateLayoutDrag(event) {
+  if (!activeLayoutDrag) {
+    return;
+  }
+
+  event.preventDefault();
+  const point = arenaPointFromEvent(event);
+  if (!point) {
+    return;
+  }
+
+  if (activeLayoutDrag.handle === "row-a") {
+    resizeUpperRows(point.y);
+  } else if (activeLayoutDrag.handle === "row-b") {
+    resizeLowerRows(point.y);
+  } else if (activeLayoutDrag.handle === "hero-col") {
+    layoutState.player.heroWidth = point.x - layoutState.arena.padding - layoutState.player.gap / 2;
+  } else if (activeLayoutDrag.handle === "center-col") {
+    layoutState.center.turnWidth = point.x - layoutState.arena.padding - layoutState.center.gap / 2;
+  }
+
+  commitLayoutChange();
+}
+
+function finishLayoutDrag() {
+  activeLayoutDrag = null;
+}
+
+function arenaPointFromEvent(event) {
+  if (!dom.arena) {
+    return null;
+  }
+
+  const rect = dom.arena.getBoundingClientRect();
+  const scale = Number(dom.arena.dataset.scale) || rect.width / PLAY_AREA.width || 1;
+  return {
+    x: (event.clientX - rect.left) / scale,
+    y: (event.clientY - rect.top) / scale
+  };
+}
+
+function resizeUpperRows(y) {
+  const arena = layoutState.arena;
+  const combined = arena.opponentRow + arena.centerRow;
+  arena.opponentRow = y - arena.padding - arena.rowGap / 2;
+  arena.opponentRow = clampNumber(
+    arena.opponentRow,
+    LAYOUT_LIMITS.arena.opponentRow[0],
+    Math.min(LAYOUT_LIMITS.arena.opponentRow[1], combined - LAYOUT_LIMITS.arena.centerRow[0]),
+    DEFAULT_LAYOUT.arena.opponentRow
+  );
+  arena.centerRow = combined - arena.opponentRow;
+}
+
+function resizeLowerRows(y) {
+  const arena = layoutState.arena;
+  const combined = arena.centerRow + arena.playerRow;
+  arena.centerRow = y - arena.padding - arena.opponentRow - arena.rowGap * 1.5;
+  arena.centerRow = clampNumber(
+    arena.centerRow,
+    LAYOUT_LIMITS.arena.centerRow[0],
+    Math.min(LAYOUT_LIMITS.arena.centerRow[1], combined - LAYOUT_LIMITS.arena.playerRow[0]),
+    DEFAULT_LAYOUT.arena.centerRow
+  );
+  arena.playerRow = combined - arena.centerRow;
+}
+
 function render() {
-  dom.refreshButton.disabled = !matchId;
-  dom.endTurnButton.disabled = !canSelectedPlayerAct();
+  dom.refreshButton.disabled = previewMode || !matchId;
+  dom.endTurnButton.disabled = previewMode || !canSelectedPlayerAct();
   dom.selectP1.classList.toggle("selected", selectedPlayerId === "p1");
   dom.selectP2.classList.toggle("selected", selectedPlayerId === "p2");
+  dom.previewPanelButton?.classList.toggle("selected", previewPanelOpen || previewMode);
 
   if (!state) {
     dom.matchLine.textContent = "Start a match to play a basic 1v1 engine demo.";
@@ -268,15 +1627,23 @@ function render() {
     dom.p1Panel.innerHTML = "";
     dom.p2Panel.innerHTML = "";
     dom.battleLog.innerHTML = "";
+    renderActionPanel();
     selectedAction = null;
     return;
   }
 
-  dom.matchLine.textContent = `${matchId} · sequence ${state.lastSequence}`;
   const activePlayerId = state.turn.activePlayerId ?? "p1";
-  dom.turnText.textContent = `${PLAYER_NAMES[activePlayerId] ?? activePlayerId} to act`;
-  dom.statusText.innerHTML = state.status === "completed" ? `<span class="result">Completed</span>` : `Phase ${state.turn.phaseId ?? "setup"}`;
+  if (previewMode && activePreviewFixture) {
+    dom.matchLine.textContent = `${activePreviewFixture.label} · ${labelFromId(activePreviewFixture.focus)} preview`;
+    dom.turnText.textContent = `${PLAYER_NAMES[activePlayerId] ?? activePlayerId} preview`;
+    dom.statusText.innerHTML = `<span class="result">Read-only fixture</span>`;
+  } else {
+    dom.matchLine.textContent = `${matchId} · sequence ${state.lastSequence}`;
+    dom.turnText.textContent = `${PLAYER_NAMES[activePlayerId] ?? activePlayerId} to act`;
+    dom.statusText.innerHTML = state.status === "completed" ? `<span class="result">Completed</span>` : `Phase ${state.turn.phaseId ?? "setup"}`;
+  }
 
+  renderActionPanel();
   dom.p2Panel.innerHTML = renderPlayer("p2");
   dom.p1Panel.innerHTML = renderPlayer("p1");
   bindActionButtons();
@@ -286,35 +1653,179 @@ function render() {
   renderLog();
 }
 
+function renderActionPanel() {
+  if (!dom.promptSummary) {
+    return;
+  }
+
+  const prompt = openPromptForActionPanel();
+  if (!state || !prompt) {
+    dom.promptSummary.innerHTML = "";
+    dom.promptSummary.removeAttribute("data-prompt-id");
+    dom.promptSummary.removeAttribute("data-prompt-type");
+    return;
+  }
+
+  const responder = prompt.currentResponderId ?? prompt.responderIds?.[0] ?? state.turn.activePlayerId;
+  const actions = Array.isArray(prompt.payload?.actions) ? prompt.payload.actions : [];
+  dom.promptSummary.dataset.promptId = prompt.id;
+  dom.promptSummary.dataset.promptType = prompt.promptType;
+  dom.promptSummary.innerHTML = `
+    <span class="prompt-label">${escapeHtml(labelFromId(prompt.promptType))}</span>
+    <strong>${escapeHtml(PLAYER_NAMES[responder] ?? responder ?? "Responder")}</strong>
+    <div class="prompt-actions">
+      ${actions.map((action) => renderPromptAction(action, responder)).join("")}
+    </div>
+  `;
+}
+
+function openPromptForActionPanel() {
+  if (!state?.prompts) {
+    return null;
+  }
+
+  return Object.values(state.prompts)
+    .filter((prompt) => prompt?.status === "open")
+    .sort((left, right) => Number(right.openedAtSequence ?? 0) - Number(left.openedAtSequence ?? 0))[0] ?? null;
+}
+
+function renderPromptAction(action, responder) {
+  const label = labelFromId(action);
+  if (action === "end_turn") {
+    const disabled = previewMode || !responder || selectedPlayerId !== responder || !canPlayerAct(responder);
+    return `<button class="prompt-chip" type="button" data-prompt-action="end_turn" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
+  }
+  return `<span class="prompt-chip passive">${escapeHtml(label)}</span>`;
+}
+
 function renderPlayer(playerId) {
-  const player = state.players[playerId];
-  const opponentId = opponentOf(playerId);
-  const zones = [
-    { id: `zone_board_${playerId}`, label: "Board", behaviorId: "minion_attack", zoneKind: "board", target: opponentId },
-    { id: `zone_weapon_${playerId}`, label: "Weapon", behaviorId: "weapon_attack", zoneKind: "weapon", target: opponentId },
-    { id: `zone_hand_${playerId}`, label: "Hand", zoneKind: "hand", target: opponentId }
-  ];
+  const regionIds = runtimeRegionIdsForPlayer(playerId);
+  const heroRegionId = regionIds.find((regionId) => layoutRegionMetadata(regionId).kind === "hero") ?? runtimeRegionIdForPlayer(playerId, "hero");
+  const collectionRegionIds = regionIds.filter((regionId) => ["battlefield", "equipment", "hand", "deck"].includes(layoutRegionMetadata(regionId).kind));
 
   return `
-    ${renderHeroCard(playerId)}
-    <section class="zones">
-      <div class="zone">
-        <h3>Board / Weapon</h3>
-        <div class="cards">
-          ${zones.slice(0, 2).flatMap((zone) => cardsInZone(zone.id).map((object) => renderCard(playerId, object, zone))).join("") || `<div class="empty">No board pieces</div>`}
-        </div>
-      </div>
-      <div class="zone">
-        <h3>Hand</h3>
-        <div class="cards">
-          ${cardsInZone(`zone_hand_${playerId}`).map((object) => renderCard(playerId, object, { zoneKind: "hand", target: opponentId })).join("") || `<div class="empty">No cards</div>`}
-        </div>
-      </div>
+    ${renderRuntimeRegion(heroRegionId, { playerId })}
+    <section class="zones" data-region-group="${escapeAttr(playerId === "p2" ? "opponent" : "player")}">
+      ${collectionRegionIds.map((regionId) => renderRuntimeRegion(regionId, { playerId })).join("")}
     </section>
   `;
 }
 
-function renderHeroCard(playerId) {
+function runtimeRegionIdsForPlayer(playerId) {
+  const ownerScope = playerId === "p2" ? "opponent" : "player";
+  const authored = Array.isArray(boardLayoutDocument?.regions)
+    ? boardLayoutDocument.regions
+      .filter((region) => region && typeof region === "object" && region.ownerScope === ownerScope && ["hero", "battlefield", "equipment", "hand", "deck"].includes(region.kind))
+      .sort((left, right) => Number(left.geometry?.x ?? 0) - Number(right.geometry?.x ?? 0))
+      .map((region) => region.id)
+      .filter((regionId) => typeof regionId === "string" && regionId.length > 0)
+    : [];
+
+  const fallback = ["hero", "battlefield", "equipment", "hand", "deck"].map((kind) => runtimeRegionIdForPlayer(playerId, kind));
+  return uniqueValues([...authored, ...fallback]);
+}
+
+function renderRuntimeRegion(regionId, context) {
+  const region = layoutRegionMetadata(regionId);
+  if (region.component === "HeroCard") {
+    return renderHeroCard(context.playerId, region.id);
+  }
+  if (region.component === "CardRow" && region.kind === "battlefield") {
+    return renderBattlefieldRegion(context.playerId, region);
+  }
+  if (region.component === "EquipmentSlot" && region.kind === "equipment") {
+    return renderEquipmentRegion(context.playerId, region);
+  }
+  if (region.component === "CardRow" && region.kind === "hand") {
+    return renderHandRegion(context.playerId, region);
+  }
+  if (region.component === "DeckStack" && region.kind === "deck") {
+    return renderDeckRegion(context.playerId, region);
+  }
+  return "";
+}
+
+function renderBattlefieldRegion(playerId, region) {
+  const opponentId = opponentOf(playerId);
+  const zones = [
+    { id: `zone_board_${playerId}`, label: "Board", behaviorId: "minion_attack", zoneKind: "board", target: opponentId }
+  ];
+
+  return `
+    <div class="zone" ${layoutRegionAttrs(region.id, { targetArea: targetAreaForRegion(region) })}>
+      <h3>${escapeHtml(region.label)}</h3>
+      <div class="cards">
+        ${zones.flatMap((zone) => cardsInZone(zone.id).map((object) => renderCard(playerId, object, zone))).join("") || `<div class="empty">No board pieces</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderEquipmentRegion(playerId, region) {
+  const opponentId = opponentOf(playerId);
+  const objects = cardsInZone(`zone_weapon_${playerId}`);
+
+  return `
+    <div class="equipment-slot" ${layoutRegionAttrs(region.id)}>
+      <h3>${escapeHtml(region.label)}</h3>
+      <div class="equipment-cards">
+        ${objects.map((object) => renderCard(playerId, object, { zoneKind: "weapon", target: opponentId })).join("") || `<div class="empty equipment-empty">No weapon</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderHandRegion(playerId, region) {
+  const opponentId = opponentOf(playerId);
+
+  return `
+    <div class="zone" ${layoutRegionAttrs(region.id)}>
+      <h3>${escapeHtml(region.label)}</h3>
+      <div class="cards">
+        ${cardsInZone(`zone_hand_${playerId}`).map((object) => renderCard(playerId, object, { zoneKind: "hand", target: opponentId })).join("") || `<div class="empty">No cards</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderDeckRegion(playerId, region) {
+  const deckCount = cardsInZone(`zone_deck_${playerId}`).length;
+  const discardCount = cardsInZone("zone_discard").filter((object) => object.ownerId === playerId).length;
+  const graveyardCount = cardsInZone("zone_graveyard").filter((object) => object.ownerId === playerId).length;
+  const fatigue = state.players[playerId]?.resources?.fatigue?.current ?? 0;
+  const tooltip = [
+    `${region.label}: ${deckCount} cards remain`,
+    `Discard: ${discardCount}`,
+    `Graveyard: ${graveyardCount}`,
+    `Fatigue: ${fatigue}`
+  ].join("\n");
+
+  return `
+    <aside
+      class="deck-stack"
+      ${layoutRegionAttrs(region.id)}
+      data-tooltip-title="${escapeAttr(region.label)}"
+      data-tooltip-body="${escapeAttr(tooltip)}"
+      tabindex="0"
+      aria-label="${escapeAttr(`${region.label}. ${deckCount} cards remain.`)}"
+    >
+      <span class="deck-stack-top" aria-hidden="true"></span>
+      <strong>${escapeHtml(deckCount)}</strong>
+      <span>Deck</span>
+      <small>${escapeHtml(discardCount + graveyardCount)} out</small>
+    </aside>
+  `;
+}
+
+function targetAreaForRegion(region) {
+  return region.kind === "battlefield" && region.targetable ? "battlefield" : "";
+}
+
+function uniqueValues(values) {
+  return Array.from(new Set(values));
+}
+
+function renderHeroCard(playerId, regionId = runtimeRegionIdForPlayer(playerId, "hero")) {
   const player = state.players[playerId];
   const hero = HERO_DEFS[playerId] ?? { name: PLAYER_NAMES[playerId] ?? playerId, title: "Hero", ability: null };
   const health = player.resources.health;
@@ -332,6 +1843,7 @@ function renderHeroCard(playerId) {
   return `
     <section
       class="hero hero-card ${isActive ? "active-hero" : ""} ${disabled ? "disabled-card" : ""}"
+      ${layoutRegionAttrs(regionId)}
       data-target-player="${playerId}"
       data-target-kind="hero"
       ${actionDataAttrs(ability)}
@@ -366,6 +1878,10 @@ function renderHeroCard(playerId) {
 }
 
 function renderCard(playerId, object, context) {
+  if (object.objectType === "hidden") {
+    return renderHiddenCard();
+  }
+
   const info = CARD_DEFS[object.templateId] ?? { name: object.templateId ?? object.id, text: object.objectType, action: "Use", display: [] };
   const action = actionForObject(playerId, object, context);
   const disabled = !action;
@@ -398,6 +1914,30 @@ function renderCard(playerId, object, context) {
         data-zone-kind="${context.zoneKind}"
         ${disabled ? "disabled" : ""}
       >${escapeHtml(info.action || "Use")}</button>
+    </article>
+  `;
+}
+
+function renderHiddenCard() {
+  const title = "Hidden Card";
+  const text = "Details hidden from this viewer.";
+  return `
+    <article
+      class="card hidden-card disabled-card"
+      data-template="hidden"
+      data-tooltip-title="${escapeAttr(title)}"
+      data-tooltip-body="${escapeAttr(text)}"
+      draggable="false"
+      tabindex="0"
+      aria-label="${escapeAttr(`${title}. ${text}`)}"
+    >
+      <div class="card-art hidden-card-art" aria-hidden="true"></div>
+      <div>
+        <div class="name">${title}</div>
+        <div class="meta">Hidden</div>
+      </div>
+      <div class="text">${text}</div>
+      <button class="card-action" type="button" disabled>Hidden</button>
     </article>
   `;
 }
@@ -606,6 +2146,9 @@ function bindActionButtons() {
   document.querySelectorAll(".card-action").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        return;
+      }
       const source = button.closest("[data-action-behavior]");
       const action = actionFromElement(source);
       if (action) {
@@ -617,6 +2160,9 @@ function bindActionButtons() {
   document.querySelectorAll(".hero-action").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        return;
+      }
       const source = button.closest("[data-action-behavior]");
       const action = actionFromElement(source);
       if (action) {
@@ -629,6 +2175,9 @@ function bindActionButtons() {
 function bindNaturalActions() {
   document.querySelectorAll("[data-action-behavior]").forEach((source) => {
     source.addEventListener("click", (event) => {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        return;
+      }
       if (event.target.closest("button")) {
         return;
       }
@@ -647,6 +2196,10 @@ function bindNaturalActions() {
     });
 
     source.addEventListener("dragstart", (event) => {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        event.preventDefault();
+        return;
+      }
       const action = actionFromElement(source);
       if (!action) {
         event.preventDefault();
@@ -662,6 +2215,9 @@ function bindNaturalActions() {
 
   document.querySelectorAll("[data-target-player], [data-target-area]").forEach((target) => {
     target.addEventListener("click", (event) => {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        return;
+      }
       if (!selectedAction || event.target.closest("button")) {
         return;
       }
@@ -669,12 +2225,18 @@ function bindNaturalActions() {
     });
 
     target.addEventListener("dragover", (event) => {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        return;
+      }
       if (selectedAction && isValidTarget(selectedAction, target)) {
         event.preventDefault();
       }
     });
 
     target.addEventListener("drop", (event) => {
+      if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen) {
+        return;
+      }
       if (!selectedAction) {
         const data = event.dataTransfer?.getData("text/plain");
         if (data) {
@@ -737,15 +2299,25 @@ function isValidTarget(action, target) {
   const area = target.dataset.targetArea;
 
   if (action.targetMode === "enemyHero") {
-    return Boolean(playerId && playerId !== action.playerId);
+    return Boolean(playerId && playerId !== action.playerId && targetRegionAllows(target, "hero"));
   }
   if (action.targetMode === "selfHero") {
-    return playerId === action.playerId;
+    return playerId === action.playerId && targetRegionAllows(target, "hero");
   }
   if (action.targetMode === "battlefield") {
-    return area === "battlefield";
+    return area === "battlefield" && targetRegionAllows(target, "battlefield");
   }
   return false;
+}
+
+function targetRegionAllows(target, expectedKind) {
+  if (!target.dataset.regionId) {
+    return true;
+  }
+  if (target.dataset.regionTargetable === "false") {
+    return false;
+  }
+  return !target.dataset.regionKind || target.dataset.regionKind === expectedKind;
 }
 
 function executeAction(action, target) {

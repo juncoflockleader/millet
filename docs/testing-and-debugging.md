@@ -11,8 +11,8 @@ npm test
 Expected current result:
 
 ```text
-tests 125
-pass 125
+tests 128
+pass 128
 fail 0
 ```
 

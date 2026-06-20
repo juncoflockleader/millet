@@ -14,6 +14,9 @@
           <p id="matchLine">Start a match to play a basic 1v1 engine demo.</p>
         </div>
         <div class="topbar-actions">
+          <button id="previewPanelButton" class="ghost" type="button">Preview</button>
+          <button id="assetLibraryButton" class="ghost" type="button">Assets</button>
+          <button id="layoutEditorButton" class="ghost" type="button">Layout</button>
           <button id="newMatchButton" type="button">New Match</button>
           <button id="refreshButton" type="button" disabled>Refresh</button>
         </div>
@@ -23,9 +26,16 @@
         <div class="arena-scale-box" id="arenaScaleBox">
           <section class="arena" id="arena" aria-label="Ember Duel board">
             <div class="effect-layer" id="effectLayer" aria-hidden="true"></div>
+            <div class="layout-guides" id="layoutGuides" aria-hidden="true">
+              <div class="layout-region-layer" id="layoutRegionLayer"></div>
+              <button class="layout-handle row-handle row-handle-a" type="button" data-layout-handle="row-a" aria-label="Resize opponent and center rows"></button>
+              <button class="layout-handle row-handle row-handle-b" type="button" data-layout-handle="row-b" aria-label="Resize center and player rows"></button>
+              <button class="layout-handle col-handle hero-col-handle" type="button" data-layout-handle="hero-col" aria-label="Resize hero column"></button>
+              <button class="layout-handle col-handle center-col-handle" type="button" data-layout-handle="center-col" aria-label="Resize center lane columns"></button>
+            </div>
             <div class="player-row opponent" id="p2Panel"></div>
-            <div class="center-lane" data-target-area="battlefield">
-              <div class="turn-panel">
+            <div class="center-lane" id="centerLane">
+              <div class="turn-panel" id="turnPanel">
                 <div class="selector" role="tablist" aria-label="Current player controls">
                   <button id="selectP1" type="button" data-player="p1">P1</button>
                   <button id="selectP2" type="button" data-player="p2">P2</button>
@@ -35,13 +45,63 @@
                   <span id="statusText">Waiting</span>
                 </div>
                 <button id="endTurnButton" class="ghost" type="button" disabled>End Turn</button>
+                <div class="prompt-summary" id="promptSummary"></div>
               </div>
               <div class="battle-log" id="battleLog" aria-live="polite"></div>
+              <aside class="chat-window" id="chatWindow" aria-live="polite">
+                <strong>Chat</strong>
+                <span>Offline</span>
+                <small>0 messages</small>
+              </aside>
             </div>
             <div class="player-row" id="p1Panel"></div>
           </section>
         </div>
       </section>
+      <aside class="layout-editor" id="layoutEditor" aria-label="Board layout editor" hidden>
+        <div class="layout-editor-head">
+          <div>
+            <strong>Board Layout</strong>
+            <span>Draft v1</span>
+          </div>
+          <button id="closeLayoutEditorButton" class="ghost icon-button" type="button" aria-label="Close layout editor">X</button>
+        </div>
+        <div class="layout-controls" id="layoutControls"></div>
+        <div class="layout-editor-actions">
+          <button id="fitLayoutButton" class="ghost" type="button">Fit Rows</button>
+          <button id="resetLayoutButton" class="ghost" type="button">Reset</button>
+          <button id="copyLayoutButton" type="button">Copy JSON</button>
+          <button id="importLayoutButton" class="ghost" type="button">Import</button>
+        </div>
+        <textarea id="layoutJson" spellcheck="false" aria-label="Layout JSON export"></textarea>
+        <p class="layout-editor-status" id="layoutEditorStatus" aria-live="polite"></p>
+      </aside>
+      <aside class="preview-panel" id="previewPanel" aria-label="UI preview fixtures" hidden>
+        <div class="panel-head">
+          <div>
+            <strong>Preview Fixtures</strong>
+            <span id="previewFixtureCount">0 fixtures</span>
+          </div>
+          <button id="closePreviewPanelButton" class="ghost icon-button" type="button" aria-label="Close preview fixtures">X</button>
+        </div>
+        <div class="preview-list" id="previewFixtureList" role="listbox" aria-label="Preview fixtures"></div>
+        <p class="preview-panel-status" id="previewPanelStatus" aria-live="polite"></p>
+      </aside>
+      <aside class="asset-library" id="assetLibrary" aria-label="Asset library" hidden>
+        <div class="panel-head">
+          <div>
+            <strong>Asset Library</strong>
+            <span id="assetCount">0 assets</span>
+          </div>
+          <button id="closeAssetLibraryButton" class="ghost icon-button" type="button" aria-label="Close asset library">X</button>
+        </div>
+        <div class="asset-filter" id="assetFilter" role="tablist" aria-label="Asset filters"></div>
+        <div class="asset-library-body">
+          <div class="asset-list" id="assetList" role="listbox" aria-label="Assets"></div>
+          <div class="asset-detail" id="assetDetail"></div>
+        </div>
+        <p class="asset-library-status" id="assetLibraryStatus" aria-live="polite"></p>
+      </aside>
       <div class="tooltip-layer" id="tooltipLayer" role="tooltip" hidden></div>
     </main>
 

@@ -22,6 +22,7 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | [PRD](prd-multiplayer-turn-based-card-game-engine.md) | Product requirements and north-star scope. |
 | [Technical Design](technical-design-multiplayer-turn-based-card-game-engine.md) | System architecture and major engineering decisions. |
 | [Milestones](milestones.md) | Delivery plan from M0 through M8. |
+| [UI Engine Plan](ui-engine-plan.md) | UI plan for assets, board layouts, cards, heroes, equipment, minions, widgets, and authoring/runtime surfaces. |
 | [Implementation Status](implementation-status.md) | Current verification, completed slices, and remaining hardening backlog. |
 
 ## Current Working Model
@@ -40,13 +41,15 @@ For a game designer:
 2. [Core Concepts](concepts.md)
 3. [Ruleset Authoring Guide](ruleset-authoring.md)
 4. [Assets And UX Guide](assets-and-ux.md)
+5. [UI Engine Plan](ui-engine-plan.md)
 
 For an engineer integrating a client:
 
 1. [Quick Start](quick-start.md)
 2. [Server API Guide](server-api.md)
-3. [Testing And Debugging Guide](testing-and-debugging.md)
-4. [Technical Design](technical-design-multiplayer-turn-based-card-game-engine.md)
+3. [UI Engine Plan](ui-engine-plan.md)
+4. [Testing And Debugging Guide](testing-and-debugging.md)
+5. [Technical Design](technical-design-multiplayer-turn-based-card-game-engine.md)
 
 For a maintainer:
 
@@ -54,4 +57,3 @@ For a maintainer:
 2. [Testing And Debugging Guide](testing-and-debugging.md)
 3. [Milestones](milestones.md)
 4. [Technical Design](technical-design-multiplayer-turn-based-card-game-engine.md)
-

@@ -9,7 +9,7 @@ Millet separates gameplay truth from presentation. The engine should be able to 
 | Demo board background | `packages/demo-basic-duel/public/assets/ember-duel-board.png` | Browser demo body background. |
 | Demo card portraits | `packages/demo-basic-duel/public/assets/cards/` | Ember Duel card renderer. |
 | Demo effect sheets | `packages/demo-basic-duel/public/assets/effects/` | CSS sprite animations after successful commands. |
-| Ruleset asset metadata | `packages/rulesets/*/asset-manifest.json` | Content validation and compatibility checks. |
+| Ruleset asset metadata | `packages/rulesets/*/asset-manifest.json` | Content validation, compatibility checks, and the demo asset library. |
 
 ## Ruleset Asset Metadata
 
@@ -22,10 +22,18 @@ Ruleset assets are described with:
 - `sourceUri`
 - `license`
 - `owner`
+- `publicPath`
 - `mediaType`
 - dimensions
+- sprite `frameCount`
+- image-generation metadata such as `generationId` and `prompt`
+- expected usage labels
 
 The validator checks that card catalog references point to known assets and that metadata is compatible with expected media shape.
+
+For browser-facing assets, `publicPath` must start with `/`. The current image compatibility checks cover card art, card backs, card frames, avatars, icons, board backgrounds, and VFX sheets.
+
+`Ember Duel` exposes this metadata through the `Assets` panel. The panel reads `packages/rulesets/sample-duel/asset-manifest.json` through `/content/rulesets/sample-duel/asset-manifest.json`, renders image previews from `publicPath`, filters by kind, and combines manifest usage labels with presentation catalog and runtime effect references.
 
 ## Demo Asset Notes
 
@@ -36,6 +44,8 @@ The current `Ember Duel` assets were generated with the built-in image generator
 - four sprite-sheet effect textures
 
 The image generator returns still images. Animation is implemented by using generated horizontal sprite sheets plus CSS `steps()` playback.
+
+The `sample-duel` asset manifest currently declares 12 assets: the default card frame placeholder, one board background, six card portraits, and four effect sheets. Generated PNG entries include SHA-256 content hashes, dimensions, generation ids, prompt summaries, public paths, licenses, owners, and usage labels.
 
 ## Behavior To UX Mapping
 
@@ -49,6 +59,21 @@ The card UI maps card templates and behavior ids to:
 - animation effect
 
 In the demo this mapping lives in `packages/demo-basic-duel/public/app.js`. In a production client, this should come from ruleset content, localization, asset manifests, and generated UX hints.
+
+## UI Preview Fixtures
+
+Preview fixtures are schema-backed projected states for authoring and QA. They let a designer inspect card, hero, equipment, minion, or full-board rendering without creating a live match.
+
+`Ember Duel` loads `packages/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json` through `/content/rulesets/sample-duel/ui/ember-duel-preview-fixtures.json`. The current fixture set covers:
+
+- cards in hand
+- hero ability and low-health styling
+- equipment with durability counters
+- minions with ready and exhausted states
+
+Preview fixtures are read-only. They reuse the live board renderer, card renderer, tooltip behavior, property badge rendering, and event log formatting, but button clicks do not mutate server state or submit engine commands.
+
+Hidden projected objects must use `objectType: "hidden"` and must not include template ids, owner/controller ids, stats, counters, tags, keywords, attachments, modifiers, or exhausted state. The renderer shows them as a generic `Hidden Card` with a generic tooltip and disabled action. This mirrors server projections, where unauthorized hidden hands or roles never include the original template id.
 
 ## Interaction Defaults
 
@@ -88,6 +113,27 @@ In `Ember Duel` this is implemented as:
 
 This default pushes UI design toward compact, scan-friendly board layouts. Extra inspection detail should move into card text, tooltips, logs, side panels, or modals instead of making the board taller than the viewport.
 
+`Ember Duel` includes a prototype board layout editor behind the `Layout` button. It loads its authored default from the ruleset board layout at `packages/rulesets/sample-duel/ui/ember-duel-board-layout.json`, then edits CSS-backed layout tokens while preserving the fixed logical board size:
+
+- opponent row height
+- center lane height
+- player row height
+- hero column width
+- board/hand zone split
+- center-lane split
+- card width and art height
+- board padding and row gap
+
+The editor stores its local draft in browser `localStorage` and exports JSON. This is intentionally presentation-only; it does not change engine rules, zones, card legality, or server state.
+
+The editor overlay also renders the authored `BoardLayoutJson` regions and widget components as guide boxes. Core regions such as hero, battlefield, equipment, hand, deck, action window, history, and chat remain visible while designers adjust the layout tokens.
+
+The live board uses the same authored region/widget metadata as runtime `data-*` attributes on hero, battlefield, equipment, hand, deck, action, history, and chat surfaces. Player-side hero, battlefield, equipment, hand, and deck containers also route through a small widget-component dispatch layer (`HeroCard`, `CardRow`, `EquipmentSlot`, `DeckStack`). The center lane exposes authored `ActionPanel`, `HistoryLog`, and disabled `ChatWindow` system widgets. `ActionPanel` now renders live open prompt summaries from projected match state, including prompt type, current responder, and compact action chips. The equipment slot renders weapon actions and durability separately from minions on the battlefield. The deck stack shows projection-safe counts and discard/graveyard summaries rather than hidden deck order or top-card identity. This gives interaction code, browser smoke tests, and future widget renderers a shared vocabulary for region kind, owner scope, targetability, accepted object types, drop behavior, and component name.
+
+`sample-identity` also declares a Sanguosha-like eight-seat board layout at `packages/rulesets/sample-identity/ui/sanguosha-eight-player-board-layout.json`. It defines an eight-player seat ring, role summary, shared deck/discard piles, active-player hand, judgment strip, equipment strip, action/response window, and history log as schema-backed regions and widgets.
+
+`Ember Duel` also loads its card, hero, equipment, and minion presentation defaults from `packages/rulesets/sample-duel/ui/ember-duel-presentation.json`. That catalog gives the runtime a content-driven source for art paths, names, rules text, action labels, property displays, layouts, and behavior references.
+
 ### Cards are self-contained
 
 By default, a rendered card should include everything needed to understand and use it:
@@ -120,6 +166,13 @@ Card templates can also declare where important properties should appear. The pr
 ```
 
 This keeps ruleset-specific visual language data-driven. A Hearthstone-like weapon can put durability in a corner badge, while a Sanguosha-like card can put suit and point metadata in slots that match that ruleset's table language. Clients may skin the icons and frame, but the card template tells them which properties deserve first-class placement.
+
+The current default runtime validates the slots and icons it knows how to render before content reaches the browser:
+
+- slots: `top-left`, `top-right`, `bottom-left`, `bottom-right`
+- icons: `mana`, `sword`, `heart`, `durability`
+
+This validation runs for card catalog template displays, presentation catalog object displays, hero displays, and hero ability displays. Future card-layout definitions should be able to extend this registry per layout, but unsupported default tokens are errors today because they would render as misplaced or unskinned badges.
 
 ## Text And Behavior Sync
 

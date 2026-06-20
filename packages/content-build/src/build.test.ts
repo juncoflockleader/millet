@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildRulesetBundle, contentLockFromBundle, validateRulesetDir } from "./build.ts";
@@ -137,6 +137,7 @@ test("ruleset validation rejects incompatible asset metadata", () => {
           sourceUri: "ftp://example.invalid/card.png",
           license: "unknown",
           owner: "nobody",
+          publicPath: "assets/card.png",
           mediaType: "application/octet-stream",
           width: 32,
           height: 9000
@@ -149,6 +150,7 @@ test("ruleset validation rejects incompatible asset metadata", () => {
   assert.ok(errors.some((issue) => issue.message.includes("remote-card contentHash must be sha256 plus 64 lowercase hex characters")));
   assert.ok(errors.some((issue) => issue.message.includes("remote-card sourceUri scheme ftp: is not allowed")));
   assert.ok(errors.some((issue) => issue.message.includes("remote-card license unknown is not in the approved license list")));
+  assert.ok(errors.some((issue) => issue.message.includes("remote-card publicPath must start with /")));
   assert.ok(errors.some((issue) => issue.message.includes("remote-card mediaType application/octet-stream is not allowed")));
   assert.ok(errors.some((issue) => issue.message.includes("remote-card width must be between 64 and 8192px")));
   assert.ok(errors.some((issue) => issue.message.includes("remote-card height must be between 64 and 8192px")));
@@ -220,7 +222,12 @@ test("ruleset validation rejects invalid card catalog references", () => {
           objectType: "card",
           nameKey: "card.known.name",
           behaviorIds: ["missing_behavior"],
-          assetRefs: ["missing_asset"]
+          assetRefs: ["missing_asset"],
+          display: {
+            properties: [
+              { property: "manaCost", slot: "center-orb", icon: "crystal" }
+            ]
+          }
         },
         {
           templateId: "known",
@@ -239,6 +246,306 @@ test("ruleset validation rejects invalid card catalog references", () => {
   assert.ok(errors.some((issue) => issue.message.includes("references unknown behavior missing_behavior")));
   assert.ok(errors.some((issue) => issue.message.includes("references unknown asset missing_asset")));
   assert.ok(errors.some((issue) => issue.message.includes("references unknown localization key card.missing.name")));
+  assert.ok(errors.some((issue) => issue.message.includes("Template known display property manaCost uses unsupported slot center-orb")));
+  assert.ok(errors.some((issue) => issue.message.includes("Template known display property manaCost uses unsupported icon crystal")));
+});
+
+test("ruleset validation rejects invalid UI board layouts", () => {
+  const dir = mkdtempSync(join(tmpdir(), "millet-ui-layout-invalid-ruleset-"));
+  mkdirSync(join(dir, "ui"));
+  writeFileSync(
+    join(dir, "game-definition.json"),
+    JSON.stringify({
+      id: "invalid-ui-layout-ruleset",
+      version: "0.1.0",
+      metadata: {},
+      playerConfig: {},
+      zones: [{ id: "hand", zoneType: "hand", scope: "player" }],
+      ui: {
+        defaultBoardLayout: "ui/bad-layout.json",
+        boardLayouts: ["ui/bad-layout.json", "ui/missing-layout.json"]
+      }
+    })
+  );
+  writeFileSync(
+    join(dir, "ui", "bad-layout.json"),
+    JSON.stringify({
+      id: "bad-layout",
+      version: "0.1.0",
+      kind: "board_layout",
+      logicalSize: { width: 1120, height: 620 },
+      scaling: { mode: "fit_viewport" },
+      regions: [
+        {
+          id: "hand",
+          kind: "hand",
+          ownerScope: "player",
+          geometry: { x: 0, y: 0, width: 320, height: 160 },
+          widgetId: "missing-widget"
+        },
+        {
+          id: "hand",
+          kind: "hand",
+          ownerScope: "player",
+          geometry: { x: 0, y: 0, width: 320, height: 160 },
+          widgetId: "missing-widget"
+        },
+        {
+          id: "off_board",
+          kind: "custom",
+          ownerScope: "shared",
+          geometry: { x: 1110, y: 610, width: 30, height: 20 },
+          widgetId: "duplicate-widget"
+        }
+      ],
+      widgets: [
+        {
+          id: "duplicate-widget",
+          kind: "card_collection",
+          component: "CardRow"
+        },
+        {
+          id: "duplicate-widget",
+          kind: "card_collection",
+          component: "CardRow"
+        }
+      ]
+    })
+  );
+
+  const errors = validateRulesetDir(dir).filter((issue) => issue.severity === "error");
+
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate board layout region id hand")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate board layout widget id duplicate-widget")));
+  assert.ok(errors.some((issue) => issue.message.includes("references unknown widget missing-widget")));
+  assert.ok(errors.some((issue) => issue.message.includes("Region off_board geometry exceeds logical board bounds 1120x620")));
+  assert.ok(errors.some((issue) => issue.message.includes("Board layout ui/missing-layout.json is missing")));
+});
+
+test("ruleset validation rejects invalid UI presentation catalogs", () => {
+  const dir = mkdtempSync(join(tmpdir(), "millet-ui-presentation-invalid-ruleset-"));
+  mkdirSync(join(dir, "ui"));
+  writeFileSync(
+    join(dir, "game-definition.json"),
+    JSON.stringify({
+      id: "invalid-ui-presentation-ruleset",
+      version: "0.1.0",
+      metadata: {},
+      playerConfig: {},
+      zones: [{ id: "hand", zoneType: "hand", scope: "player" }],
+      cardCatalog: "card-catalog.json",
+      behaviors: ["known_behavior"],
+      ui: {
+        defaultPresentationCatalog: "ui/bad-presentation.json",
+        presentationCatalogs: ["ui/bad-presentation.json", "ui/missing-presentation.json"]
+      }
+    })
+  );
+  writeFileSync(
+    join(dir, "behaviors.json"),
+    JSON.stringify({
+      id: "invalid-ui-presentation-behaviors",
+      version: "0.1.0",
+      behaviors: ["known_behavior"]
+    })
+  );
+  writeFileSync(
+    join(dir, "card-catalog.json"),
+    JSON.stringify({
+      id: "invalid-ui-presentation-cards",
+      version: "0.1.0",
+      templates: [
+        {
+          templateId: "known",
+          version: "0.1.0",
+          objectType: "card",
+          nameKey: "card.known.name",
+          behaviorIds: ["known_behavior"]
+        }
+      ]
+    })
+  );
+  writeFileSync(
+    join(dir, "ui", "bad-presentation.json"),
+    JSON.stringify({
+      id: "bad-presentation",
+      version: "0.1.0",
+      kind: "presentation_catalog",
+      cards: [
+        {
+          templateId: "known",
+          name: "Known",
+          text: "Known text.",
+          behavior: { behaviorId: "missing_behavior" },
+          properties: {
+            display: [
+              { property: "manaCost", slot: "banner-left", icon: "gem" }
+            ]
+          }
+        },
+        {
+          templateId: "known",
+          name: "Duplicate",
+          text: "Duplicate text."
+        },
+        {
+          templateId: "missing_template",
+          name: "Missing",
+          text: "Missing text."
+        }
+      ],
+      heroes: [
+        {
+          playerId: "p1",
+          name: "Hero",
+          title: "Hero",
+          ability: {
+            name: "Bad Ability",
+            behaviorId: "missing_hero_behavior",
+            text: "Bad.",
+            action: "Use",
+            targetMode: "enemyHero",
+            display: [
+              { property: "manaCost", slot: "hero-center", icon: "flame" }
+            ]
+          }
+        },
+        {
+          playerId: "p1",
+          name: "Duplicate Hero",
+          title: "Hero"
+        }
+      ]
+    })
+  );
+
+  const errors = validateRulesetDir(dir).filter((issue) => issue.severity === "error");
+
+  assert.ok(errors.some((issue) => issue.message.includes("Presentation catalog ui/missing-presentation.json is missing")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate presentation template id known")));
+  assert.ok(errors.some((issue) => issue.message.includes("references unknown card template missing_template")));
+  assert.ok(errors.some((issue) => issue.message.includes("references unknown behavior missing_behavior")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate hero presentation player id p1")));
+  assert.ok(errors.some((issue) => issue.message.includes("ability references unknown behavior missing_hero_behavior")));
+  assert.ok(errors.some((issue) => issue.message.includes("Presentation known display property manaCost uses unsupported slot banner-left")));
+  assert.ok(errors.some((issue) => issue.message.includes("Presentation known display property manaCost uses unsupported icon gem")));
+  assert.ok(errors.some((issue) => issue.message.includes("Hero p1 ability display property manaCost uses unsupported slot hero-center")));
+  assert.ok(errors.some((issue) => issue.message.includes("Hero p1 ability display property manaCost uses unsupported icon flame")));
+});
+
+test("ruleset validation rejects invalid UI preview fixtures", () => {
+  const dir = mkdtempSync(join(tmpdir(), "millet-ui-preview-invalid-ruleset-"));
+  mkdirSync(join(dir, "ui"));
+  writeFileSync(
+    join(dir, "game-definition.json"),
+    JSON.stringify({
+      id: "invalid-ui-preview-ruleset",
+      version: "0.1.0",
+      metadata: {},
+      playerConfig: {},
+      zones: [{ id: "hand", zoneType: "hand", scope: "player" }],
+      cardCatalog: "card-catalog.json",
+      ui: {
+        defaultPreviewFixture: "ui/bad-preview.json",
+        previewFixtures: ["ui/bad-preview.json", "ui/missing-preview.json"]
+      }
+    })
+  );
+  writeFileSync(
+    join(dir, "card-catalog.json"),
+    JSON.stringify({
+      id: "invalid-ui-preview-cards",
+      version: "0.1.0",
+      templates: [
+        {
+          templateId: "known",
+          version: "0.1.0",
+          objectType: "card",
+          nameKey: "card.known.name"
+        }
+      ]
+    })
+  );
+  writeFileSync(
+    join(dir, "ui", "bad-preview.json"),
+    JSON.stringify({
+      id: "bad-preview",
+      version: "0.1.0",
+      kind: "ui_preview_fixture",
+      fixtures: [
+        {
+          id: "bad",
+          label: "Bad Preview",
+          focus: "card",
+          viewerId: "p4",
+          selectedPlayerId: "p3",
+          state: {
+            status: "active",
+            lastSequence: 0,
+            turn: { activePlayerId: "p9" },
+            players: {
+              p1: { id: "p1", status: "alive", resources: { health: { current: 10 } } },
+              p2: { id: "p2", status: "alive", resources: { health: { current: 10 } } }
+            },
+            zones: {
+              zone_hand_p1: { id: "other_zone", objectIds: ["missing_object", "obj_key", "hidden_leak", "visible_missing"] }
+            },
+            objects: {
+              obj_key: { id: "other_id", objectType: "card", templateId: "missing_template", ownerId: "p9" },
+              hidden_leak: {
+                id: "hidden_leak",
+                objectType: "hidden",
+                templateId: "known",
+                ownerId: "p1",
+                stats: { attack: 1 },
+                counters: { durability: 1 },
+                tags: ["spell"],
+                exhausted: true
+              },
+              visible_missing: { id: "visible_missing", objectType: "card", ownerId: "p1" }
+            },
+            outcomes: []
+          }
+        },
+        {
+          id: "bad",
+          label: "Duplicate",
+          focus: "hero",
+          state: {
+            status: "active",
+            lastSequence: 1,
+            turn: { activePlayerId: "p1" },
+            players: {
+              p1: { id: "p1", status: "alive", resources: { health: { current: 10 } } }
+            },
+            zones: {},
+            objects: {},
+            outcomes: []
+          }
+        }
+      ]
+    })
+  );
+
+  const errors = validateRulesetDir(dir).filter((issue) => issue.severity === "error");
+
+  assert.ok(errors.some((issue) => issue.message.includes("UI preview fixture ui/missing-preview.json is missing")));
+  assert.ok(errors.some((issue) => issue.message.includes("Duplicate UI preview fixture id bad")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad viewerId references unknown player p4")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad selectedPlayerId references unknown player p3")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad turn references unknown active player p9")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad object key obj_key does not match id other_id")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad object other_id references unknown card template missing_template")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad object other_id references unknown owner p9")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad hidden object hidden_leak must not expose templateId")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad hidden object hidden_leak must not expose ownerId")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad hidden object hidden_leak must not expose stats")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad hidden object hidden_leak must not expose counters")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad hidden object hidden_leak must not expose tags")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad hidden object hidden_leak must not expose exhausted")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad object visible_missing must declare templateId unless it is hidden")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad zone key zone_hand_p1 does not match id other_zone")));
+  assert.ok(errors.some((issue) => issue.message.includes("Preview fixture bad zone other_zone references unknown object missing_object")));
 });
 
 test("ruleset dependency report summarizes files and content references", () => {
