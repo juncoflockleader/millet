@@ -527,7 +527,7 @@ Validation should cover:
 
 - Build specialized hero editor for player avatar, resources, hero power, status, equipment strip, and death hooks.
 - Acceptance: a hero ability can be authored, previewed, validated, and executed in a playtest fixture.
-- Current slice: Ember Duel `Presentation` panel renders a structured Hero Studio for selected hero entries, writes browser-local presentation drafts, previews hero art/frame/layout and ability badges, and re-renders live match hero cards from those draft definitions.
+- Current slice: Ember Duel `Presentation` panel renders a structured Hero Studio for selected hero entries, writes browser-local presentation drafts, validates required ability fields and behavior references, edits hero ability display badges from the active board layout slot/icon registry, previews hero art/frame/layout and ability badges, and re-renders live match hero cards from those draft definitions.
 
 ### UI-M5: Equipment Studio
 
@@ -548,6 +548,6 @@ Validation should cover:
 
 ## Immediate Next Steps
 
-1. Add hero studio promotion/validation hardening for required ability fields, behavior availability, and hero ability display-slot editing.
-2. Add equipment studio validation/promotion hardening for behavior availability, slot compatibility, and schema-safe replacement metadata.
-3. Add minion studio validation/promotion hardening for death-trigger availability, token variant schema conventions, and modifier badge display rules.
+1. Add equipment studio validation/promotion hardening for behavior availability, slot compatibility, and schema-safe replacement metadata.
+2. Add minion studio validation/promotion hardening for death-trigger availability, token variant schema conventions, and modifier badge display rules.
+3. Add integrated playtest debug affordances that connect local authoring drafts to scripted fixture/playtest runs.

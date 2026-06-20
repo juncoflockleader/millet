@@ -963,7 +963,19 @@ function installPresentationEditor() {
     selectedPresentationEntryId = button.dataset.presentationEntryId;
     renderPresentationEditor();
   });
+  dom.heroPresentationEditor?.addEventListener("click", (event) => {
+    const displayButton = event.target.closest("[data-hero-display-action]");
+    if (!displayButton) {
+      return;
+    }
+    handleHeroAbilityDisplayAction(displayButton.dataset.heroDisplayAction, displayButton);
+  });
   dom.heroPresentationEditor?.addEventListener("change", (event) => {
+    const displayInput = event.target.closest("[data-hero-display-field]");
+    if (displayInput) {
+      updateHeroAbilityDisplayDraftFromInput(displayInput);
+      return;
+    }
     const input = event.target.closest("[data-hero-presentation-field]");
     if (input) {
       updateHeroPresentationDraftFromInput(input);
@@ -1148,6 +1160,7 @@ function renderHeroPresentationEditor(hero) {
             <span>${escapeHtml(hero.playerId)} · ${escapeHtml(layout.variant ?? "default")}</span>
           </div>
         </div>
+        ${renderHeroStudioValidation(hero)}
         <div class="hero-studio-grid">
           <label class="card-frame-field">
             <span>Name</span>
@@ -1212,9 +1225,89 @@ function renderHeroPresentationEditor(hero) {
             </label>
           </div>
         </div>
+        ${renderHeroAbilityDisplayEditor(hero)}
         ${renderAssetPathDatalist(datalistId)}
         ${renderHeroBehaviorDatalist(behaviorDatalistId)}
       </div>
+    </div>
+  `;
+}
+
+function renderHeroAbilityDisplayEditor(hero) {
+  const ability = hero.ability && typeof hero.ability === "object" ? hero.ability : null;
+  const display = Array.isArray(ability?.display) ? ability.display : [];
+  const slots = propertyDisplaySlotsForObjectType("hero");
+  const icons = propertyDisplayIcons();
+  return `
+    <div class="hero-ability-display-editor card-display-editor">
+      <div class="card-display-head">
+        <div>
+          <strong>Ability Display</strong>
+          <span>${display.length} badge${display.length === 1 ? "" : "s"}</span>
+        </div>
+        <button class="ghost" type="button" data-hero-display-action="add" ${ability ? "" : "disabled"}>Add Badge</button>
+      </div>
+      <div class="card-display-rows">
+        ${ability
+          ? display.length > 0
+            ? display.map((property, index) => renderHeroAbilityDisplayRow(property, index, slots, icons)).join("")
+            : `<div class="card-display-empty">No ability badges. Add one for hero power cost, cooldown, or status markers.</div>`
+          : `<div class="card-display-empty">Add a hero ability before editing ability badges.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderHeroAbilityDisplayRow(property, index, slots, icons) {
+  return `
+    <div class="card-display-row hero-display-row" data-hero-display-index="${index}">
+      <label>
+        <span>Property</span>
+        <input type="text" value="${escapeAttr(property.property ?? "")}" data-hero-display-field="property" data-hero-display-index="${index}">
+      </label>
+      <label>
+        <span>Source</span>
+        <select data-hero-display-field="source" data-hero-display-index="${index}">
+          ${renderSelectOptionsWithBlank(PROPERTY_DISPLAY_SOURCES, property.source ?? "", "Auto")}
+        </select>
+      </label>
+      <label>
+        <span>Slot</span>
+        <select data-hero-display-field="slot" data-hero-display-index="${index}">
+          ${renderDisplayRegistryOptions(slots, property.slot)}
+        </select>
+      </label>
+      <label>
+        <span>Icon</span>
+        <select data-hero-display-field="icon" data-hero-display-index="${index}">
+          ${renderDisplayRegistryOptions(icons, property.icon, "Auto")}
+        </select>
+      </label>
+      <label>
+        <span>Label</span>
+        <input type="text" value="${escapeAttr(property.label ?? "")}" data-hero-display-field="label" data-hero-display-index="${index}">
+      </label>
+      <label>
+        <span>Priority</span>
+        <input type="number" step="1" value="${escapeAttr(property.priority ?? "")}" data-hero-display-field="priority" data-hero-display-index="${index}">
+      </label>
+      <button class="ghost" type="button" data-hero-display-action="remove" data-hero-display-index="${index}">Remove</button>
+    </div>
+  `;
+}
+
+function renderHeroStudioValidation(hero) {
+  const validation = heroStudioValidation(hero);
+  const items = [
+    ...validation.errors.map((message) => ({ severity: "error", message })),
+    ...validation.warnings.map((message) => ({ severity: "warning", message }))
+  ];
+  return `
+    <div class="card-template-validation hero-studio-validation ${validation.errors.length > 0 ? "error" : validation.warnings.length > 0 ? "warning" : "ok"}">
+      <strong>${validation.errors.length > 0 ? "Needs Fix" : validation.warnings.length > 0 ? "Warnings" : "Looks Valid"}</strong>
+      ${items.length > 0
+        ? items.map((item) => `<span class="${escapeAttr(item.severity)}">${escapeHtml(item.message)}</span>`).join("")
+        : `<span>Hero ability and display metadata are ready.</span>`}
     </div>
   `;
 }
@@ -1805,6 +1898,103 @@ function updateHeroPresentationDraftFromInput(input) {
   setPresentationEditorStatus(`Updated hero presentation for ${selected.key}.`);
 }
 
+function handleHeroAbilityDisplayAction(action, button) {
+  const selected = currentSelectedHeroPresentationEntry();
+  if (!selected || !presentationCatalog) {
+    setPresentationEditorStatus("No hero presentation entry selected.");
+    return;
+  }
+
+  const draftHero = cloneJson(selected.value);
+  const display = ensureHeroAbilityDisplay(draftHero);
+  if (!display) {
+    setPresentationEditorStatus("No hero ability selected.");
+    return;
+  }
+
+  if (action === "add") {
+    display.push(defaultHeroAbilityDisplayProperty());
+    applyHeroPresentationValue(selected, draftHero, `Added ability display badge to ${selected.key}.`);
+    return;
+  }
+
+  if (action === "remove") {
+    const index = Number(button.dataset.heroDisplayIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= display.length) {
+      setPresentationEditorStatus("No ability display badge selected.");
+      return;
+    }
+    display.splice(index, 1);
+    applyHeroPresentationValue(selected, draftHero, `Removed ability display badge from ${selected.key}.`);
+  }
+}
+
+function updateHeroAbilityDisplayDraftFromInput(input) {
+  const selected = currentSelectedHeroPresentationEntry();
+  if (!selected || !presentationCatalog) {
+    setPresentationEditorStatus("No hero presentation entry selected.");
+    return;
+  }
+
+  const draftHero = cloneJson(selected.value);
+  const display = ensureHeroAbilityDisplay(draftHero);
+  if (!display) {
+    setPresentationEditorStatus("No hero ability selected.");
+    return;
+  }
+
+  const index = Number(input.dataset.heroDisplayIndex);
+  if (!Number.isInteger(index) || index < 0 || index >= display.length) {
+    setPresentationEditorStatus("No ability display badge selected.");
+    return;
+  }
+
+  const property = display[index];
+  const field = input.dataset.heroDisplayField;
+  if (field === "priority") {
+    if (input.value === "") {
+      delete property.priority;
+    } else {
+      property.priority = Number(input.value);
+    }
+  } else if (["source", "icon", "label"].includes(field) && input.value === "") {
+    delete property[field];
+  } else if (field) {
+    property[field] = input.value;
+  }
+
+  applyHeroPresentationValue(selected, draftHero, `Updated ability display badge for ${selected.key}.`);
+}
+
+function currentSelectedHeroPresentationEntry() {
+  const selected = presentationEntries().find((entry) => entry.id === selectedPresentationEntryId);
+  return selected?.section === "heroes" ? selected : null;
+}
+
+function applyHeroPresentationValue(selected, draftHero, message) {
+  cleanupPresentationEntry(draftHero);
+  const nextCatalog = replacePresentationEntry(presentationCatalog, selected, draftHero);
+  localStorage.setItem(PRESENTATION_STORAGE_KEY, JSON.stringify(nextCatalog));
+  applyPresentationCatalog(nextCatalog);
+  renderPresentationEditor();
+  render();
+  setPresentationEditorStatus(message);
+}
+
+function ensureHeroAbilityDisplay(hero) {
+  if (!hero.ability || typeof hero.ability !== "object" || Array.isArray(hero.ability)) {
+    return null;
+  }
+  if (!Array.isArray(hero.ability.display)) {
+    hero.ability.display = [];
+  }
+  return hero.ability.display;
+}
+
+function defaultHeroAbilityDisplayProperty() {
+  return { property: "manaCost", source: "template", slot: "top-left", icon: "mana", label: "Cost", priority: 10 };
+}
+
 function heroPresentationInputValue(input) {
   if (input.type === "number") {
     if (input.value === "") {
@@ -2331,12 +2521,16 @@ function renderDisplayRegistryOptions(entries, selectedValue, blankLabel = "") {
 }
 
 function propertyDisplaySlotsForTemplate(template) {
+  return propertyDisplaySlotsForObjectType(template.objectType);
+}
+
+function propertyDisplaySlotsForObjectType(objectType) {
   return uniqueDisplayRegistryEntries([
     ...DEFAULT_PROPERTY_DISPLAY_SLOTS,
     ...displayRegistryEntries(boardLayoutDocument?.propertyDisplay?.slots)
   ]).filter((slot) => {
     const objectTypes = Array.isArray(slot.objectTypes) ? slot.objectTypes : [];
-    return objectTypes.length === 0 || objectTypes.includes(template.objectType);
+    return objectTypes.length === 0 || objectTypes.includes(objectType);
   });
 }
 
@@ -3338,6 +3532,92 @@ function presentationEntryForTemplate(templateId) {
     }
   }
   return null;
+}
+
+function heroStudioValidation(hero) {
+  const errors = [];
+  const warnings = [];
+  if (!hero || typeof hero !== "object" || Array.isArray(hero)) {
+    return { errors: ["Hero presentation entry must be a JSON object."], warnings };
+  }
+
+  if (typeof hero.playerId !== "string" || hero.playerId.length === 0) {
+    errors.push("Hero requires playerId.");
+  }
+  if (typeof hero.name !== "string" || hero.name.length === 0) {
+    errors.push("Hero requires a non-empty name.");
+  }
+
+  const ability = hero.ability;
+  if (!ability || typeof ability !== "object" || Array.isArray(ability)) {
+    errors.push("Hero ability is required.");
+    return { errors, warnings };
+  }
+
+  for (const field of ["name", "behaviorId", "text", "action", "targetMode"]) {
+    if (typeof ability[field] !== "string" || ability[field].length === 0) {
+      errors.push(`Hero ability requires ${field}.`);
+    }
+  }
+  if (ability.targetMode && !["enemyHero", "selfHero", "battlefield", "targeted"].includes(ability.targetMode)) {
+    errors.push(`Hero ability targetMode ${ability.targetMode} is unsupported.`);
+  }
+  if (ability.manaCost !== undefined && (!Number.isInteger(ability.manaCost) || ability.manaCost < 0)) {
+    errors.push("Hero ability manaCost must be a non-negative integer.");
+  }
+  if (ability.behaviorId && behaviorAvailable(ability.behaviorId) === "missing") {
+    warnings.push(`Unknown behavior ${ability.behaviorId}.`);
+  }
+
+  addHeroAbilityDisplayValidationIssues(errors, ability.display);
+  return { errors, warnings };
+}
+
+function addHeroAbilityDisplayValidationIssues(errors, display) {
+  if (display === undefined) {
+    return;
+  }
+  if (!Array.isArray(display)) {
+    errors.push("Hero ability display must be an array.");
+    return;
+  }
+
+  const slotIds = new Set(propertyDisplaySlotsForObjectType("hero").map((slot) => slot.id));
+  const iconIds = new Set(propertyDisplayIcons().map((icon) => icon.id));
+  display.forEach((property, index) => {
+    const label = `Hero ability display property ${index + 1}`;
+    if (!property || typeof property !== "object" || Array.isArray(property)) {
+      errors.push(`${label} must be a JSON object.`);
+      return;
+    }
+    Object.keys(property).forEach((key) => {
+      if (!["property", "source", "slot", "icon", "label", "priority"].includes(key)) {
+        errors.push(`${label} has unsupported field ${key}.`);
+      }
+    });
+    if (typeof property.property !== "string" || property.property.length === 0) {
+      errors.push(`${label} requires property.`);
+    }
+    if (typeof property.slot !== "string" || property.slot.length === 0) {
+      errors.push(`${label} requires slot.`);
+    } else if (!slotIds.has(property.slot)) {
+      errors.push(`${label} uses unsupported slot ${property.slot}.`);
+    }
+    if (property.source !== undefined && !PROPERTY_DISPLAY_SOURCES.includes(property.source)) {
+      errors.push(`${label} has unsupported source ${property.source}.`);
+    }
+    if (property.icon !== undefined && (typeof property.icon !== "string" || property.icon.length === 0)) {
+      errors.push(`${label} icon must be a non-empty string.`);
+    } else if (property.icon && !iconIds.has(property.icon)) {
+      errors.push(`${label} uses unsupported icon ${property.icon}.`);
+    }
+    if (property.label !== undefined && (typeof property.label !== "string" || property.label.length === 0)) {
+      errors.push(`${label} label must be a non-empty string.`);
+    }
+    if (property.priority !== undefined && !Number.isInteger(property.priority)) {
+      errors.push(`${label} priority must be an integer.`);
+    }
+  });
 }
 
 function cardTemplateValidation(template) {
