@@ -11,6 +11,7 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | Understand the engine model | [Core Concepts](concepts.md) |
 | Build or modify a ruleset | [Ruleset Authoring Guide](ruleset-authoring.md) |
 | Integrate with the server API | [Server API Guide](server-api.md) |
+| Build a projected player or spectator client | [Client Architecture](client-architecture.md) |
 | Work with art, text, and UX sync | [Assets And UX Guide](assets-and-ux.md) |
 | Debug and verify behavior | [Testing And Debugging Guide](testing-and-debugging.md) |
 | Play the current 1v1 prototype | [Basic 1v1 Demo: Ember Duel](basic-duel-demo.md) |
@@ -26,6 +27,7 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | [Technical Design](technical-design-multiplayer-turn-based-card-game-engine.md) | System architecture and major engineering decisions. |
 | [Milestones](milestones.md) | Delivery plan from M0 through M8. |
 | [UI Engine Plan](ui-engine-plan.md) | UI plan for assets, board layouts, cards, heroes, equipment, minions, widgets, and authoring/runtime surfaces. |
+| [Client Architecture](client-architecture.md) | Proposed split between Studio/Admin, player, and spectator clients with projection-safe information boundaries. |
 | [Implementation Status](implementation-status.md) | Current verification, completed slices, and remaining hardening backlog. |
 | [Engine Evaluation](engine-evaluation.md) | Dogfood verdict, filled gaps, remaining risks, and recommended next milestone. |
 
@@ -52,9 +54,9 @@ For an engineer integrating a client:
 
 1. [Quick Start](quick-start.md)
 2. [Server API Guide](server-api.md)
-3. [UI Engine Plan](ui-engine-plan.md)
-4. [Testing And Debugging Guide](testing-and-debugging.md)
-5. [Technical Design](technical-design-multiplayer-turn-based-card-game-engine.md)
+3. [Client Architecture](client-architecture.md)
+4. [UI Engine Plan](ui-engine-plan.md)
+5. [Testing And Debugging Guide](testing-and-debugging.md)
 
 For a maintainer:
 
