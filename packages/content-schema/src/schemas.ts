@@ -317,6 +317,7 @@ export const boardLayoutSchema = {
               "discard",
               "graveyard",
               "battlefield",
+              "land",
               "equipment",
               "judgment",
               "prompt",
@@ -541,7 +542,7 @@ const uiPlaytestStepSchema = {
   properties: {
     id: { type: "string", minLength: 1 },
     label: { type: "string", minLength: 1 },
-    action: { enum: ["create_match", "submit_command", "fetch_state", "fetch_replay", "assert_resource"] },
+    action: { enum: ["create_match", "submit_command", "fetch_state", "fetch_replay", "assert_resource", "assert_object_stat", "assert_zone_count"] },
     match: {
       type: "object",
       additionalProperties: true,
@@ -675,8 +676,38 @@ const presentationObjectSchema = {
       additionalProperties: false,
       properties: {
         behaviorId: { type: "string", minLength: 1 },
-        targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targeted"] },
-        targetSelector: { type: "string", minLength: 1 }
+        targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targetObject", "targeted"] },
+        targetSelector: { type: "string", minLength: 1 },
+        sourceZoneKinds: {
+          type: "array",
+          items: { type: "string", minLength: 1 }
+        },
+        targetZoneKinds: {
+          type: "array",
+          items: { type: "string", minLength: 1 }
+        }
+      }
+    },
+    actions: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["behaviorId"],
+        additionalProperties: false,
+        properties: {
+          label: { type: "string", minLength: 1 },
+          behaviorId: { type: "string", minLength: 1 },
+          targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targetObject", "targeted"] },
+          targetSelector: { type: "string", minLength: 1 },
+          sourceZoneKinds: {
+            type: "array",
+            items: { type: "string", minLength: 1 }
+          },
+          targetZoneKinds: {
+            type: "array",
+            items: { type: "string", minLength: 1 }
+          }
+        }
       }
     }
   }
@@ -754,7 +785,7 @@ export const presentationCatalogSchema = {
               behaviorId: { type: "string", minLength: 1 },
               text: { type: "string" },
               action: { type: "string", minLength: 1 },
-              targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targeted"] },
+              targetMode: { enum: ["enemyHero", "selfHero", "battlefield", "targetObject", "targeted"] },
               manaCost: { type: "integer", minimum: 0 },
               display: {
                 type: "array",

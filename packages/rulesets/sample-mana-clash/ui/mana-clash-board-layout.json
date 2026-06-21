@@ -1,0 +1,261 @@
+{
+  "id": "mana-clash-default-board",
+  "version": "0.1.0",
+  "kind": "board_layout",
+  "metadata": {
+    "name": "Mana Clash Default Board",
+    "description": "Compact 2P board layout with a dedicated land row to test permanent zones and tap/untap state."
+  },
+  "logicalSize": {
+    "width": 1240,
+    "height": 700
+  },
+  "scaling": {
+    "mode": "fit_viewport",
+    "minScale": 0.2,
+    "maxScale": 1
+  },
+  "tokens": {
+    "arena": {
+      "padding": 10,
+      "rowGap": 8,
+      "opponentRow": 250,
+      "centerRow": 142,
+      "playerRow": 272
+    },
+    "player": {
+      "heroWidth": 158,
+      "gap": 8
+    },
+    "zones": {
+      "boardWidth": 300,
+      "gap": 8
+    },
+    "center": {
+      "turnWidth": 390,
+      "gap": 8
+    },
+    "card": {
+      "width": 104,
+      "artHeight": 54
+    }
+  },
+  "propertyDisplay": {
+    "slots": [
+      { "id": "top-left", "label": "Cost Corner", "objectTypes": ["card", "hero"] },
+      { "id": "top-right", "label": "Keyword Corner", "objectTypes": ["card", "hero", "minion"] },
+      { "id": "bottom-left", "label": "Power Corner", "objectTypes": ["minion"] },
+      { "id": "bottom-right", "label": "Toughness Corner", "objectTypes": ["minion"] }
+    ],
+    "icons": [
+      { "id": "mana", "label": "Mana" },
+      { "id": "sword", "label": "Power" },
+      { "id": "heart", "label": "Toughness" },
+      { "id": "spark", "label": "Keyword" }
+    ]
+  },
+  "regions": [
+    {
+      "id": "opponent_hero",
+      "kind": "hero",
+      "ownerScope": "opponent",
+      "label": "Opponent",
+      "geometry": { "x": 10, "y": 10, "width": 158, "height": 250 },
+      "widgetId": "hero-card",
+      "accepts": ["hero", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_battlefield",
+      "kind": "battlefield",
+      "ownerScope": "opponent",
+      "dataSource": { "zoneType": "board" },
+      "label": "Opponent Creatures",
+      "geometry": { "x": 176, "y": 10, "width": 300, "height": 250 },
+      "widgetId": "card-row",
+      "accepts": ["minion", "creature"],
+      "targetable": true,
+      "dropBehavior": "select_object_target",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_land",
+      "kind": "land",
+      "ownerScope": "opponent",
+      "dataSource": { "zoneType": "land" },
+      "label": "Opponent Lands",
+      "geometry": { "x": 484, "y": 10, "width": 150, "height": 250 },
+      "widgetId": "card-row",
+      "accepts": ["land"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "opponent_hand",
+      "kind": "hand",
+      "ownerScope": "opponent",
+      "dataSource": { "zoneType": "hand" },
+      "label": "Opponent Hand",
+      "geometry": { "x": 642, "y": 10, "width": 520, "height": 250 },
+      "widgetId": "card-row",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "admin"
+    },
+    {
+      "id": "opponent_deck",
+      "kind": "deck",
+      "ownerScope": "opponent",
+      "dataSource": { "zoneType": "deck" },
+      "label": "Opponent Deck",
+      "geometry": { "x": 1170, "y": 24, "width": 60, "height": 92 },
+      "widgetId": "deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    },
+    {
+      "id": "turn_action_window",
+      "kind": "action_window",
+      "ownerScope": "shared",
+      "label": "Mana Flow",
+      "geometry": { "x": 10, "y": 268, "width": 390, "height": 142 },
+      "widgetId": "action-panel",
+      "accepts": ["command"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "history_log",
+      "kind": "history_log",
+      "ownerScope": "shared",
+      "label": "Grave Trace",
+      "geometry": { "x": 408, "y": 268, "width": 822, "height": 142 },
+      "widgetId": "history-log",
+      "accepts": ["event"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "scroll",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_hero",
+      "kind": "hero",
+      "ownerScope": "player",
+      "label": "You",
+      "geometry": { "x": 10, "y": 418, "width": 158, "height": 272 },
+      "widgetId": "hero-card",
+      "accepts": ["hero", "player"],
+      "targetable": true,
+      "dropBehavior": "select_player_target",
+      "overflow": "compact",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_battlefield",
+      "kind": "battlefield",
+      "ownerScope": "player",
+      "dataSource": { "zoneType": "board" },
+      "label": "Your Creatures",
+      "geometry": { "x": 176, "y": 418, "width": 300, "height": 272 },
+      "widgetId": "card-row",
+      "accepts": ["minion", "creature"],
+      "targetable": true,
+      "dropBehavior": "select_object_target",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_land",
+      "kind": "land",
+      "ownerScope": "player",
+      "dataSource": { "zoneType": "land" },
+      "label": "Your Lands",
+      "geometry": { "x": 484, "y": 418, "width": 150, "height": 272 },
+      "widgetId": "card-row",
+      "accepts": ["land"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "public"
+    },
+    {
+      "id": "player_hand",
+      "kind": "hand",
+      "ownerScope": "player",
+      "dataSource": { "zoneType": "hand" },
+      "label": "Your Hand",
+      "geometry": { "x": 642, "y": 418, "width": 520, "height": 272 },
+      "widgetId": "card-row",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "fan",
+      "visibleTo": "owner"
+    },
+    {
+      "id": "player_deck",
+      "kind": "deck",
+      "ownerScope": "player",
+      "dataSource": { "zoneType": "deck" },
+      "label": "Your Deck",
+      "geometry": { "x": 1170, "y": 598, "width": 60, "height": 92 },
+      "widgetId": "deck-stack",
+      "accepts": ["card"],
+      "targetable": false,
+      "dropBehavior": "none",
+      "overflow": "stack",
+      "visibleTo": "public"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "hero-card",
+      "kind": "single_object",
+      "component": "HeroCard",
+      "config": {
+        "supportsSourceActions": true,
+        "supportsTargetHighlight": true
+      }
+    },
+    {
+      "id": "card-row",
+      "kind": "card_collection",
+      "component": "CardRow",
+      "config": {
+        "supportsDragSource": true,
+        "supportsFanOverflow": true
+      }
+    },
+    {
+      "id": "deck-stack",
+      "kind": "card_collection",
+      "component": "DeckStack",
+      "config": {
+        "showCount": true
+      }
+    },
+    {
+      "id": "action-panel",
+      "kind": "system",
+      "component": "ActionPanel"
+    },
+    {
+      "id": "history-log",
+      "kind": "system",
+      "component": "HistoryLog"
+    }
+  ]
+}

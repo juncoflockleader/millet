@@ -1,0 +1,2759 @@
+{
+  "id": "basic-trio-playtests",
+  "version": "0.1.0",
+  "kind": "ui_playtest_script",
+  "metadata": {
+    "name": "Basic Trio Playtests",
+    "description": "Scripted local API smoke runs for the three-class early-basic dogfood project."
+  },
+  "scripts": [
+    {
+      "id": "mage-lance-smoke",
+      "label": "Mage Lance Smoke",
+      "description": "Create a Basic Trio Mage match, cast Ember Lance from Player 1 into Player 2, then verify health.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-ember-lance",
+          "label": "P1 casts Ember Lance at P2",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ember_lance",
+              "sourceObjectId": "card_ember_lance_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 24",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 24
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 24
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "mage-spell-power-smoke",
+      "label": "Mage Spell Power Smoke",
+      "description": "Create a Basic Trio Mage match, play Spark Adept, cast Ember Lance, then verify spell damage.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-spark-adept",
+          "label": "P1 plays Spark Adept",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_spark_adept",
+              "sourceObjectId": "card_spark_adept_p1"
+            }
+          }
+        },
+        {
+          "id": "cast-ember-lance",
+          "label": "P1 casts empowered Ember Lance at P2",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ember_lance",
+              "sourceObjectId": "card_ember_lance_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 23",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 23
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 4",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 4
+          }
+        },
+        {
+          "id": "assert-spark-spell-power",
+          "label": "Assert Spark Adept spell power",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "card_spark_adept_p1",
+            "stat": "spellPower",
+            "value": 1
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 23
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 4
+          }
+        ],
+        "objectStats": [
+          {
+            "objectId": "card_spark_adept_p1",
+            "stat": "spellPower",
+            "value": 1
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-axe-smoke",
+      "label": "Warrior Axe Smoke",
+      "description": "Create a Basic Trio Warrior match, attack with the equipped Forge Axe, then verify health.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "swing-forge-axe",
+          "label": "P1 strikes P2 with Forge Axe",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "forge_axe_attack",
+              "sourceObjectId": "weapon_forge_axe_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 27",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-reaper-smoke",
+      "label": "Warrior Reaper Smoke",
+      "description": "Break the starting weapon, equip Heavy Reaper from hand, attack, then verify hero health and weapon zone state.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "swing-forge-axe-once",
+          "label": "P1 strikes P2 with Forge Axe",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "forge_axe_attack",
+              "sourceObjectId": "weapon_forge_axe_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "swing-forge-axe-twice",
+          "label": "P1 breaks Forge Axe",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "forge_axe_attack",
+              "sourceObjectId": "weapon_forge_axe_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "equip-heavy-reaper",
+          "label": "P1 equips Heavy Reaper",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "equip_heavy_reaper",
+              "sourceObjectId": "card_heavy_reaper_p1"
+            }
+          }
+        },
+        {
+          "id": "swing-heavy-reaper",
+          "label": "P1 strikes P2 with Heavy Reaper",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "heavy_reaper_attack",
+              "sourceObjectId": "card_heavy_reaper_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 19",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 19
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 5",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 5
+          }
+        },
+        {
+          "id": "assert-weapon-zone",
+          "label": "Assert P1 has one equipped weapon",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_weapon_p1",
+            "count": 1
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 19
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 5
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 3,
+          "object_played": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-focus-smoke",
+      "label": "Warrior Focus Smoke",
+      "description": "Give the Warrior hero temporary attack, spend it on the enemy hero, then verify damage.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-battle-focus",
+          "label": "P1 casts Battle Focus",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "battle_focus",
+              "sourceObjectId": "card_battle_focus_p1"
+            }
+          }
+        },
+        {
+          "id": "swing-focused-hero",
+          "label": "P1 attacks with focused hero",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "battle_focus_attack",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 26",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 26
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        },
+        {
+          "id": "assert-p1-hero-attack",
+          "label": "Assert P1 hero attack is spent",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "heroAttack",
+            "current": 0
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 26
+          },
+          {
+            "playerId": "p1",
+            "resource": "heroAttack",
+            "current": 0
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1,
+          "resource_changed": 4
+        }
+      }
+    },
+    {
+      "id": "warrior-focus-axe-smoke",
+      "label": "Warrior Focus Axe Smoke",
+      "description": "Give the Warrior hero temporary attack, stack it with Forge Axe, then verify combined weapon damage and cleanup.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-battle-focus",
+          "label": "P1 casts Battle Focus",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "battle_focus",
+              "sourceObjectId": "card_battle_focus_p1"
+            }
+          }
+        },
+        {
+          "id": "swing-focused-axe",
+          "label": "P1 attacks with focused Forge Axe",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "forge_axe_attack",
+              "sourceObjectId": "weapon_forge_axe_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 23",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 23
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        },
+        {
+          "id": "assert-p1-hero-attack",
+          "label": "Assert P1 hero attack is spent",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "heroAttack",
+            "current": 0
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 23
+          },
+          {
+            "playerId": "p1",
+            "resource": "heroAttack",
+            "current": 0
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1,
+          "resource_changed": 4
+        }
+      }
+    },
+    {
+      "id": "warrior-rush-expiry-smoke",
+      "label": "Warrior Rush Expiry Smoke",
+      "description": "Exhaust a friendly minion, use Battle Rush to ready and buff it, attack again, then expire the temporary attack.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "first-river-guard-attack",
+          "label": "P1 attacks with River Guard",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "river_guard_attack",
+              "sourceObjectId": "minion_river_guard_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "cast-battle-rush",
+          "label": "P1 casts Battle Rush on River Guard",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "battle_rush",
+              "sourceObjectId": "card_battle_rush_p1",
+              "selections": {
+                "target": [
+                  "minion_river_guard_p1"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "second-river-guard-attack",
+          "label": "P1 attacks again with rushed River Guard",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "river_guard_attack",
+              "sourceObjectId": "minion_river_guard_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "expire-battle-rush",
+          "label": "Expire Battle Rush temporary attack",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "expire_basic_trio_battle_rush"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 24",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 24
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 7",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        },
+        {
+          "id": "assert-river-guard-attack",
+          "label": "Assert River Guard attack returned to 2",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_river_guard_p1",
+            "stat": "attack",
+            "value": 2
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 24
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 2,
+          "object_stat_changed": 2,
+          "object_keyword_changed": 2
+        }
+      }
+    },
+    {
+      "id": "neutral-battlecry-smoke",
+      "label": "Neutral Battlecry Smoke",
+      "description": "Play a neutral Battlecry minion with an object target, then verify the selected enemy minion takes damage.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-needle-scout",
+          "label": "P1 plays Needle Scout at an enemy minion",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_needle_scout",
+              "sourceObjectId": "card_needle_scout_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 9",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        },
+        {
+          "id": "assert-scout-health",
+          "label": "Assert Needle Scout health is 1",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "card_needle_scout_p1",
+            "stat": "health",
+            "value": 1
+          }
+        },
+        {
+          "id": "assert-ogre-health",
+          "label": "Assert enemy ogre health is 6",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 6
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "damage_dealt": 1,
+          "object_stat_changed": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-storm-runner-smoke",
+      "label": "Warrior Storm Runner Smoke",
+      "description": "Play a ready Warrior minion, attack immediately, then verify hero health.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-storm-runner",
+          "label": "P1 plays Storm Runner",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_storm_runner",
+              "sourceObjectId": "card_storm_runner_p1"
+            }
+          }
+        },
+        {
+          "id": "attack-with-storm-runner",
+          "label": "P1 attacks with Storm Runner",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "storm_runner_attack",
+              "sourceObjectId": "card_storm_runner_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 26",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 26
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 6",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 26
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "damage_dealt": 1,
+          "object_exhausted": 2
+        }
+      }
+    },
+    {
+      "id": "warrior-drummer-smoke",
+      "label": "Warrior Drummer Smoke",
+      "description": "Play a summon-trigger minion, play a small recruit, attack immediately, then verify hero health.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-war-drummer",
+          "label": "P1 plays War Drummer",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_war_drummer",
+              "sourceObjectId": "card_war_drummer_p1"
+            }
+          }
+        },
+        {
+          "id": "play-line-recruit",
+          "label": "P1 plays a small recruit",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_river_guard",
+              "sourceObjectId": "card_line_recruit_p1"
+            }
+          }
+        },
+        {
+          "id": "attack-with-line-recruit",
+          "label": "P1 attacks with the readied recruit",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "river_guard_attack",
+              "sourceObjectId": "card_line_recruit_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 28",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 28
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 5",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 5
+          }
+        },
+        {
+          "id": "assert-recruit-health",
+          "label": "Assert recruit health is 3",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "card_line_recruit_p1",
+            "stat": "health",
+            "value": 3
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 28
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 5
+          }
+        ],
+        "eventTypes": {
+          "object_played": 2,
+          "trigger_fired": 1,
+          "object_keyword_changed": 1,
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-banner-aura-smoke",
+      "label": "Warrior Banner Aura Smoke",
+      "description": "Play a continuous attack-aura minion, attack with an existing friendly minion, then verify buffed damage.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-banner-captain",
+          "label": "P1 plays Banner Captain",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_banner_captain",
+              "sourceObjectId": "card_banner_captain_p1"
+            }
+          }
+        },
+        {
+          "id": "attack-with-river-guard",
+          "label": "P1 attacks with aura-buffed River Guard",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "river_guard_attack",
+              "sourceObjectId": "minion_river_guard_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 27",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 7",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        },
+        {
+          "id": "assert-banner-health",
+          "label": "Assert Banner Captain health is 2",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "card_banner_captain_p1",
+            "stat": "health",
+            "value": 2
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "damage_dealt": 1,
+          "object_exhausted": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-area-smoke",
+      "label": "Warrior Area Smoke",
+      "description": "Create a Basic Trio Warrior match, cast Ring Sweep, then verify both boards take minion damage.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-ring-sweep",
+          "label": "P1 casts Ring Sweep",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ring_sweep",
+              "sourceObjectId": "card_ring_sweep_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 9",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        },
+        {
+          "id": "assert-p1-minion-health",
+          "label": "Assert P1 minion health is 2",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_river_guard_p1",
+            "stat": "health",
+            "value": 2
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 minion health is 6",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 6
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        ],
+        "eventTypes": {
+          "object_stat_changed": 2,
+          "damage_dealt": 2
+        }
+      }
+    },
+    {
+      "id": "warrior-random-smoke",
+      "label": "Warrior Random Smoke",
+      "description": "Create a Basic Trio Warrior match, cast Split Strike, then verify deterministic random minion damage through the live API.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "p1-cast-split-strike",
+          "label": "P1 casts Split Strike",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "split_strike",
+              "sourceObjectId": "card_split_strike_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        },
+        {
+          "id": "assert-p1-minion-health",
+          "label": "Assert P1 minion health is unchanged",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_river_guard_p1",
+            "stat": "health",
+            "value": 3
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 minion health is 5",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 5
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        ],
+        "eventTypes": {
+          "random_choice_made": 1,
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "warrior-edict-smoke",
+      "label": "Warrior Edict Smoke",
+      "description": "Damage an enemy minion, then destroy it with Battle Edict through the live API.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "warrior",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-ring-sweep",
+          "label": "P1 casts Ring Sweep",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ring_sweep",
+              "sourceObjectId": "card_ring_sweep_p1"
+            }
+          }
+        },
+        {
+          "id": "cast-battle-edict",
+          "label": "P1 casts Battle Edict",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "battle_edict",
+              "sourceObjectId": "card_battle_edict_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        ],
+        "eventTypes": {
+          "object_destroyed": 1
+        }
+      }
+    },
+    {
+      "id": "priest-mind-smoke",
+      "label": "Priest Mind Smoke",
+      "description": "Create a Basic Trio Priest match, cast Mind Spark from Player 1 into Player 2, then verify health.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "priest",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-mind-spark",
+          "label": "P1 casts Mind Spark at P2",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "mind_spark",
+              "sourceObjectId": "card_mind_spark_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 25",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 25
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 25
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "priest-glimpse-smoke",
+      "label": "Priest Glimpse Smoke",
+      "description": "Copy a random card from the enemy hand through the live API without moving the source card.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "priest",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-mind-glimpse",
+          "label": "P1 casts Mind Glimpse at P2",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "mind_glimpse",
+              "sourceObjectId": "card_mind_glimpse_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 9",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        ],
+        "eventTypes": {
+          "random_choice_made": 1,
+          "object_created": 1
+        }
+      }
+    },
+    {
+      "id": "priest-bloom-smoke",
+      "label": "Priest Bloom Smoke",
+      "description": "In a live API match without phase auto-run, play Dawn Cleric, heal a damaged minion with Holy Bloom, and verify the heal trigger fires.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": false,
+        "p1Class": "priest",
+        "p2Class": "mage"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "p2-cast-ember-wave",
+          "label": "P2 damages P1 minions with Ember Wave",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p2",
+            "userId": "u2",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ember_wave",
+              "sourceObjectId": "card_ember_wave_p2"
+            }
+          }
+        },
+        {
+          "id": "play-dawn-cleric",
+          "label": "P1 plays Dawn Cleric",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_dawn_cleric",
+              "sourceObjectId": "card_dawn_cleric_p1"
+            }
+          }
+        },
+        {
+          "id": "cast-holy-bloom",
+          "label": "P1 casts Holy Bloom",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "holy_bloom",
+              "sourceObjectId": "card_holy_bloom_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 28",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 28
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 4",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 4
+          }
+        },
+        {
+          "id": "assert-p1-minion-health",
+          "label": "Assert P1 minion is healed",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_river_guard_p1",
+            "stat": "health",
+            "value": 3
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 minion is damaged",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 5
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 28
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 4
+          }
+        ],
+        "eventTypes": {
+          "trigger_fired": 1
+        }
+      }
+    },
+    {
+      "id": "priest-control-smoke",
+      "label": "Priest Control Smoke",
+      "description": "Create a Basic Trio Priest match, cast Borrowed Command, then verify the enemy minion moves to the caster board.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "priest",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-borrowed-command",
+          "label": "P1 casts Borrowed Command",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "borrowed_command",
+              "sourceObjectId": "card_borrowed_command_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 0",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 0
+          }
+        },
+        {
+          "id": "assert-p1-board",
+          "label": "Assert P1 board has two objects",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p1",
+            "count": 2
+          }
+        },
+        {
+          "id": "assert-p2-board",
+          "label": "Assert P2 board is empty",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p2",
+            "count": 0
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 0
+          }
+        ],
+        "eventTypes": {
+          "object_control_changed": 1
+        }
+      }
+    },
+    {
+      "id": "priest-verdict-smoke",
+      "label": "Priest Verdict Smoke",
+      "description": "Create a Basic Trio Priest match, cast Final Verdict, then verify the high-attack enemy minion is destroyed.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "priest",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-final-verdict",
+          "label": "P1 casts Final Verdict",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "final_verdict",
+              "sourceObjectId": "card_final_verdict_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 7",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        },
+        {
+          "id": "assert-p2-board",
+          "label": "Assert P2 board is empty",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p2",
+            "count": 0
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        ],
+        "eventTypes": {
+          "object_destroyed": 1
+        }
+      }
+    },
+    {
+      "id": "mage-board-tools-smoke",
+      "label": "Mage Board Tools Smoke",
+      "description": "Create a Basic Trio Mage match, summon two guard tokens, damage and freeze an enemy minion, then verify zone and object state.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-mirror-guard",
+          "label": "P1 casts Mirror Guard",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "mirror_guard",
+              "sourceObjectId": "card_mirror_guard_p1"
+            }
+          }
+        },
+        {
+          "id": "cast-frost-pin",
+          "label": "P1 casts Frost Pin at P2 minion",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "frost_pin",
+              "sourceObjectId": "card_frost_pin_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-board",
+          "label": "Assert P1 board has three objects",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p1",
+            "count": 3
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 minion health is 4",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 4
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 7
+          }
+        ],
+        "eventTypes": {
+          "object_created": 2,
+          "object_stat_changed": 1,
+          "object_keyword_changed": 1,
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "mage-hero-freeze-smoke",
+      "label": "Mage Hero Freeze Smoke",
+      "description": "Create a Basic Trio Mage match, cast Frost Pin at the enemy hero, then verify hero damage and the frozen hero flag.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "cast-frost-pin-hero",
+          "label": "P1 casts Frost Pin at P2 hero",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "frost_pin_hero",
+              "sourceObjectId": "card_frost_pin_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 27",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          }
+        },
+        {
+          "id": "assert-p2-frozen",
+          "label": "Assert P2 hero is frozen",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "heroFrozen",
+            "current": 1
+          }
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          },
+          {
+            "playerId": "p2",
+            "resource": "heroFrozen",
+            "current": 1
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        ],
+        "eventTypes": {
+          "damage_dealt": 1,
+          "resource_changed": 3
+        }
+      }
+    },
+    {
+      "id": "mage-area-smoke",
+      "label": "Mage Area Smoke",
+      "description": "Create a Basic Trio Mage match, cast Ember Wave, then verify it damages the enemy board minion.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "p1-cast-ember-wave",
+          "label": "P1 casts Ember Wave",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ember_wave",
+              "sourceObjectId": "card_ember_wave_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        },
+        {
+          "id": "assert-p2-board",
+          "label": "Assert P2 board still has one object",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p2",
+            "count": 1
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 large minion health is 6",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 6
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        ],
+        "eventTypes": {
+          "object_stat_changed": 1,
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "mage-stasis-column-smoke",
+      "label": "Mage Stasis Column Smoke",
+      "description": "Create a Basic Trio Mage match, freeze the enemy board, then cast the heavier area spell.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "p1-cast-winter-stasis",
+          "label": "P1 casts Winter Stasis",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "winter_stasis",
+              "sourceObjectId": "card_winter_stasis_p1"
+            }
+          }
+        },
+        {
+          "id": "p1-cast-ember-column",
+          "label": "P1 casts Ember Column",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "ember_column",
+              "sourceObjectId": "card_ember_column_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 0",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 0
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 large minion health is 3",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 3
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 0
+          }
+        ],
+        "eventTypes": {
+          "object_keyword_changed": 1,
+          "object_exhausted": 1,
+          "damage_dealt": 1
+        }
+      }
+    },
+    {
+      "id": "mage-glacier-smoke",
+      "label": "Mage Glacier Smoke",
+      "description": "Play Glacier Warden, ready it through the refresh module, attack an enemy minion, then verify damage.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-glacier-warden",
+          "label": "P1 plays Glacier Warden",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_glacier_warden",
+              "sourceObjectId": "card_glacier_warden_p1"
+            }
+          }
+        },
+        {
+          "id": "ready-glacier-warden",
+          "label": "Refresh P1 objects",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "refresh_basic_trio_objects"
+            }
+          }
+        },
+        {
+          "id": "attack-with-glacier-warden",
+          "label": "P1 attacks enemy minion with Glacier Warden",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "glacier_warden_attack_minion",
+              "sourceObjectId": "card_glacier_warden_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 6",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        },
+        {
+          "id": "assert-p2-minion-health",
+          "label": "Assert P2 large minion health is 4",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 4
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "damage_dealt": 1,
+          "object_keyword_changed": 1
+        }
+      }
+    },
+    {
+      "id": "mage-glacier-hero-freeze-smoke",
+      "label": "Mage Glacier Hero Freeze Smoke",
+      "description": "Play Glacier Warden, ready it, attack the enemy hero, then verify damage and the frozen hero flag.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-glacier-warden",
+          "label": "P1 plays Glacier Warden",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_glacier_warden",
+              "sourceObjectId": "card_glacier_warden_p1"
+            }
+          }
+        },
+        {
+          "id": "ready-glacier-warden",
+          "label": "Refresh P1 objects",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "refresh_basic_trio_objects"
+            }
+          }
+        },
+        {
+          "id": "attack-hero-with-glacier-warden",
+          "label": "P1 attacks enemy hero with Glacier Warden",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "glacier_warden_attack",
+              "sourceObjectId": "card_glacier_warden_p1",
+              "selections": {
+                "target": [
+                  "p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 6",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        },
+        {
+          "id": "assert-p2-health",
+          "label": "Assert P2 health is 27",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          }
+        },
+        {
+          "id": "assert-p2-frozen",
+          "label": "Assert P2 hero is frozen",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p2",
+            "resource": "heroFrozen",
+            "current": 1
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p2",
+            "resource": "health",
+            "current": 27
+          },
+          {
+            "playerId": "p2",
+            "resource": "heroFrozen",
+            "current": 1
+          },
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "damage_dealt": 1,
+          "resource_changed": 3
+        }
+      }
+    },
+    {
+      "id": "mage-random-smoke",
+      "label": "Mage Random Smoke",
+      "description": "Create a Basic Trio Mage match, cast Cinder Sparks, then verify three deterministic random choices and damage events.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "p1-cast-cinder-sparks",
+          "label": "P1 casts Cinder Sparks",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "cinder_sparks",
+              "sourceObjectId": "card_cinder_sparks_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 9",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 9
+          }
+        ],
+        "eventTypes": {
+          "random_choice_made": 3,
+          "damage_dealt": 3
+        }
+      }
+    },
+    {
+      "id": "mage-transform-smoke",
+      "label": "Mage Transform Smoke",
+      "description": "Create a Basic Trio Mage match, cast Null Form, then verify the enemy minion becomes a 1/1 transformed body.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "p1-cast-null-form",
+          "label": "P1 casts Null Form",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "null_form",
+              "sourceObjectId": "card_null_form_p1",
+              "selections": {
+                "target": [
+                  "minion_arena_ogre_p2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 6",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        },
+        {
+          "id": "assert-transformed-health",
+          "label": "Assert transformed minion health is 1",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "minion_arena_ogre_p2",
+            "stat": "health",
+            "value": 1
+          }
+        },
+        {
+          "id": "assert-p2-board",
+          "label": "Assert P2 board still has one object",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p2",
+            "count": 1
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 6
+          }
+        ],
+        "eventTypes": {
+          "object_transformed": 1
+        }
+      }
+    },
+    {
+      "id": "neutral-minion-play-smoke",
+      "label": "Neutral Minion Play Smoke",
+      "description": "Create a Basic Trio Mage match, play the drawn neutral minion from hand, then verify it becomes a public exhausted board object.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-basic-trio",
+        "demoDuel": true,
+        "p1Class": "mage",
+        "p2Class": "warrior"
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Basic Trio match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-river-guard",
+          "label": "P1 plays the drawn River Guard",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_river_guard",
+              "sourceObjectId": "card_river_guard_draw_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "fetch-replay",
+          "label": "Fetch admin replay",
+          "action": "fetch_replay"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 mana is 8",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        },
+        {
+          "id": "assert-p1-board",
+          "label": "Assert P1 board has two objects",
+          "action": "assert_zone_count",
+          "expect": {
+            "zoneId": "zone_board_p1",
+            "count": 2
+          }
+        },
+        {
+          "id": "assert-played-minion-health",
+          "label": "Assert played minion health is 3",
+          "action": "assert_object_stat",
+          "expect": {
+            "objectId": "card_river_guard_draw_p1",
+            "stat": "health",
+            "value": 3
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 8
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1
+        }
+      }
+    }
+  ]
+}

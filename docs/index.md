@@ -15,6 +15,7 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | Debug and verify behavior | [Testing And Debugging Guide](testing-and-debugging.md) |
 | Play the current 1v1 prototype | [Basic 1v1 Demo: Ember Duel](basic-duel-demo.md) |
 | Inspect the second 1v1 dogfood game | [Rune Duel Dogfood](rune-duel-dogfood.md) |
+| Inspect the early Basic-set behavior dogfood | [Hearthstone Basic Trio Dogfood](hearthstone-basic-trio-dogfood.md) |
 | Evaluate the current engine | [Engine Evaluation](engine-evaluation.md) |
 
 ## Product And Planning Docs

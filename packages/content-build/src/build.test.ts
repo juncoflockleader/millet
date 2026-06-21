@@ -25,6 +25,7 @@ test("validates and hashes sample ruleset bundles", () => {
   assert.deepEqual(validateRulesetDir("packages/rulesets/sample-duel").filter((issue) => issue.severity === "error"), []);
   assert.deepEqual(validateRulesetDir("packages/rulesets/sample-identity").filter((issue) => issue.severity === "error"), []);
   assert.deepEqual(validateRulesetDir("packages/rulesets/sample-rune-duel").filter((issue) => issue.severity === "error"), []);
+  assert.deepEqual(validateRulesetDir("packages/rulesets/sample-basic-trio").filter((issue) => issue.severity === "error"), []);
 });
 
 test("ruleset validation rejects behavior manifest mismatches", () => {

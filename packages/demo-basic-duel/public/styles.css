@@ -55,20 +55,20 @@ button:disabled {
 }
 
 .app-shell {
-  width: min(1160px, calc(100vw - 12px));
+  width: calc(100vw - 8px);
   height: 100vh;
   height: 100dvh;
   min-height: 0;
   margin: 0 auto;
-  padding: 6px 0;
+  padding: 4px 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .topbar {
-  min-height: 52px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -156,6 +156,10 @@ p,
 
 .topbar p {
   font-size: 12px;
+  max-width: min(52vw, 680px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .play-area {
@@ -759,8 +763,15 @@ p,
   gap: var(--player-gap, 8px);
 }
 
+.player-row > .hero,
+.player-row > .zones {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+
 .opponent {
-  align-items: start;
+  align-items: stretch;
 }
 
 .hero,
@@ -885,9 +896,17 @@ p,
 .zones {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(180px, var(--zone-board-width, 292px)) minmax(78px, 118px) minmax(0, 1fr) minmax(62px, 72px);
+  grid-template-columns: minmax(180px, var(--zone-board-width, 300px)) minmax(76px, 104px) minmax(0, 1fr) minmax(50px, 60px);
   grid-template-rows: 1fr;
   gap: var(--zone-gap, 8px);
+}
+
+.zones:has(.land-zone) {
+  grid-template-columns: minmax(170px, var(--zone-board-width, 300px)) minmax(112px, 168px) minmax(0, 1fr) minmax(50px, 60px);
+}
+
+.land-zone .card {
+  --card-width: 92px;
 }
 
 .zone,
@@ -898,10 +917,14 @@ p,
 
 .zone h3,
 .equipment-slot h3 {
+  min-width: 0;
   margin: 0 0 6px;
+  overflow: hidden;
   font-size: 12px;
   color: var(--muted);
   font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-transform: uppercase;
 }
 
@@ -911,8 +934,12 @@ p,
   display: flex;
   align-items: stretch;
   gap: 7px;
-  overflow: visible;
-  padding-bottom: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding-bottom: 4px;
+  scrollbar-color: rgba(255, 207, 118, 0.5) rgba(255, 255, 255, 0.06);
+  scrollbar-width: thin;
 }
 
 .equipment-cards {
@@ -922,6 +949,7 @@ p,
 .equipment-slot .card {
   width: min(100%, var(--card-width, 118px));
   min-width: 0;
+  flex: 0 1 min(100%, var(--card-width, 118px));
 }
 
 .equipment-empty {
@@ -981,7 +1009,8 @@ p,
 .card {
   position: relative;
   width: var(--card-width, 118px);
-  min-width: var(--card-width, 118px);
+  min-width: min(84px, var(--card-width, 118px));
+  flex: 0 0 var(--card-width, 118px);
   min-height: 0;
   height: 100%;
   padding: 7px;
@@ -1047,10 +1076,18 @@ p,
   overflow: hidden;
 }
 
+.card-action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+  gap: 4px;
+  min-height: 27px;
+}
+
 .card .card-action {
   min-height: 27px;
   width: 100%;
   font-size: 11px;
+  padding-inline: 6px;
 }
 
 .keyword {
@@ -1183,6 +1220,10 @@ p,
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #75644a;
 }
 
+.icon-spark {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.28), transparent 28%), #3a5ea8;
+}
+
 .icon-suit,
 .icon-rank {
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 28%), #3c5d70;
@@ -1207,22 +1248,37 @@ p,
   z-index: 2;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(280px, var(--center-turn-width, 420px)) minmax(0, 1fr) minmax(126px, 172px);
+  grid-template-columns: minmax(280px, var(--center-turn-width, 420px)) minmax(0, 1fr) minmax(92px, 118px);
   gap: var(--center-gap, 8px);
+  overflow: hidden;
+}
+
+.center-lane > * {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .turn-panel {
-  padding: 9px;
+  padding: 7px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto auto;
   align-items: center;
-  gap: 8px 12px;
+  gap: 5px 8px;
+  font-size: 12px;
 }
 
 .selector button {
-  width: 48px;
+  width: 42px;
+  min-height: 28px;
   background: rgba(16, 18, 23, 0.82);
+}
+
+.turn-panel #endTurnButton {
+  min-height: 30px;
+  padding: 0 9px;
 }
 
 .selector button.selected {
@@ -1238,11 +1294,11 @@ p,
 .prompt-summary {
   grid-column: 1 / -1;
   min-width: 0;
-  min-height: 26px;
+  min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 7px;
+  gap: 5px 6px;
 }
 
 .prompt-summary:empty {
@@ -1252,21 +1308,22 @@ p,
 .prompt-label,
 .prompt-chip,
 .prompt-responder {
-  min-height: 24px;
-  padding: 0 7px;
+  min-height: 21px;
+  padding: 0 6px;
   display: inline-grid;
   align-items: center;
   border: 1px solid rgba(105, 211, 154, 0.28);
   border-radius: 999px;
   color: #dffcea;
   background: rgba(105, 211, 154, 0.08);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 820;
   white-space: nowrap;
 }
 
 .prompt-main {
   min-width: 0;
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1290,7 +1347,7 @@ p,
 }
 
 .prompt-responders {
-  grid-column: 1 / -1;
+  grid-column: 1 / 2;
   min-width: 0;
   display: flex;
   gap: 5px;
@@ -1298,7 +1355,7 @@ p,
 }
 
 .prompt-responder {
-  min-height: 20px;
+  min-height: 19px;
   padding: 0 6px;
   color: #cbbdaa;
   background: rgba(255, 255, 255, 0.06);
@@ -1322,11 +1379,18 @@ p,
 }
 
 .prompt-actions {
+  grid-column: 2 / -1;
   min-width: 0;
   display: flex;
   justify-content: flex-end;
   gap: 5px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.prompt-actions::-webkit-scrollbar {
+  display: none;
 }
 
 .prompt-chip {
@@ -1358,10 +1422,10 @@ p,
 .chat-window {
   min-width: 0;
   min-height: 0;
-  padding: 9px;
+  padding: 7px;
   display: grid;
-  align-content: center;
-  gap: 4px;
+  align-content: start;
+  gap: 2px;
 }
 
 .chat-window strong,
@@ -1373,12 +1437,12 @@ p,
 }
 
 .chat-window strong {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .chat-window span {
   color: #dacbb9;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 760;
 }
 

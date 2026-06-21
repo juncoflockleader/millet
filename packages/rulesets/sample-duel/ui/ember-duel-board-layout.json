@@ -7,8 +7,8 @@
     "description": "Schema-backed default layout tokens and semantic regions for the Ember Duel runtime demo."
   },
   "logicalSize": {
-    "width": 1120,
-    "height": 620
+    "width": 1240,
+    "height": 700
   },
   "scaling": {
     "mode": "fit_viewport",
@@ -17,27 +17,27 @@
   },
   "tokens": {
     "arena": {
-      "padding": 12,
-      "rowGap": 10,
-      "opponentRow": 214,
-      "centerRow": 96,
-      "playerRow": 254
+      "padding": 10,
+      "rowGap": 8,
+      "opponentRow": 250,
+      "centerRow": 142,
+      "playerRow": 272
     },
     "player": {
-      "heroWidth": 172,
+      "heroWidth": 160,
       "gap": 8
     },
     "zones": {
-      "boardWidth": 292,
+      "boardWidth": 300,
       "gap": 8
     },
     "center": {
-      "turnWidth": 420,
+      "turnWidth": 390,
       "gap": 8
     },
     "card": {
-      "width": 118,
-      "artHeight": 50
+      "width": 108,
+      "artHeight": 54
     }
   },
   "propertyDisplay": {
@@ -60,7 +60,7 @@
       "kind": "hero",
       "ownerScope": "opponent",
       "label": "Opponent Hero",
-      "geometry": { "x": 12, "y": 12, "width": 172, "height": 214 },
+      "geometry": { "x": 10, "y": 10, "width": 160, "height": 250 },
       "widgetId": "hero-card",
       "accepts": ["hero", "player"],
       "targetable": true,
@@ -74,7 +74,7 @@
       "ownerScope": "opponent",
       "dataSource": { "zoneType": "board" },
       "label": "Opponent Battlefield",
-      "geometry": { "x": 192, "y": 12, "width": 292, "height": 214 },
+      "geometry": { "x": 178, "y": 10, "width": 300, "height": 250 },
       "widgetId": "card-row",
       "accepts": ["minion"],
       "targetable": true,
@@ -88,7 +88,7 @@
       "ownerScope": "opponent",
       "dataSource": { "zoneType": "weapon" },
       "label": "Opponent Equipment",
-      "geometry": { "x": 492, "y": 12, "width": 88, "height": 214 },
+      "geometry": { "x": 486, "y": 10, "width": 104, "height": 250 },
       "widgetId": "equipment-slot",
       "accepts": ["weapon", "equipment"],
       "targetable": false,
@@ -102,7 +102,7 @@
       "ownerScope": "opponent",
       "dataSource": { "zoneType": "hand" },
       "label": "Opponent Hand",
-      "geometry": { "x": 588, "y": 12, "width": 520, "height": 214 },
+      "geometry": { "x": 598, "y": 10, "width": 564, "height": 250 },
       "widgetId": "card-row",
       "accepts": ["card"],
       "targetable": false,
@@ -116,7 +116,7 @@
       "ownerScope": "opponent",
       "dataSource": { "zoneType": "deck" },
       "label": "Opponent Deck",
-      "geometry": { "x": 1032, "y": 24, "width": 64, "height": 92 },
+      "geometry": { "x": 1170, "y": 24, "width": 60, "height": 92 },
       "widgetId": "deck-stack",
       "accepts": ["card"],
       "targetable": false,
@@ -129,7 +129,7 @@
       "kind": "action_window",
       "ownerScope": "shared",
       "label": "Turn Action Window",
-      "geometry": { "x": 12, "y": 236, "width": 420, "height": 96 },
+      "geometry": { "x": 10, "y": 268, "width": 390, "height": 142 },
       "widgetId": "action-panel",
       "accepts": ["command"],
       "targetable": false,
@@ -142,7 +142,7 @@
       "kind": "history_log",
       "ownerScope": "shared",
       "label": "History Log",
-      "geometry": { "x": 440, "y": 236, "width": 668, "height": 96 },
+      "geometry": { "x": 408, "y": 268, "width": 642, "height": 142 },
       "widgetId": "history-log",
       "accepts": ["event"],
       "targetable": false,
@@ -155,7 +155,7 @@
       "kind": "chat",
       "ownerScope": "shared",
       "label": "Chat Window",
-      "geometry": { "x": 936, "y": 236, "width": 172, "height": 96 },
+      "geometry": { "x": 1058, "y": 268, "width": 172, "height": 142 },
       "widgetId": "chat-window",
       "accepts": ["message"],
       "targetable": false,
@@ -168,7 +168,7 @@
       "kind": "hero",
       "ownerScope": "player",
       "label": "Player Hero",
-      "geometry": { "x": 12, "y": 342, "width": 172, "height": 254 },
+      "geometry": { "x": 10, "y": 418, "width": 160, "height": 272 },
       "widgetId": "hero-card",
       "accepts": ["hero", "player"],
       "targetable": true,
@@ -182,7 +182,7 @@
       "ownerScope": "player",
       "dataSource": { "zoneType": "board" },
       "label": "Player Battlefield",
-      "geometry": { "x": 192, "y": 342, "width": 292, "height": 254 },
+      "geometry": { "x": 178, "y": 418, "width": 300, "height": 272 },
       "widgetId": "card-row",
       "accepts": ["minion"],
       "targetable": true,
@@ -196,7 +196,7 @@
       "ownerScope": "player",
       "dataSource": { "zoneType": "weapon" },
       "label": "Player Equipment",
-      "geometry": { "x": 492, "y": 342, "width": 88, "height": 254 },
+      "geometry": { "x": 486, "y": 418, "width": 104, "height": 272 },
       "widgetId": "equipment-slot",
       "accepts": ["weapon", "equipment"],
       "targetable": false,
@@ -210,7 +210,7 @@
       "ownerScope": "player",
       "dataSource": { "zoneType": "hand" },
       "label": "Player Hand",
-      "geometry": { "x": 588, "y": 342, "width": 520, "height": 254 },
+      "geometry": { "x": 598, "y": 418, "width": 564, "height": 272 },
       "widgetId": "card-row",
       "accepts": ["card"],
       "targetable": false,
@@ -224,7 +224,7 @@
       "ownerScope": "player",
       "dataSource": { "zoneType": "deck" },
       "label": "Player Deck",
-      "geometry": { "x": 1032, "y": 492, "width": 64, "height": 92 },
+      "geometry": { "x": 1170, "y": 598, "width": 60, "height": 92 },
       "widgetId": "deck-stack",
       "accepts": ["card"],
       "targetable": false,

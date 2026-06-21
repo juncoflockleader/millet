@@ -1,0 +1,56 @@
+{
+  "id": "sample-mana-clash",
+  "version": "0.1.0",
+  "metadata": {
+    "name": "Mana Clash",
+    "description": "A small original Magic-like 1v1 ruleset that dogfoods lands, tap/untap, mana payment, creature combat, and graveyard flow."
+  },
+  "playerConfig": {
+    "minPlayers": 2,
+    "maxPlayers": 2
+  },
+  "zones": [
+    { "id": "hand", "zoneType": "hand", "scope": "player" },
+    { "id": "deck", "zoneType": "deck", "scope": "player" },
+    { "id": "board", "zoneType": "board", "scope": "player", "capacity": 7 },
+    { "id": "land", "zoneType": "land", "scope": "player" },
+    { "id": "discard", "zoneType": "discard", "scope": "match" },
+    { "id": "graveyard", "zoneType": "graveyard", "scope": "match" }
+  ],
+  "resources": [
+    { "id": "health", "defaultMax": 20 },
+    { "id": "mana", "defaultCurrent": 0, "defaultMax": 99 },
+    { "id": "landDrop", "defaultCurrent": 1, "defaultMax": 1 },
+    { "id": "fatigue", "defaultCurrent": 0 }
+  ],
+  "turnGraph": [
+    "turn_start",
+    "refresh",
+    "draw",
+    "main",
+    "turn_end"
+  ],
+  "cardCatalog": "card-catalog.json",
+  "ui": {
+    "defaultBoardLayout": "ui/mana-clash-board-layout.json",
+    "boardLayouts": ["ui/mana-clash-board-layout.json"],
+    "defaultPresentationCatalog": "ui/mana-clash-presentation.json",
+    "presentationCatalogs": ["ui/mana-clash-presentation.json"],
+    "defaultPlaytestScript": "ui/mana-clash-playtests.json",
+    "playtestScripts": ["ui/mana-clash-playtests.json"]
+  },
+  "behaviors": [
+    "play_land",
+    "tap_land_for_mana",
+    "play_river_bear",
+    "play_sky_drake",
+    "cinder_bolt_hero",
+    "cinder_bolt_creature",
+    "growth_charm",
+    "creature_attack_hero",
+    "creature_fight_creature",
+    "mana_clash_draw_or_fatigue",
+    "refresh_mana_clash_turn",
+    "open_mana_clash_main_prompt"
+  ]
+}

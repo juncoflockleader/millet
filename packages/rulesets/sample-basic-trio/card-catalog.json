@@ -1,0 +1,1472 @@
+{
+  "id": "sample-basic-trio-cards",
+  "version": "0.1.0",
+  "templates": [
+    {
+      "templateId": "ember_lance",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.ember_lance.name",
+      "descriptionKey": "card.ember_lance.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "freeze"
+      ],
+      "behaviorIds": [
+        "ember_lance",
+        "ember_lance_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-ember-lance"
+      ],
+      "manaCost": 4,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "study_scroll",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.study_scroll.name",
+      "descriptionKey": "card.study_scroll.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "draw"
+      ],
+      "behaviorIds": [
+        "study_scroll"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-study-scroll"
+      ],
+      "manaCost": 3,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "mirror_guard",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.mirror_guard.name",
+      "descriptionKey": "card.mirror_guard.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "summon"
+      ],
+      "behaviorIds": [
+        "mirror_guard"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-study-scroll"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "frost_pin",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.frost_pin.name",
+      "descriptionKey": "card.frost_pin.description",
+      "tags": [
+        "spell",
+        "class_mage"
+      ],
+      "behaviorIds": [
+        "frost_pin",
+        "frost_pin_hero"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-frost-pin"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "null_form",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.null_form.name",
+      "descriptionKey": "card.null_form.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "transform"
+      ],
+      "behaviorIds": [
+        "null_form"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-null-form"
+      ],
+      "manaCost": 4,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "ember_wave",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.ember_wave.name",
+      "descriptionKey": "card.ember_wave.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "area"
+      ],
+      "behaviorIds": [
+        "ember_wave"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-ember-wave"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "cinder_sparks",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.cinder_sparks.name",
+      "descriptionKey": "card.cinder_sparks.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "random"
+      ],
+      "behaviorIds": [
+        "cinder_sparks"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-cinder-sparks"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "winter_stasis",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.winter_stasis.name",
+      "descriptionKey": "card.winter_stasis.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "freeze",
+        "area"
+      ],
+      "behaviorIds": [
+        "winter_stasis"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-winter-stasis"
+      ],
+      "manaCost": 3,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "ember_column",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.ember_column.name",
+      "descriptionKey": "card.ember_column.description",
+      "tags": [
+        "spell",
+        "class_mage",
+        "area"
+      ],
+      "behaviorIds": [
+        "ember_column"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-ember-column"
+      ],
+      "manaCost": 7,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "glacier_warden",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.glacier_warden.name",
+      "descriptionKey": "card.glacier_warden.description",
+      "tags": [
+        "minion",
+        "class_mage",
+        "freeze"
+      ],
+      "behaviorIds": [
+        "play_glacier_warden",
+        "glacier_warden_attack",
+        "glacier_warden_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-glacier-warden"
+      ],
+      "manaCost": 4,
+      "stats": {
+        "attack": 3,
+        "health": 6,
+        "maxHealth": 6
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "spark_adept",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.spark_adept.name",
+      "descriptionKey": "card.spark_adept.description",
+      "tags": [
+        "minion",
+        "neutral",
+        "spell_power"
+      ],
+      "behaviorIds": [
+        "play_spark_adept",
+        "river_guard_attack",
+        "river_guard_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-spark-adept"
+      ],
+      "manaCost": 2,
+      "stats": {
+        "attack": 2,
+        "health": 2,
+        "maxHealth": 2,
+        "spellPower": 1
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "spellPower",
+            "source": "stats",
+            "slot": "top-right",
+            "icon": "spark",
+            "label": "Spell Power",
+            "priority": 15
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "guard_stance",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.guard_stance.name",
+      "descriptionKey": "card.guard_stance.description",
+      "tags": [
+        "spell",
+        "class_warrior",
+        "armor",
+        "draw"
+      ],
+      "behaviorIds": [
+        "guard_stance"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-guard-stance"
+      ],
+      "manaCost": 3,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "ring_sweep",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.ring_sweep.name",
+      "descriptionKey": "card.ring_sweep.description",
+      "tags": [
+        "spell",
+        "class_warrior",
+        "area"
+      ],
+      "behaviorIds": [
+        "ring_sweep"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-ring-sweep"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "split_strike",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.split_strike.name",
+      "descriptionKey": "card.split_strike.description",
+      "tags": [
+        "spell",
+        "class_warrior",
+        "random"
+      ],
+      "behaviorIds": [
+        "split_strike"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-split-strike"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "battle_edict",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.battle_edict.name",
+      "descriptionKey": "card.battle_edict.description",
+      "tags": [
+        "spell",
+        "class_warrior",
+        "destroy"
+      ],
+      "behaviorIds": [
+        "battle_edict"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-battle-edict"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "battle_rush",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.battle_rush.name",
+      "descriptionKey": "card.battle_rush.description",
+      "tags": [
+        "spell",
+        "class_warrior",
+        "buff",
+        "charge"
+      ],
+      "behaviorIds": [
+        "battle_rush"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-battle-rush"
+      ],
+      "manaCost": 3,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "battle_focus",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.battle_focus.name",
+      "descriptionKey": "card.battle_focus.description",
+      "tags": [
+        "spell",
+        "class_warrior",
+        "hero_attack"
+      ],
+      "behaviorIds": [
+        "battle_focus",
+        "battle_focus_attack"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-battle-focus"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "forge_axe",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.forge_axe.name",
+      "descriptionKey": "card.forge_axe.description",
+      "tags": [
+        "weapon",
+        "class_warrior"
+      ],
+      "behaviorIds": [
+        "forge_axe_attack"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-forge-axe"
+      ],
+      "stats": {
+        "attack": 3,
+        "durability": 2
+      },
+      "display": {
+        "layout": "basic-weapon",
+        "properties": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "durability",
+            "source": "counter",
+            "slot": "bottom-right",
+            "icon": "durability",
+            "label": "Durability",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "heavy_reaper",
+      "version": "0.1.0",
+      "objectType": "equipment",
+      "nameKey": "card.heavy_reaper.name",
+      "descriptionKey": "card.heavy_reaper.description",
+      "tags": [
+        "weapon",
+        "class_warrior"
+      ],
+      "behaviorIds": [
+        "equip_heavy_reaper",
+        "heavy_reaper_attack"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-heavy-reaper"
+      ],
+      "manaCost": 5,
+      "stats": {
+        "attack": 5,
+        "durability": 2
+      },
+      "display": {
+        "layout": "basic-weapon",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "durability",
+            "source": "counter",
+            "slot": "bottom-right",
+            "icon": "durability",
+            "label": "Durability",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "storm_runner",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.storm_runner.name",
+      "descriptionKey": "card.storm_runner.description",
+      "tags": [
+        "minion",
+        "class_warrior",
+        "charge"
+      ],
+      "behaviorIds": [
+        "play_storm_runner",
+        "storm_runner_attack",
+        "storm_runner_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-storm-runner"
+      ],
+      "manaCost": 4,
+      "stats": {
+        "attack": 4,
+        "health": 3,
+        "maxHealth": 3
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "war_drummer",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.war_drummer.name",
+      "descriptionKey": "card.war_drummer.description",
+      "tags": [
+        "minion",
+        "class_warrior",
+        "aura"
+      ],
+      "behaviorIds": [
+        "play_war_drummer",
+        "war_drummer_ready_small_minion",
+        "river_guard_attack",
+        "river_guard_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-war-drummer"
+      ],
+      "manaCost": 3,
+      "stats": {
+        "attack": 2,
+        "health": 3,
+        "maxHealth": 3
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "banner_captain",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.banner_captain.name",
+      "descriptionKey": "card.banner_captain.description",
+      "tags": [
+        "minion",
+        "neutral",
+        "attack_aura",
+        "aura"
+      ],
+      "behaviorIds": [
+        "play_banner_captain",
+        "river_guard_attack",
+        "river_guard_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-banner-captain"
+      ],
+      "manaCost": 3,
+      "stats": {
+        "attack": 2,
+        "health": 2,
+        "maxHealth": 2
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "dawn_smite",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.dawn_smite.name",
+      "descriptionKey": "card.dawn_smite.description",
+      "tags": [
+        "spell",
+        "class_priest"
+      ],
+      "behaviorIds": [
+        "dawn_smite"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-dawn-smite"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "mind_spark",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.mind_spark.name",
+      "descriptionKey": "card.mind_spark.description",
+      "tags": [
+        "spell",
+        "class_priest"
+      ],
+      "behaviorIds": [
+        "mind_spark"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-mind-spark"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "mind_glimpse",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.mind_glimpse.name",
+      "descriptionKey": "card.mind_glimpse.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "copy"
+      ],
+      "behaviorIds": [
+        "mind_glimpse"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-mind-glimpse"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "dawn_cleric",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.dawn_cleric.name",
+      "descriptionKey": "card.dawn_cleric.description",
+      "tags": [
+        "minion",
+        "class_priest"
+      ],
+      "behaviorIds": [
+        "play_dawn_cleric",
+        "river_guard_attack",
+        "river_guard_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-dawn-cleric"
+      ],
+      "stats": {
+        "attack": 1,
+        "health": 3,
+        "maxHealth": 3
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "aegis_word",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.aegis_word.name",
+      "descriptionKey": "card.aegis_word.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "buff",
+        "draw"
+      ],
+      "behaviorIds": [
+        "aegis_word"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-aegis-word"
+      ],
+      "manaCost": 1,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "spirit_echo",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.spirit_echo.name",
+      "descriptionKey": "card.spirit_echo.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "buff"
+      ],
+      "behaviorIds": [
+        "spirit_echo"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-spirit-echo"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "holy_bloom",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.holy_bloom.name",
+      "descriptionKey": "card.holy_bloom.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "area",
+        "heal"
+      ],
+      "behaviorIds": [
+        "holy_bloom"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-holy-bloom"
+      ],
+      "manaCost": 5,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "quiet_verdict",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.quiet_verdict.name",
+      "descriptionKey": "card.quiet_verdict.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "destroy"
+      ],
+      "behaviorIds": [
+        "quiet_verdict"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-quiet-verdict"
+      ],
+      "manaCost": 2,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "final_verdict",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.final_verdict.name",
+      "descriptionKey": "card.final_verdict.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "destroy"
+      ],
+      "behaviorIds": [
+        "final_verdict"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-final-verdict"
+      ],
+      "manaCost": 3,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "borrowed_command",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.borrowed_command.name",
+      "descriptionKey": "card.borrowed_command.description",
+      "tags": [
+        "spell",
+        "class_priest",
+        "control"
+      ],
+      "behaviorIds": [
+        "borrowed_command"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-borrowed-command"
+      ],
+      "manaCost": 10,
+      "display": {
+        "layout": "basic-spell",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "river_guard",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.river_guard.name",
+      "descriptionKey": "card.river_guard.description",
+      "tags": [
+        "minion",
+        "neutral"
+      ],
+      "behaviorIds": [
+        "play_river_guard",
+        "river_guard_attack",
+        "river_guard_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-river-guard"
+      ],
+      "stats": {
+        "attack": 2,
+        "health": 3,
+        "maxHealth": 3
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "needle_scout",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.needle_scout.name",
+      "descriptionKey": "card.needle_scout.description",
+      "tags": [
+        "minion",
+        "neutral",
+        "battlecry"
+      ],
+      "behaviorIds": [
+        "play_needle_scout",
+        "needle_scout_battlecry",
+        "river_guard_attack",
+        "river_guard_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-needle-scout"
+      ],
+      "manaCost": 1,
+      "stats": {
+        "attack": 1,
+        "health": 1,
+        "maxHealth": 1
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost",
+            "priority": 10
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "mirror_guard_token",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.mirror_guard_token.name",
+      "descriptionKey": "card.mirror_guard_token.description",
+      "tags": [
+        "minion",
+        "taunt",
+        "token"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-study-scroll"
+      ],
+      "stats": {
+        "attack": 0,
+        "health": 2,
+        "maxHealth": 2
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "training_spark",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.training_spark.name",
+      "descriptionKey": "card.training_spark.description",
+      "tags": [
+        "minion",
+        "neutral",
+        "transformed"
+      ],
+      "behaviorIds": [
+        "training_spark_attack",
+        "training_spark_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-null-form"
+      ],
+      "stats": {
+        "attack": 1,
+        "health": 1,
+        "maxHealth": 1
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    },
+    {
+      "templateId": "arena_ogre",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.arena_ogre.name",
+      "descriptionKey": "card.arena_ogre.description",
+      "tags": [
+        "minion",
+        "neutral"
+      ],
+      "behaviorIds": [
+        "arena_ogre_attack",
+        "arena_ogre_attack_minion"
+      ],
+      "assetRefs": [
+        "card-frame-default",
+        "card-art-arena-ogre"
+      ],
+      "stats": {
+        "attack": 6,
+        "health": 7,
+        "maxHealth": 7
+      },
+      "display": {
+        "layout": "basic-minion",
+        "properties": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack",
+            "priority": 20
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health",
+            "priority": 30
+          }
+        ]
+      }
+    }
+  ]
+}

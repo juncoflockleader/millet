@@ -1,0 +1,18 @@
+{
+  "id": "sample-mana-clash-behaviors",
+  "version": "0.1.0",
+  "behaviors": [
+    "play_land",
+    "tap_land_for_mana",
+    "play_river_bear",
+    "play_sky_drake",
+    "cinder_bolt_hero",
+    "cinder_bolt_creature",
+    "growth_charm",
+    "creature_attack_hero",
+    "creature_fight_creature",
+    "mana_clash_draw_or_fatigue",
+    "refresh_mana_clash_turn",
+    "open_mana_clash_main_prompt"
+  ]
+}

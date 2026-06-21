@@ -14,9 +14,20 @@ import {
   sampleIdentityBehaviors,
   sampleIdentityPhaseGraph
 } from "../../rulesets/sample-identity/sample-identity.ts";
+import {
+  createSampleBasicTrioSetupEvents,
+  sampleBasicTrioBehaviors,
+  sampleBasicTrioPhaseGraph,
+  type BasicTrioClassId
+} from "../../rulesets/sample-basic-trio/sample-basic-trio.ts";
+import {
+  createSampleManaClashSetupEvents,
+  sampleManaClashBehaviors,
+  sampleManaClashPhaseGraph
+} from "../../rulesets/sample-mana-clash/sample-mana-clash.ts";
 import { createSampleRuneDuelSetupEvents, sampleRuneDuelBehaviors, sampleRuneDuelPhaseGraph } from "../../rulesets/sample-rune-duel/sample-rune-duel.ts";
 
-export const REGISTERED_RULESET_IDS = ["sample-duel", "sample-identity", "sample-rune-duel"] as const;
+export const REGISTERED_RULESET_IDS = ["sample-duel", "sample-identity", "sample-rune-duel", "sample-basic-trio", "sample-mana-clash"] as const;
 export type RegisteredRulesetId = typeof REGISTERED_RULESET_IDS[number];
 
 export interface RegisteredRuleset {
@@ -35,6 +46,8 @@ export interface RegisteredRulesetSetupOptions {
   contentLock?: ContentLock;
   playerCount?: 6 | 8;
   demoDuel?: boolean;
+  p1Class?: BasicTrioClassId;
+  p2Class?: BasicTrioClassId;
 }
 
 export const REGISTERED_RULESETS: Record<RegisteredRulesetId, RegisteredRuleset> = {
@@ -94,6 +107,55 @@ export const REGISTERED_RULESETS: Record<RegisteredRulesetId, RegisteredRuleset>
               p2Health: 12,
               p1Mana: 4,
               p2Mana: 4,
+              mirrorP2Hand: true
+            }
+          : {})
+      }),
+    shouldRunPhaseOnCreate: (options) => options.demoDuel === true,
+    resolution: {
+      outcomeMode: "last_alive",
+      deathMode: "direct"
+    }
+  },
+  "sample-basic-trio": {
+    id: "sample-basic-trio",
+    dir: "packages/rulesets/sample-basic-trio",
+    behaviorLibrary: sampleBasicTrioBehaviors,
+    phaseGraph: sampleBasicTrioPhaseGraph,
+    createSetupEvents: (options) =>
+      createSampleBasicTrioSetupEvents({
+        contentLock: options.contentLock,
+        p1Class: options.p1Class,
+        p2Class: options.p2Class,
+        ...(options.demoDuel
+          ? {
+              p1Health: 30,
+              p2Health: 30,
+              p1Mana: 10,
+              p2Mana: 10
+            }
+          : {})
+      }),
+    shouldRunPhaseOnCreate: (options) => options.demoDuel === true,
+    resolution: {
+      outcomeMode: "last_alive",
+      deathMode: "direct"
+    }
+  },
+  "sample-mana-clash": {
+    id: "sample-mana-clash",
+    dir: "packages/rulesets/sample-mana-clash",
+    behaviorLibrary: sampleManaClashBehaviors,
+    phaseGraph: sampleManaClashPhaseGraph,
+    createSetupEvents: (options) =>
+      createSampleManaClashSetupEvents({
+        contentLock: options.contentLock,
+        ...(options.demoDuel
+          ? {
+              p1Health: 20,
+              p2Health: 20,
+              p1Mana: 0,
+              p2Mana: 0,
               mirrorP2Hand: true
             }
           : {})

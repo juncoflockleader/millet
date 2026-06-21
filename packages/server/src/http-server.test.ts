@@ -99,6 +99,14 @@ test("HTTP server can serve the Millet Studio shell, project registry, and asset
   assert.equal(cardArt.headers["content-type"], "image/png");
   assert.match(cardArt.body, /^\uFFFDPNG/);
 
+  const cardArtHead = await dispatch(server, {
+    method: "HEAD",
+    url: "/assets/cards/firebolt.png"
+  });
+  assert.equal(cardArtHead.statusCode, 200);
+  assert.equal(cardArtHead.headers["content-type"], "image/png");
+  assert.equal(cardArtHead.body, "");
+
   const effectSheet = await dispatch(server, {
     method: "GET",
     url: "/assets/effects/firebolt-sheet.png"

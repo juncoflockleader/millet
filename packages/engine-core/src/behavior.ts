@@ -1,16 +1,25 @@
 import { assertStateInvariants } from "./invariants.ts";
 import { selectorCanReachByEffectiveRange } from "./range.ts";
 import { reduceEvent } from "./reducer.ts";
+import { DeterministicRng } from "./rng.ts";
 import type {
   CardMovedPayload,
   DamageDealtPayload,
+  EventVisibility,
+  GameObjectState,
   Id,
   MatchCommand,
   MatchEvent,
   MatchState,
+  ObjectControlChangedPayload,
+  ObjectCreatedPayload,
   ObjectCounterChangedPayload,
   ObjectDestroyedPayload,
   ObjectExhaustedPayload,
+  ObjectKeywordChangedPayload,
+  ObjectPlayedPayload,
+  ObjectStatChangedPayload,
+  ObjectTransformedPayload,
   OutcomeDeclaredPayload,
   OutcomeState,
   PlayerStatus,
@@ -18,6 +27,7 @@ import type {
   PromptAnsweredPayload,
   PromptOpenedPayload,
   PromptState,
+  RandomChoiceMadePayload,
   ResourceChangedPayload,
   TriggerFiredPayload,
   TriggerRegisteredPayload
@@ -35,6 +45,7 @@ export class CommandRejectedError extends Error {
 
 export interface BehaviorLibrary {
   behaviors: Record<Id, BehaviorDefinition>;
+  statModifiers?: StatModifierDefinition[];
 }
 
 export interface BehaviorDefinition {
@@ -53,10 +64,24 @@ export interface BehaviorDefinition {
   ux?: Record<string, unknown>;
 }
 
+export interface StatModifierDefinition {
+  id: Id;
+  stat: string;
+  source?: ObjectMatchDefinition;
+  target?: ObjectMatchDefinition;
+  delta?: number;
+  multiplier?: number;
+  min?: number;
+  max?: number;
+  round?: "floor" | "ceil" | "round";
+  includeSource?: boolean;
+}
+
 export interface TriggerDefinition {
   eventType: string;
   timing: "after";
   source?: "self" | "any";
+  eventMatch?: TriggerEventMatchDefinition;
   priority?: number;
   once?: boolean;
 }
@@ -68,7 +93,7 @@ export type PlayerRef =
   | { id: Id }
   | { selector: Id };
 
-export type ObjectRef = "self" | { id: Id } | { selector: Id };
+export type ObjectRef = "self" | "event_object" | { id: Id } | { selector: Id };
 export type ZoneRef = Id | { id: Id } | { owner: PlayerRef; zoneType: string };
 
 export interface JudgmentMatchDefinition {
@@ -103,15 +128,109 @@ export interface SelectorDefinition {
     notSelf?: boolean;
     objectTypes?: string[];
     tags?: string[];
+    keywords?: string[];
+    keywordsNot?: string[];
     owner?: PlayerRef;
+    ownerNot?: PlayerRef;
+    controller?: PlayerRef;
+    controllerNot?: PlayerRef;
     zoneOwner?: PlayerRef;
+    zoneOwnerNot?: PlayerRef;
     zoneType?: string;
+    stats?: Record<string, ObjectStatMatchDefinition>;
+    guardedBy?: SelectorGuardDefinition;
     range?: {
       from: "controller" | PlayerRef;
       mode: "attack";
       baseRange?: number;
     };
   };
+}
+
+export interface ObjectStatMatchDefinition {
+  min?: number;
+  max?: number;
+  equals?: number;
+  lessThanStat?: string;
+  greaterThanStat?: string;
+}
+
+export interface SelectorGuardDefinition {
+  objectTypes?: string[];
+  tags?: string[];
+  zoneType?: string;
+}
+
+export type ObjectMatchDefinition = NonNullable<SelectorDefinition["match"]>;
+export type PlayerMatchDefinition = NonNullable<SelectorDefinition["match"]>;
+
+export interface TriggerEventMatchDefinition {
+  reason?: string | string[];
+  stat?: string;
+  object?: ObjectMatchDefinition;
+}
+
+export type NumericValueDefinition =
+  | number
+  | {
+      source: "sum";
+      values: NumericValueDefinition[];
+      multiplier?: number;
+      delta?: number;
+      min?: number;
+      max?: number;
+      round?: "floor" | "ceil" | "round";
+    }
+  | {
+      source: "object_stat";
+      object: ObjectRef;
+      stat: string;
+      multiplier?: number;
+      delta?: number;
+      min?: number;
+      max?: number;
+      round?: "floor" | "ceil" | "round";
+    }
+  | {
+      source: "object_counter";
+      object: ObjectRef;
+      counter: string;
+      multiplier?: number;
+      delta?: number;
+      min?: number;
+      max?: number;
+      round?: "floor" | "ceil" | "round";
+    }
+  | {
+      source: "matching_object_stat_sum";
+      stat: string;
+      match?: ObjectMatchDefinition;
+      base?: number;
+      multiplier?: number;
+      delta?: number;
+      min?: number;
+      max?: number;
+      round?: "floor" | "ceil" | "round";
+    }
+  | {
+      source: "player_resource";
+      player: PlayerRef;
+      resource: string;
+      multiplier?: number;
+      delta?: number;
+      min?: number;
+      max?: number;
+      round?: "floor" | "ceil" | "round";
+    };
+
+export interface RandomTargetPoolDefinition {
+  players?: PlayerMatchDefinition;
+  objects?: ObjectMatchDefinition;
+}
+
+interface RandomTargetCandidate {
+  kind: "player" | "object";
+  id: Id;
 }
 
 export type ConditionDefinition =
@@ -127,6 +246,12 @@ export type ConditionDefinition =
       amount: number;
     }
   | {
+      type: "resource_at_most";
+      player: PlayerRef;
+      resource: string;
+      amount: number;
+    }
+  | {
       type: "object_ready";
       object: ObjectRef;
     };
@@ -135,20 +260,76 @@ export type EffectDefinition =
   | {
       type: "deal_damage";
       to: PlayerRef;
-      amount: number;
+      amount: NumericValueDefinition;
       damageType?: string;
     }
   | {
+      type: "deal_damage_to_object";
+      to: ObjectRef;
+      amount: NumericValueDefinition;
+      healthStat?: string;
+      destroyAt?: number;
+      toZoneId?: ZoneRef;
+      damageType?: string;
+    }
+  | {
+      type: "deal_damage_to_matching_objects";
+      match?: ObjectMatchDefinition;
+      amount: NumericValueDefinition;
+      healthStat?: string;
+      destroyAt?: number;
+      toZoneId?: ZoneRef;
+      damageType?: string;
+      requireAny?: boolean;
+    }
+  | {
+      type: "deal_damage_to_random_targets";
+      targetPool: RandomTargetPoolDefinition;
+      count: NumericValueDefinition;
+      amount: NumericValueDefinition;
+      healthStat?: string;
+      destroyAt?: number;
+      toZoneId?: ZoneRef;
+      damageType?: string;
+      withReplacement?: boolean;
+      requireAny?: boolean;
+      reason?: string;
+    }
+  | {
       type: "deal_damage_all_players";
-      amount: number;
+      amount: NumericValueDefinition;
       includeDead?: boolean;
       damageType?: string;
     }
   | {
+      type: "deal_damage_to_matching_players";
+      match?: PlayerMatchDefinition;
+      amount: NumericValueDefinition;
+      damageType?: string;
+      requireAny?: boolean;
+    }
+  | {
       type: "heal";
       player: PlayerRef;
-      amount: number;
+      amount: NumericValueDefinition;
       resource?: string;
+    }
+  | {
+      type: "heal_object";
+      object: ObjectRef;
+      amount: NumericValueDefinition;
+      healthStat?: string;
+      maxHealthStat?: string;
+      reason?: string;
+    }
+  | {
+      type: "heal_matching_objects";
+      match?: ObjectMatchDefinition;
+      amount: NumericValueDefinition;
+      healthStat?: string;
+      maxHealthStat?: string;
+      requireAny?: boolean;
+      reason?: string;
     }
   | {
       type: "prevent_next_damage";
@@ -168,6 +349,38 @@ export type EffectDefinition =
       player: PlayerRef;
       slotTag: string;
       discardZoneId?: ZoneRef;
+    }
+  | {
+      type: "play_object";
+      object: ObjectRef;
+      toZoneId: ZoneRef;
+      toPosition?: number;
+      fromZoneType?: string;
+      replaceExisting?: boolean;
+      discardZoneId?: ZoneRef;
+      objectType?: string;
+      owner?: PlayerRef;
+      controller?: PlayerRef;
+      visibility?: GameObjectState["visibility"];
+      stats?: Record<string, number>;
+      counters?: Record<string, number>;
+      tags?: string[];
+      keywords?: string[];
+      exhausted?: boolean;
+      battlecryBehaviorId?: Id;
+      reason?: string;
+    }
+  | {
+      type: "copy_random_object_from_zone";
+      fromZoneId: ZoneRef;
+      toZoneId: ZoneRef;
+      objectId: Id;
+      match?: ObjectMatchDefinition;
+      owner?: PlayerRef;
+      controller?: PlayerRef;
+      visibility?: GameObjectState["visibility"];
+      requireAny?: boolean;
+      reason?: string;
     }
   | {
       type: "resolve_delayed_effect";
@@ -286,6 +499,52 @@ export type EffectDefinition =
       reason?: string;
     }
   | {
+      type: "set_object_exhausted_on_matching_objects";
+      match?: ObjectMatchDefinition;
+      exhausted: boolean;
+      requireAny?: boolean;
+      reason?: string;
+    }
+  | {
+      type: "set_object_keyword";
+      object: ObjectRef;
+      keyword: string;
+      present: boolean;
+      reason?: string;
+    }
+  | {
+      type: "set_object_keyword_on_matching_objects";
+      match?: ObjectMatchDefinition;
+      keyword: string;
+      present: boolean;
+      requireAny?: boolean;
+      reason?: string;
+    }
+  | {
+      type: "transform_object";
+      object: ObjectRef;
+      templateId?: Id;
+      objectType?: string;
+      visibility?: GameObjectState["visibility"];
+      stats?: Record<string, number>;
+      counters?: Record<string, number>;
+      tags?: string[];
+      keywords?: string[];
+      attachments?: Id[];
+      modifiers?: Id[];
+      exhausted?: boolean;
+      reason?: string;
+    }
+  | {
+      type: "change_object_control";
+      object: ObjectRef;
+      controller: PlayerRef;
+      toZoneId?: ZoneRef;
+      toPosition?: number;
+      exhausted?: boolean;
+      reason?: string;
+    }
+  | {
       type: "adjust_object_counter";
       object: ObjectRef;
       counter: string;
@@ -301,6 +560,38 @@ export type EffectDefinition =
       value: number;
       toZoneId?: ZoneRef;
       reason?: string;
+    }
+  | {
+      type: "create_object";
+      object: ObjectCreationDefinition;
+      toZoneId: ZoneRef;
+      toPosition?: number;
+    }
+  | {
+      type: "set_object_stat";
+      object: ObjectRef;
+      stat: string;
+      value: NumericValueDefinition;
+      reason?: string;
+    }
+  | {
+      type: "adjust_object_stat";
+      object: ObjectRef;
+      stat: string;
+      delta: NumericValueDefinition;
+      min?: number;
+      max?: number;
+      reason?: string;
+    }
+  | {
+      type: "adjust_object_stat_on_matching_objects";
+      match?: ObjectMatchDefinition;
+      stat: string;
+      delta: NumericValueDefinition;
+      min?: number;
+      max?: number;
+      reason?: string;
+      requireAny?: boolean;
     }
   | {
       type: "register_trigger";
@@ -320,6 +611,23 @@ export type EffectDefinition =
       payload?: unknown;
       defaultSelections?: Record<Id, PlayerRef[]>;
     };
+
+export interface ObjectCreationDefinition {
+  id: Id;
+  templateId?: Id;
+  objectType: string;
+  owner?: PlayerRef;
+  controller?: PlayerRef;
+  creator?: PlayerRef | "system";
+  visibility?: GameObjectState["visibility"];
+  stats?: Record<string, number>;
+  counters?: Record<string, number>;
+  tags?: string[];
+  keywords?: string[];
+  attachments?: Id[];
+  modifiers?: Id[];
+  exhausted?: boolean;
+}
 
 export interface ExecuteBehaviorPayload {
   behaviorId: Id;
@@ -346,6 +654,20 @@ interface PromptBehaviorAnswer {
   selections?: Record<Id, Id[]>;
 }
 
+interface ObjectMatchContext {
+  controllerId?: Id;
+  statModifiers?: StatModifierDefinition[];
+  ignoreStatModifiers?: boolean;
+}
+
+function objectMatchContext(session: ResolutionSession, overrides: ObjectMatchContext = {}): ObjectMatchContext {
+  return {
+    controllerId: session.controllerId,
+    statModifiers: session.context.behaviorLibrary.statModifiers,
+    ...overrides
+  };
+}
+
 export interface ResolutionContext {
   behaviorLibrary: BehaviorLibrary;
   outcomeMode?: "none" | "last_alive";
@@ -365,6 +687,7 @@ interface ResolutionSession {
   command: MatchCommand<ExecuteBehaviorPayload>;
   context: ResolutionContext;
   sourceObjectId?: Id;
+  eventObjectId?: Id;
   controllerId?: Id;
   ownerId?: Id;
   selections: Record<Id, Id[]>;
@@ -380,7 +703,11 @@ export interface SelectorCandidate {
   reasons: string[];
 }
 
-function eventVisibility() {
+function eventVisibility(visibility?: EventVisibility) {
+  if (visibility) {
+    return structuredClone(visibility);
+  }
+
   return {
     default: {
       kind: "public" as const
@@ -388,7 +715,7 @@ function eventVisibility() {
   };
 }
 
-function emit<TPayload>(session: ResolutionSession, type: string, payload: TPayload): void {
+function emit<TPayload>(session: ResolutionSession, type: string, payload: TPayload, visibility?: EventVisibility): void {
   const event: MatchEvent<TPayload> = {
     id: `evt_${session.state.lastSequence + 1}`,
     matchId: session.state.matchId,
@@ -396,7 +723,7 @@ function emit<TPayload>(session: ResolutionSession, type: string, payload: TPayl
     transactionId: session.transactionId,
     type,
     payload,
-    visibility: eventVisibility(),
+    visibility: eventVisibility(visibility),
     causedBy: {
       commandId: session.command.id
     }
@@ -458,6 +785,14 @@ function resolveObjectRef(session: ResolutionSession, ref: ObjectRef): Id {
     return session.sourceObjectId;
   }
 
+  if (ref === "event_object") {
+    if (!session.eventObjectId) {
+      throw new CommandRejectedError("missing_event_object", "Behavior does not have an event object");
+    }
+
+    return session.eventObjectId;
+  }
+
   if ("id" in ref) {
     return ref.id;
   }
@@ -496,6 +831,22 @@ function resolveZoneRef(session: ResolutionSession, ref: ZoneRef): Id {
   return matches[0]!;
 }
 
+function resolveOptionalPlayerRef(session: ResolutionSession, ref: PlayerRef | undefined, fallback?: Id): Id | undefined {
+  if (!ref) {
+    return fallback;
+  }
+
+  return resolvePlayerRef(session, ref);
+}
+
+function resolveCreationActorRef(session: ResolutionSession, ref: PlayerRef | "system" | undefined, fallback?: Id): Id | undefined {
+  if (ref === "system") {
+    return "system";
+  }
+
+  return resolveOptionalPlayerRef(session, ref, fallback);
+}
+
 function resolveTemplateId(session: ResolutionSession, id: Id): Id {
   return id.replace(/\{(player|command_player|source|next_sequence)\}/g, (_token, placeholder: string) => {
     if (placeholder === "source") {
@@ -518,6 +869,178 @@ function resolveTemplateId(session: ResolutionSession, id: Id): Id {
   });
 }
 
+function applyNumericModifiers(
+  baseValue: number,
+  modifiers: {
+    multiplier?: number;
+    delta?: number;
+    min?: number;
+    max?: number;
+    round?: "floor" | "ceil" | "round";
+  }
+): number {
+  let value = baseValue;
+
+  if (modifiers.multiplier !== undefined) {
+    value *= modifiers.multiplier;
+  }
+
+  if (modifiers.delta !== undefined) {
+    value += modifiers.delta;
+  }
+
+  if (modifiers.round === "floor") {
+    value = Math.floor(value);
+  } else if (modifiers.round === "ceil") {
+    value = Math.ceil(value);
+  } else if (modifiers.round === "round") {
+    value = Math.round(value);
+  }
+
+  if (modifiers.min !== undefined) {
+    value = Math.max(value, modifiers.min);
+  }
+
+  if (modifiers.max !== undefined) {
+    value = Math.min(value, modifiers.max);
+  }
+
+  return value;
+}
+
+function objectStatValue(
+  state: MatchState,
+  object: GameObjectState,
+  stat: string,
+  context: ObjectMatchContext = {}
+): number | undefined {
+  const baseValue = object.stats[stat];
+
+  if (typeof baseValue !== "number" || !Number.isFinite(baseValue)) {
+    return undefined;
+  }
+
+  if (context.ignoreStatModifiers || !context.statModifiers || context.statModifiers.length === 0) {
+    return baseValue;
+  }
+
+  let value = baseValue;
+  const matchingModifiers = context.statModifiers
+    .filter((modifier) => modifier.stat === stat)
+    .sort((left, right) => left.id.localeCompare(right.id));
+
+  for (const modifier of matchingModifiers) {
+    const sources = Object.values(state.objects).sort((left, right) => left.id.localeCompare(right.id));
+
+    for (const source of sources) {
+      const sourceContext: ObjectMatchContext = {
+        controllerId: source.controllerId ?? context.controllerId,
+        statModifiers: context.statModifiers,
+        ignoreStatModifiers: true
+      };
+
+      if (objectMatchReasons(state, source, modifier.source, sourceContext).length > 0) {
+        continue;
+      }
+
+      if (!modifier.includeSource && object.id === source.id) {
+        continue;
+      }
+
+      const targetContext: ObjectMatchContext = {
+        controllerId: source.controllerId ?? context.controllerId,
+        statModifiers: context.statModifiers,
+        ignoreStatModifiers: true
+      };
+
+      if (objectMatchReasons(state, object, modifier.target, targetContext).length > 0) {
+        continue;
+      }
+
+      value = applyNumericModifiers(value, modifier);
+    }
+  }
+
+  return value;
+}
+
+function resolveNumericValue(session: ResolutionSession, definition: NumericValueDefinition): number {
+  if (typeof definition === "number") {
+    if (!Number.isFinite(definition)) {
+      throw new CommandRejectedError("invalid_numeric_value", `Numeric value must be finite, got ${definition}`);
+    }
+
+    return definition;
+  }
+
+  if (definition.source === "sum") {
+    const total = definition.values.reduce((sum, value) => sum + resolveNumericValue(session, value), 0);
+    return applyNumericModifiers(total, definition);
+  }
+
+  if (definition.source === "object_stat") {
+    const objectId = resolveObjectRef(session, definition.object);
+    const object = session.state.objects[objectId];
+    const value = object ? objectStatValue(session.state, object, definition.stat, {
+      controllerId: session.controllerId,
+      statModifiers: session.context.behaviorLibrary.statModifiers
+    }) : undefined;
+
+    if (!object || typeof value !== "number" || !Number.isFinite(value)) {
+      throw new CommandRejectedError("missing_stat", `Object ${objectId} does not have stat ${definition.stat}`);
+    }
+
+    return applyNumericModifiers(value, definition);
+  }
+
+  if (definition.source === "object_counter") {
+    const objectId = resolveObjectRef(session, definition.object);
+    const object = session.state.objects[objectId];
+    const value = object?.counters[definition.counter];
+
+    if (!object || typeof value !== "number" || !Number.isFinite(value)) {
+      throw new CommandRejectedError("missing_counter", `Object ${objectId} does not have counter ${definition.counter}`);
+    }
+
+    return applyNumericModifiers(value, definition);
+  }
+
+  if (definition.source === "matching_object_stat_sum") {
+    let total = definition.base ?? 0;
+
+    for (const object of Object.values(session.state.objects)) {
+      const context: ObjectMatchContext = {
+        controllerId: session.controllerId,
+        statModifiers: session.context.behaviorLibrary.statModifiers
+      };
+      if (objectMatchReasons(session.state, object, definition.match, context).length > 0) {
+        continue;
+      }
+
+      const value = objectStatValue(session.state, object, definition.stat, context);
+      if (typeof value === "number" && Number.isFinite(value)) {
+        total += value;
+      }
+    }
+
+    return applyNumericModifiers(total, definition);
+  }
+
+  if (definition.source !== "player_resource") {
+    throw new CommandRejectedError("invalid_numeric_value", `Unsupported numeric source ${definition.source}`);
+  }
+
+  const playerId = resolvePlayerRef(session, definition.player);
+  const player = session.state.players[playerId];
+  const value = player?.resources[definition.resource]?.current;
+
+  if (!player || typeof value !== "number" || !Number.isFinite(value)) {
+    throw new CommandRejectedError("missing_resource", `Player ${playerId} does not have resource ${definition.resource}`);
+  }
+
+  return applyNumericModifiers(value, definition);
+}
+
 function resolveSelectorRangePlayerRef(
   state: MatchState,
   ref: "controller" | PlayerRef,
@@ -538,6 +1061,276 @@ function resolveSelectorRangePlayerRef(
   }
 
   return undefined;
+}
+
+function objectMatchesGuard(state: MatchState, object: GameObjectState, guard: SelectorGuardDefinition): boolean {
+  const zone = state.zones[object.zoneId];
+
+  if (guard.zoneType && zone?.zoneType !== guard.zoneType) {
+    return false;
+  }
+
+  if (guard.objectTypes && !guard.objectTypes.includes(object.objectType)) {
+    return false;
+  }
+
+  if (guard.tags && !guard.tags.every((tag) => object.tags.includes(tag))) {
+    return false;
+  }
+
+  return true;
+}
+
+function guardOwnerIdForObject(state: MatchState, object: GameObjectState): Id | undefined {
+  const zone = state.zones[object.zoneId];
+  return zone?.ownerId ?? object.ownerId ?? object.controllerId;
+}
+
+function hasGuardingObject(state: MatchState, ownerId: Id | undefined, guard: SelectorGuardDefinition, exceptObjectId?: Id): boolean {
+  if (!ownerId) {
+    return false;
+  }
+
+  return Object.values(state.objects).some((object) => {
+    if (object.id === exceptObjectId) {
+      return false;
+    }
+
+    if (guardOwnerIdForObject(state, object) !== ownerId) {
+      return false;
+    }
+
+    return objectMatchesGuard(state, object, guard);
+  });
+}
+
+function objectMatchReasons(
+  state: MatchState,
+  object: GameObjectState,
+  match: ObjectMatchDefinition | undefined,
+  context: ObjectMatchContext
+): string[] {
+  const reasons: string[] = [];
+  const zone = state.zones[object.zoneId];
+
+  if (match?.objectTypes && !match.objectTypes.includes(object.objectType)) {
+    reasons.push("object_type_not_allowed");
+  }
+
+  if (match?.tags && !match.tags.every((tag) => object.tags.includes(tag))) {
+    reasons.push("missing_required_tag");
+  }
+
+  if (match?.keywords && !match.keywords.every((keyword) => object.keywords.includes(keyword))) {
+    reasons.push("missing_required_keyword");
+  }
+
+  if (match?.keywordsNot && match.keywordsNot.some((keyword) => object.keywords.includes(keyword))) {
+    reasons.push("keyword_not_allowed");
+  }
+
+  if (match?.owner) {
+    const ownerId = resolveSelectorRangePlayerRef(state, match.owner, context);
+    if (!ownerId || object.ownerId !== ownerId) {
+      reasons.push("owner_not_allowed");
+    }
+  }
+
+  if (match?.ownerNot) {
+    const ownerId = resolveSelectorRangePlayerRef(state, match.ownerNot, context);
+    if (!ownerId || object.ownerId === ownerId) {
+      reasons.push("owner_not_allowed");
+    }
+  }
+
+  if (match?.controller) {
+    const controllerId = resolveSelectorRangePlayerRef(state, match.controller, context);
+    if (!controllerId || object.controllerId !== controllerId) {
+      reasons.push("controller_not_allowed");
+    }
+  }
+
+  if (match?.controllerNot) {
+    const controllerId = resolveSelectorRangePlayerRef(state, match.controllerNot, context);
+    if (!controllerId || object.controllerId === controllerId) {
+      reasons.push("controller_not_allowed");
+    }
+  }
+
+  if (match?.zoneType) {
+    if (zone?.zoneType !== match.zoneType) {
+      reasons.push(`zone_not_${match.zoneType}`);
+    }
+  }
+
+  if (match?.zoneOwner) {
+    const zoneOwnerId = resolveSelectorRangePlayerRef(state, match.zoneOwner, context);
+    if (!zoneOwnerId || zone?.ownerId !== zoneOwnerId) {
+      reasons.push("zone_owner_not_allowed");
+    }
+  }
+
+  if (match?.zoneOwnerNot) {
+    const zoneOwnerId = resolveSelectorRangePlayerRef(state, match.zoneOwnerNot, context);
+    if (!zoneOwnerId || zone?.ownerId === zoneOwnerId) {
+      reasons.push("zone_owner_not_allowed");
+    }
+  }
+
+  if (match?.stats) {
+    for (const [stat, filter] of Object.entries(match.stats)) {
+      const value = objectStatValue(state, object, stat, context);
+
+      if (!Number.isFinite(value)) {
+        reasons.push(`stat_${stat}_missing`);
+        continue;
+      }
+
+      if (filter.equals !== undefined && value !== filter.equals) {
+        reasons.push(`stat_${stat}_not_${filter.equals}`);
+      }
+      if (filter.min !== undefined && value < filter.min) {
+        reasons.push(`stat_${stat}_below_${filter.min}`);
+      }
+      if (filter.max !== undefined && value > filter.max) {
+        reasons.push(`stat_${stat}_above_${filter.max}`);
+      }
+      if (filter.lessThanStat !== undefined) {
+        const other = objectStatValue(state, object, filter.lessThanStat, context);
+        if (!Number.isFinite(other) || value >= other) {
+          reasons.push(`stat_${stat}_not_below_${filter.lessThanStat}`);
+        }
+      }
+      if (filter.greaterThanStat !== undefined) {
+        const other = objectStatValue(state, object, filter.greaterThanStat, context);
+        if (!Number.isFinite(other) || value <= other) {
+          reasons.push(`stat_${stat}_not_above_${filter.greaterThanStat}`);
+        }
+      }
+    }
+  }
+
+  if (match?.guardedBy) {
+    const guardOwnerId = guardOwnerIdForObject(state, object);
+    const guarded = hasGuardingObject(state, guardOwnerId, match.guardedBy, object.id);
+    const isGuard = objectMatchesGuard(state, object, match.guardedBy);
+    if (guarded && !isGuard) {
+      reasons.push("guarded_by_object");
+    }
+  }
+
+  return reasons;
+}
+
+function playerMatchReasons(
+  state: MatchState,
+  playerId: Id,
+  match: PlayerMatchDefinition | undefined,
+  context: {
+    controllerId?: Id;
+  }
+): string[] {
+  const reasons: string[] = [];
+  const player = state.players[playerId];
+
+  if (!player) {
+    reasons.push("missing_player");
+    return reasons;
+  }
+
+  if (match?.status && player.status !== match.status) {
+    reasons.push(`status_not_${match.status}`);
+  }
+
+  if (match?.notSelf && player.id === context.controllerId) {
+    reasons.push("self_not_allowed");
+  }
+
+  if (match?.guardedBy && hasGuardingObject(state, player.id, match.guardedBy)) {
+    reasons.push("guarded_by_object");
+  }
+
+  if (match?.range) {
+    const fromPlayerId = resolveSelectorRangePlayerRef(state, match.range.from, context);
+
+    if (!fromPlayerId || !selectorCanReachByEffectiveRange(state, fromPlayerId, player.id, match.range.baseRange ?? 1)) {
+      reasons.push("out_of_range");
+    }
+  }
+
+  return reasons;
+}
+
+function randomTargetCandidates(
+  state: MatchState,
+  targetPool: RandomTargetPoolDefinition,
+  context: ObjectMatchContext,
+  excluded = new Set<string>()
+): RandomTargetCandidate[] {
+  const candidates: RandomTargetCandidate[] = [];
+
+  if (targetPool.players) {
+    for (const player of Object.values(state.players)) {
+      const key = `player:${player.id}`;
+      if (!excluded.has(key) && playerMatchReasons(state, player.id, targetPool.players, context).length === 0) {
+        candidates.push({ kind: "player", id: player.id });
+      }
+    }
+  }
+
+  if (targetPool.objects) {
+    for (const object of Object.values(state.objects)) {
+      const key = `object:${object.id}`;
+      if (!excluded.has(key) && objectMatchReasons(state, object, targetPool.objects, context).length === 0) {
+        candidates.push({ kind: "object", id: object.id });
+      }
+    }
+  }
+
+  return candidates.sort((left, right) => `${left.kind}:${left.id}`.localeCompare(`${right.kind}:${right.id}`));
+}
+
+function chooseRandomTarget(session: ResolutionSession, candidates: RandomTargetCandidate[], reason?: string): RandomTargetCandidate {
+  if (candidates.length === 0) {
+    throw new CommandRejectedError("missing_target", "No random targets are available");
+  }
+
+  const rng = new DeterministicRng(session.state.seed, session.state.rngCursor);
+  const selected = candidates[rng.nextInt(candidates.length)]!;
+  emit<RandomChoiceMadePayload>(session, "random_choice_made", {
+    candidateIds: candidates.map((candidate) => `${candidate.kind}:${candidate.id}`),
+    selectedId: selected.id,
+    selectedKind: selected.kind,
+    rngCursorBefore: session.state.rngCursor,
+    rngCursorAfter: rng.cursor,
+    reason
+  });
+
+  return selected;
+}
+
+function chooseRandomHiddenObject(session: ResolutionSession, candidates: Id[], reason?: string): Id {
+  if (candidates.length === 0) {
+    throw new CommandRejectedError("missing_target", "No hidden random objects are available");
+  }
+
+  const rng = new DeterministicRng(session.state.seed, session.state.rngCursor);
+  const selectedId = candidates[rng.nextInt(candidates.length)]!;
+  emit<RandomChoiceMadePayload>(
+    session,
+    "random_choice_made",
+    {
+      candidateIds: candidates.map((id) => `object:${id}`),
+      selectedId,
+      selectedKind: "object",
+      rngCursorBefore: session.state.rngCursor,
+      rngCursorAfter: rng.cursor,
+      reason
+    },
+    { default: { kind: "admin" } }
+  );
+
+  return selectedId;
 }
 
 function isPassAnswer(answer: unknown): boolean {
@@ -623,9 +1416,7 @@ export function getSelectorCandidates(
   state: MatchState,
   behavior: BehaviorDefinition,
   selectorId: Id,
-  context: {
-    controllerId?: Id;
-  } = {}
+  context: ObjectMatchContext = {}
 ): SelectorCandidate[] {
   const selector = behavior.selectors?.find((candidate) => candidate.id === selectorId);
 
@@ -635,23 +1426,7 @@ export function getSelectorCandidates(
 
   if (selector.from === "players") {
     return Object.values(state.players).map((player) => {
-      const reasons: string[] = [];
-
-      if (selector.match?.status && player.status !== selector.match.status) {
-        reasons.push(`status_not_${selector.match.status}`);
-      }
-
-      if (selector.match?.notSelf && player.id === context.controllerId) {
-        reasons.push("self_not_allowed");
-      }
-
-      if (selector.match?.range) {
-        const fromPlayerId = resolveSelectorRangePlayerRef(state, selector.match.range.from, context);
-
-        if (!fromPlayerId || !selectorCanReachByEffectiveRange(state, fromPlayerId, player.id, selector.match.range.baseRange ?? 1)) {
-          reasons.push("out_of_range");
-        }
-      }
+      const reasons = playerMatchReasons(state, player.id, selector.match, context);
 
       return {
         id: player.id,
@@ -662,37 +1437,7 @@ export function getSelectorCandidates(
   }
 
   return Object.values(state.objects).map((object) => {
-    const reasons: string[] = [];
-
-    if (selector.match?.objectTypes && !selector.match.objectTypes.includes(object.objectType)) {
-      reasons.push("object_type_not_allowed");
-    }
-
-    if (selector.match?.tags && !selector.match.tags.every((tag) => object.tags.includes(tag))) {
-      reasons.push("missing_required_tag");
-    }
-
-    if (selector.match?.owner) {
-      const ownerId = resolveSelectorRangePlayerRef(state, selector.match.owner, context);
-      if (!ownerId || object.ownerId !== ownerId) {
-        reasons.push("owner_not_allowed");
-      }
-    }
-
-    if (selector.match?.zoneType) {
-      const zone = state.zones[object.zoneId];
-      if (zone?.zoneType !== selector.match.zoneType) {
-        reasons.push(`zone_not_${selector.match.zoneType}`);
-      }
-    }
-
-    if (selector.match?.zoneOwner) {
-      const zoneOwnerId = resolveSelectorRangePlayerRef(state, selector.match.zoneOwner, context);
-      const zone = state.zones[object.zoneId];
-      if (!zoneOwnerId || zone?.ownerId !== zoneOwnerId) {
-        reasons.push("zone_owner_not_allowed");
-      }
-    }
+    const reasons = objectMatchReasons(state, object, selector.match, context);
 
     return {
       id: object.id,
@@ -714,7 +1459,7 @@ function validateSelectors(state: MatchState, behavior: BehaviorDefinition, sess
     }
 
     const legalIds = new Set(
-      getSelectorCandidates(state, behavior, selector.id, { controllerId: session.controllerId })
+      getSelectorCandidates(state, behavior, selector.id, objectMatchContext(session))
         .filter((candidate) => candidate.legal)
         .map((candidate) => candidate.id)
     );
@@ -743,11 +1488,19 @@ function validateCondition(session: ResolutionSession, condition: ConditionDefin
     if (!resource || resource.current < condition.amount) {
       throw new CommandRejectedError("condition_failed", `Player ${playerId} does not have ${condition.amount} ${condition.resource}`);
     }
+  } else if (condition.type === "resource_at_most") {
+    const playerId = resolvePlayerRef(session, condition.player);
+    const player = session.state.players[playerId];
+    const current = player?.resources[condition.resource]?.current ?? 0;
+
+    if (!player || current > condition.amount) {
+      throw new CommandRejectedError("condition_failed", `Player ${playerId} has more than ${condition.amount} ${condition.resource}`);
+    }
   } else if (condition.type === "object_ready") {
     const objectId = resolveObjectRef(session, condition.object);
     const object = session.state.objects[objectId];
 
-    if (!object || object.exhausted) {
+    if (!object || object.exhausted || object.keywords.includes("frozen")) {
       throw new CommandRejectedError("condition_failed", `Object ${objectId} is exhausted or missing`);
     }
   }
@@ -934,6 +1687,60 @@ function eventSourceMatches(trigger: TriggerDefinition | undefined, sourceObject
   return payload.objectId === sourceObjectId || payload.sourceObjectId === sourceObjectId;
 }
 
+function eventTargetObjectId(event: MatchEvent): Id | undefined {
+  const payload = event.payload as Record<string, unknown>;
+
+  if (typeof payload.objectId === "string") {
+    return payload.objectId;
+  }
+
+  if (typeof payload.targetObjectId === "string") {
+    return payload.targetObjectId;
+  }
+
+  return undefined;
+}
+
+function eventMatchReasons(
+  state: MatchState,
+  trigger: TriggerDefinition | undefined,
+  event: MatchEvent,
+  context: ObjectMatchContext
+): string[] {
+  const match = trigger?.eventMatch;
+  const reasons: string[] = [];
+
+  if (!match) {
+    return reasons;
+  }
+
+  const payload = event.payload as Record<string, unknown>;
+
+  if (match.reason !== undefined) {
+    const allowedReasons = Array.isArray(match.reason) ? match.reason : [match.reason];
+    if (typeof payload.reason !== "string" || !allowedReasons.includes(payload.reason)) {
+      reasons.push("reason_not_allowed");
+    }
+  }
+
+  if (match.stat !== undefined && payload.stat !== match.stat) {
+    reasons.push("stat_not_allowed");
+  }
+
+  if (match.object) {
+    const objectId = eventTargetObjectId(event);
+    const object = objectId ? state.objects[objectId] : undefined;
+
+    if (!object) {
+      reasons.push("missing_event_object");
+    } else {
+      reasons.push(...objectMatchReasons(state, object, match.object, context));
+    }
+  }
+
+  return reasons;
+}
+
 function runAfterTriggers(session: ResolutionSession, event: MatchEvent): void {
   if (event.type === "trigger_fired" || event.type === "trigger_registered") {
     return;
@@ -953,7 +1760,14 @@ function runAfterTriggers(session: ResolutionSession, event: MatchEvent): void {
   for (const trigger of triggers) {
     const behavior = session.context.behaviorLibrary.behaviors[trigger.behaviorId];
 
-    if (!behavior || !eventSourceMatches(behavior.trigger, trigger.sourceObjectId, event)) {
+    if (
+      !behavior ||
+      !eventSourceMatches(behavior.trigger, trigger.sourceObjectId, event) ||
+      eventMatchReasons(session.state, behavior.trigger, event, {
+        controllerId: trigger.controllerId,
+        statModifiers: session.context.behaviorLibrary.statModifiers
+      }).length > 0
+    ) {
       continue;
     }
 
@@ -963,15 +1777,18 @@ function runAfterTriggers(session: ResolutionSession, event: MatchEvent): void {
 
     const sourceObject = trigger.sourceObjectId ? session.state.objects[trigger.sourceObjectId] : undefined;
     const previousSourceObjectId = session.sourceObjectId;
+    const previousEventObjectId = session.eventObjectId;
     const previousControllerId = session.controllerId;
     const previousOwnerId = session.ownerId;
     session.sourceObjectId = trigger.sourceObjectId;
+    session.eventObjectId = eventTargetObjectId(event);
     session.controllerId = trigger.controllerId ?? sourceObject?.controllerId;
     session.ownerId = sourceObject?.ownerId;
     session.triggerDepth += 1;
     runBehaviorEffects(session, behavior);
     session.triggerDepth -= 1;
     session.sourceObjectId = previousSourceObjectId;
+    session.eventObjectId = previousEventObjectId;
     session.controllerId = previousControllerId;
     session.ownerId = previousOwnerId;
   }
@@ -980,6 +1797,27 @@ function runAfterTriggers(session: ResolutionSession, event: MatchEvent): void {
 function damageAfterEquipmentReduction(state: MatchState, targetPlayerId: Id, amount: number): number {
   const reduction = Math.max(0, equipmentStatTotal(state, targetPlayerId, "damageReduction"));
   return Math.max(0, amount - reduction);
+}
+
+function applyArmorAbsorption(session: ResolutionSession, targetPlayerId: Id, amount: number): number {
+  const target = session.state.players[targetPlayerId];
+  const armorResource = target?.resources.armor;
+  const armor = Math.max(0, armorResource?.current ?? 0);
+
+  if (armor === 0 || amount === 0) {
+    return amount;
+  }
+
+  const absorbed = Math.min(amount, armor);
+  emit<ResourceChangedPayload>(session, "resource_changed", {
+    playerId: targetPlayerId,
+    resource: "armor",
+    current: armor - absorbed,
+    max: armorResource?.max,
+    reason: "armor_absorbed"
+  });
+
+  return amount - absorbed;
 }
 
 function applyDamagePrevention(session: ResolutionSession, targetPlayerId: Id, amount: number): number {
@@ -1001,6 +1839,105 @@ function applyDamagePrevention(session: ResolutionSession, targetPlayerId: Id, a
   });
 
   return amount - prevented;
+}
+
+function dealDamageToPlayer(session: ResolutionSession, targetPlayerId: Id, amount: number, damageType: string, healthReason = "damage"): void {
+  const target = session.state.players[targetPlayerId];
+
+  if (!target) {
+    throw new CommandRejectedError("missing_target", `Target player ${targetPlayerId} does not exist`);
+  }
+
+  const health = target.resources.health;
+  if (!health) {
+    throw new CommandRejectedError("missing_health", `Target player ${targetPlayerId} does not have health`);
+  }
+
+  const reducedAmount = applyDamagePrevention(session, targetPlayerId, damageAfterEquipmentReduction(session.state, targetPlayerId, amount));
+  const healthDamage = applyArmorAbsorption(session, targetPlayerId, reducedAmount);
+  const currentHealth = session.state.players[targetPlayerId]?.resources.health;
+  emit<DamageDealtPayload>(session, "damage_dealt", {
+    sourceObjectId: session.sourceObjectId,
+    sourcePlayerId: session.controllerId,
+    targetPlayerId,
+    amount: reducedAmount,
+    damageType
+  });
+  emit<ResourceChangedPayload>(session, "resource_changed", {
+    playerId: targetPlayerId,
+    resource: "health",
+    current: (currentHealth ?? health).current - healthDamage,
+    max: (currentHealth ?? health).max,
+    reason: healthReason
+  });
+}
+
+function dealDamageToObject(session: ResolutionSession, targetObjectId: Id, amount: number, damageType: string, healthStat = "health", destroyAt = 0, toZoneId?: Id): void {
+  const target = session.state.objects[targetObjectId];
+
+  if (!target) {
+    throw new CommandRejectedError("missing_target", `Target object ${targetObjectId} does not exist`);
+  }
+
+  const currentHealth = target.stats[healthStat];
+  if (typeof currentHealth !== "number") {
+    throw new CommandRejectedError("missing_stat", `Target object ${targetObjectId} does not have stat ${healthStat}`);
+  }
+
+  const damageAmount = Math.max(0, amount);
+  const nextHealth = currentHealth - damageAmount;
+  emit<DamageDealtPayload>(session, "damage_dealt", {
+    sourceObjectId: session.sourceObjectId,
+    sourcePlayerId: session.controllerId,
+    targetObjectId,
+    amount: damageAmount,
+    damageType
+  });
+  emit<ObjectStatChangedPayload>(session, "object_stat_changed", {
+    objectId: targetObjectId,
+    stat: healthStat,
+    value: nextHealth,
+    reason: "damage"
+  });
+
+  const currentObject = session.state.objects[targetObjectId];
+  if (currentObject && nextHealth <= destroyAt) {
+    emit<ObjectDestroyedPayload>(session, "object_destroyed", {
+      objectId: targetObjectId,
+      fromZoneId: currentObject.zoneId,
+      toZoneId,
+      reason: "health_zero"
+    });
+  }
+}
+
+function healObject(session: ResolutionSession, targetObjectId: Id, amount: number, healthStat = "health", maxHealthStat = "maxHealth", reason = "heal"): void {
+  const target = session.state.objects[targetObjectId];
+
+  if (!target) {
+    throw new CommandRejectedError("missing_target", `Target object ${targetObjectId} does not exist`);
+  }
+
+  const currentHealth = target.stats[healthStat];
+  if (typeof currentHealth !== "number") {
+    throw new CommandRejectedError("missing_stat", `Target object ${targetObjectId} does not have stat ${healthStat}`);
+  }
+
+  const healAmount = Math.max(0, amount);
+  const maxHealth = target.stats[maxHealthStat];
+  const uncapped = currentHealth + healAmount;
+  const nextHealth = typeof maxHealth === "number" ? Math.min(maxHealth, uncapped) : uncapped;
+
+  if (nextHealth === currentHealth) {
+    return;
+  }
+
+  emit<ObjectStatChangedPayload>(session, "object_stat_changed", {
+    objectId: targetObjectId,
+    stat: healthStat,
+    value: nextHealth,
+    reason
+  });
 }
 
 function equipmentStatTotal(state: MatchState, playerId: Id, stat: string): number {
@@ -1181,62 +2118,121 @@ function resolveDelayedJudgmentObject(
 function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
   if (effect.type === "deal_damage") {
     const targetPlayerId = resolvePlayerRef(session, effect.to);
-    const target = session.state.players[targetPlayerId];
-
-    if (!target) {
-      throw new CommandRejectedError("missing_target", `Target player ${targetPlayerId} does not exist`);
-    }
-
-    const health = target.resources.health;
-    if (!health) {
-      throw new CommandRejectedError("missing_health", `Target player ${targetPlayerId} does not have health`);
-    }
-
-    const amount = applyDamagePrevention(session, targetPlayerId, damageAfterEquipmentReduction(session.state, targetPlayerId, effect.amount));
-    const currentHealth = session.state.players[targetPlayerId]?.resources.health;
-    emit<DamageDealtPayload>(session, "damage_dealt", {
-      sourceObjectId: session.sourceObjectId,
-      sourcePlayerId: session.controllerId,
-      targetPlayerId,
-      amount,
-      damageType: effect.damageType ?? "normal"
-    });
-    emit<ResourceChangedPayload>(session, "resource_changed", {
-      playerId: targetPlayerId,
-      resource: "health",
-      current: (currentHealth ?? health).current - amount,
-      max: (currentHealth ?? health).max,
-      reason: "damage"
-    });
+    dealDamageToPlayer(session, targetPlayerId, resolveNumericValue(session, effect.amount), effect.damageType ?? "normal");
     checkDeathsAndOutcomes(session);
   } else if (effect.type === "deal_damage_all_players") {
     const targets = Object.values(session.state.players).filter((player) => effect.includeDead || player.status === "alive");
+    const amount = resolveNumericValue(session, effect.amount);
 
     for (const target of targets) {
-      const health = target.resources.health;
-      if (!health) {
+      if (!target.resources.health) {
         continue;
       }
 
-      const amount = applyDamagePrevention(session, target.id, damageAfterEquipmentReduction(session.state, target.id, effect.amount));
-      const currentHealth = session.state.players[target.id]?.resources.health;
-      emit<DamageDealtPayload>(session, "damage_dealt", {
-        sourceObjectId: session.sourceObjectId,
-        sourcePlayerId: session.controllerId,
-        targetPlayerId: target.id,
-        amount,
-        damageType: effect.damageType ?? "normal"
-      });
-      emit<ResourceChangedPayload>(session, "resource_changed", {
-        playerId: target.id,
-        resource: "health",
-        current: (currentHealth ?? health).current - amount,
-        max: (currentHealth ?? health).max,
-        reason: "damage"
-      });
+      dealDamageToPlayer(session, target.id, amount, effect.damageType ?? "normal");
     }
 
     checkDeathsAndOutcomes(session);
+  } else if (effect.type === "deal_damage_to_matching_players") {
+    const targets = Object.values(session.state.players)
+      .filter((player) => playerMatchReasons(session.state, player.id, effect.match, { controllerId: session.controllerId }).length === 0)
+      .map((player) => player.id);
+    const amount = resolveNumericValue(session, effect.amount);
+
+    if (effect.requireAny && targets.length === 0) {
+      throw new CommandRejectedError("missing_target", "No players match the damage filter");
+    }
+
+    for (const targetPlayerId of targets) {
+      const player = session.state.players[targetPlayerId];
+      if (!player?.resources.health) {
+        continue;
+      }
+
+      dealDamageToPlayer(session, targetPlayerId, amount, effect.damageType ?? "normal");
+    }
+
+    checkDeathsAndOutcomes(session);
+  } else if (effect.type === "deal_damage_to_object") {
+    const targetObjectId = resolveObjectRef(session, effect.to);
+    dealDamageToObject(
+      session,
+      targetObjectId,
+      resolveNumericValue(session, effect.amount),
+      effect.damageType ?? "normal",
+      effect.healthStat ?? "health",
+      effect.destroyAt ?? 0,
+      effect.toZoneId ? resolveZoneRef(session, effect.toZoneId) : undefined
+    );
+  } else if (effect.type === "deal_damage_to_matching_objects") {
+    const targetObjectIds = Object.values(session.state.objects)
+      .filter((object) => objectMatchReasons(session.state, object, effect.match, objectMatchContext(session)).length === 0)
+      .map((object) => object.id);
+    const toZoneId = effect.toZoneId ? resolveZoneRef(session, effect.toZoneId) : undefined;
+
+    if (effect.requireAny && targetObjectIds.length === 0) {
+      throw new CommandRejectedError("missing_target", "No objects match the area damage filter");
+    }
+
+    for (const targetObjectId of targetObjectIds) {
+      if (!session.state.objects[targetObjectId]) {
+        continue;
+      }
+
+      dealDamageToObject(
+        session,
+        targetObjectId,
+        resolveNumericValue(session, effect.amount),
+        effect.damageType ?? "normal",
+        effect.healthStat ?? "health",
+        effect.destroyAt ?? 0,
+        toZoneId
+      );
+    }
+  } else if (effect.type === "deal_damage_to_random_targets") {
+    const count = resolveNumericValue(session, effect.count);
+    if (!Number.isInteger(count) || count < 0) {
+      throw new CommandRejectedError("invalid_count", `Random target count must be a non-negative integer, got ${count}`);
+    }
+
+    const excluded = new Set<string>();
+    const toZoneId = effect.toZoneId ? resolveZoneRef(session, effect.toZoneId) : undefined;
+
+    for (let index = 0; index < count; index += 1) {
+      const candidates = randomTargetCandidates(
+        session.state,
+        effect.targetPool,
+        objectMatchContext(session),
+        effect.withReplacement === false ? excluded : new Set<string>()
+      );
+
+      if (candidates.length === 0) {
+        if (effect.requireAny && index === 0) {
+          throw new CommandRejectedError("missing_target", "No random targets are available");
+        }
+        break;
+      }
+
+      const selected = chooseRandomTarget(session, candidates, effect.reason ?? effect.damageType ?? "random_target");
+      if (effect.withReplacement === false) {
+        excluded.add(`${selected.kind}:${selected.id}`);
+      }
+
+      if (selected.kind === "player") {
+        dealDamageToPlayer(session, selected.id, resolveNumericValue(session, effect.amount), effect.damageType ?? "normal");
+        checkDeathsAndOutcomes(session);
+      } else {
+        dealDamageToObject(
+          session,
+          selected.id,
+          resolveNumericValue(session, effect.amount),
+          effect.damageType ?? "normal",
+          effect.healthStat ?? "health",
+          effect.destroyAt ?? 0,
+          toZoneId
+        );
+      }
+    }
   } else if (effect.type === "heal") {
     const playerId = resolvePlayerRef(session, effect.player);
     const player = session.state.players[playerId];
@@ -1247,7 +2243,7 @@ function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
       throw new CommandRejectedError("missing_resource", `Player ${playerId} does not have resource ${resourceName}`);
     }
 
-    const uncapped = resource.current + effect.amount;
+    const uncapped = resource.current + Math.max(0, resolveNumericValue(session, effect.amount));
     const current = resource.max === undefined ? uncapped : Math.min(resource.max, uncapped);
 
     emit<ResourceChangedPayload>(session, "resource_changed", {
@@ -1257,6 +2253,38 @@ function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
       max: resource.max,
       reason: "heal"
     });
+  } else if (effect.type === "heal_object") {
+    healObject(
+      session,
+      resolveObjectRef(session, effect.object),
+      resolveNumericValue(session, effect.amount),
+      effect.healthStat ?? "health",
+      effect.maxHealthStat ?? "maxHealth",
+      effect.reason ?? "heal"
+    );
+  } else if (effect.type === "heal_matching_objects") {
+    const targetObjectIds = Object.values(session.state.objects)
+      .filter((object) => objectMatchReasons(session.state, object, effect.match, objectMatchContext(session)).length === 0)
+      .map((object) => object.id);
+
+    if (effect.requireAny && targetObjectIds.length === 0) {
+      throw new CommandRejectedError("missing_target", "No objects match the healing filter");
+    }
+
+    for (const targetObjectId of targetObjectIds) {
+      if (!session.state.objects[targetObjectId]) {
+        continue;
+      }
+
+      healObject(
+        session,
+        targetObjectId,
+        resolveNumericValue(session, effect.amount),
+        effect.healthStat ?? "health",
+        effect.maxHealthStat ?? "maxHealth",
+        effect.reason ?? "heal"
+      );
+    }
   } else if (effect.type === "prevent_next_damage") {
     const playerId = resolvePlayerRef(session, effect.player);
     const player = session.state.players[playerId];
@@ -1334,6 +2362,133 @@ function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
         toZoneId
       });
     }
+  } else if (effect.type === "play_object") {
+    const objectId = resolveObjectRef(session, effect.object);
+    const object = session.state.objects[objectId];
+    const toZoneId = resolveZoneRef(session, effect.toZoneId);
+
+    if (!object) {
+      throw new CommandRejectedError("missing_object", `Object ${objectId} does not exist`);
+    }
+    const fromZone = session.state.zones[object.zoneId];
+    if (effect.fromZoneType && fromZone?.zoneType !== effect.fromZoneType) {
+      throw new CommandRejectedError(
+        "zone_mismatch",
+        `Object ${objectId} must be in a ${effect.fromZoneType} zone to be played`
+      );
+    }
+
+    const toZone = session.state.zones[toZoneId];
+    if (!toZone) {
+      throw new CommandRejectedError("missing_zone", `Play target zone ${toZoneId} does not exist`);
+    }
+
+    if (effect.replaceExisting) {
+      const existingObjectIds = [...toZone.objectIds].filter((candidateId) => candidateId !== objectId);
+      const discardZoneId = effect.discardZoneId ? resolveZoneRef(session, effect.discardZoneId) : undefined;
+      if (existingObjectIds.length > 0 && !discardZoneId) {
+        throw new CommandRejectedError("missing_discard_zone", `Playing ${objectId} would replace objects in ${toZoneId}, but no discard zone was provided`);
+      }
+
+      for (const existingObjectId of existingObjectIds) {
+        const existingObject = session.state.objects[existingObjectId];
+        if (!existingObject || !discardZoneId) {
+          continue;
+        }
+        emit<CardMovedPayload>(session, "card_moved", {
+          objectId: existingObjectId,
+          fromZoneId: existingObject.zoneId,
+          toZoneId: discardZoneId
+        });
+      }
+    }
+
+    emit<ObjectPlayedPayload>(session, "object_played", {
+      objectId,
+      fromZoneId: object.zoneId,
+      toZoneId,
+      toPosition: effect.toPosition,
+      objectType: effect.objectType,
+      ownerId: effect.owner ? resolvePlayerRef(session, effect.owner) : undefined,
+      controllerId: effect.controller ? resolvePlayerRef(session, effect.controller) : undefined,
+      visibility: effect.visibility,
+      stats: effect.stats,
+      counters: effect.counters,
+      tags: effect.tags,
+      keywords: effect.keywords,
+      exhausted: effect.exhausted,
+      reason: effect.reason
+    });
+
+    if (effect.battlecryBehaviorId) {
+      const playedObject = session.state.objects[objectId];
+      executeBehaviorInSession(session, effect.battlecryBehaviorId, {
+        sourceObjectId: objectId,
+        controllerId: playedObject?.controllerId ?? session.controllerId,
+        selections: session.selections
+      });
+    }
+  } else if (effect.type === "copy_random_object_from_zone") {
+    const fromZoneId = resolveZoneRef(session, effect.fromZoneId);
+    const toZoneId = resolveZoneRef(session, effect.toZoneId);
+    const fromZone = session.state.zones[fromZoneId];
+    const toZone = session.state.zones[toZoneId];
+
+    if (!fromZone) {
+      throw new CommandRejectedError("missing_zone", `Copy source zone ${fromZoneId} does not exist`);
+    }
+
+    if (!toZone) {
+      throw new CommandRejectedError("missing_zone", `Copy target zone ${toZoneId} does not exist`);
+    }
+
+    const candidates = fromZone.objectIds.filter((candidateId) => {
+      const candidate = session.state.objects[candidateId];
+      return candidate && objectMatchReasons(session.state, candidate, effect.match, objectMatchContext(session)).length === 0;
+    });
+
+    if (candidates.length === 0) {
+      if (effect.requireAny === false) {
+        return;
+      }
+
+      throw new CommandRejectedError("missing_target", "No objects are available to copy");
+    }
+
+    const selectedObjectId = chooseRandomHiddenObject(session, candidates, effect.reason ?? "copy_random_object");
+    const sourceObject = session.state.objects[selectedObjectId];
+    if (!sourceObject) {
+      throw new CommandRejectedError("missing_object", `Copy source object ${selectedObjectId} does not exist`);
+    }
+
+    const ownerId = resolveOptionalPlayerRef(session, effect.owner, session.controllerId ?? session.command.playerId);
+    if (!ownerId) {
+      throw new CommandRejectedError("missing_owner", "Copy effect requires an owner");
+    }
+
+    const controllerId = resolveOptionalPlayerRef(session, effect.controller, ownerId);
+    const copiedObject: GameObjectState = {
+      id: resolveTemplateId(session, effect.objectId),
+      templateId: sourceObject.templateId,
+      objectType: sourceObject.objectType,
+      ownerId,
+      controllerId,
+      creatorId: session.controllerId ?? session.command.playerId,
+      zoneId: toZoneId,
+      position: toZone.objectIds.length,
+      visibility: effect.visibility ?? toZone.visibility,
+      stats: structuredClone(sourceObject.stats),
+      counters: structuredClone(sourceObject.counters),
+      tags: [...sourceObject.tags],
+      keywords: [...sourceObject.keywords],
+      attachments: [...sourceObject.attachments],
+      modifiers: [...sourceObject.modifiers],
+      exhausted: sourceObject.exhausted,
+      createdAtSequence: session.state.lastSequence + 1,
+      lastChangedAtSequence: session.state.lastSequence + 1
+    };
+
+    emit<ObjectCreatedPayload>(session, "object_created", { object: copiedObject });
   } else if (effect.type === "resolve_delayed_effect") {
     const objectId = resolveObjectRef(session, effect.object);
     const object = session.state.objects[objectId];
@@ -1475,19 +2630,7 @@ function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
           throw new CommandRejectedError("missing_health", `Empty-deck player ${playerId} does not have health`);
         }
 
-        emit<DamageDealtPayload>(session, "damage_dealt", {
-          sourcePlayerId: playerId,
-          targetPlayerId: playerId,
-          amount: nextCounter,
-          damageType: "fatigue"
-        });
-        emit<ResourceChangedPayload>(session, "resource_changed", {
-          playerId,
-          resource: "health",
-          current: health.current - nextCounter,
-          max: health.max,
-          reason: "fatigue"
-        });
+        dealDamageToPlayer(session, playerId, nextCounter, "fatigue", "fatigue");
         checkDeathsAndOutcomes(session);
         continue;
       }
@@ -1640,6 +2783,124 @@ function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
       exhausted: effect.exhausted,
       reason: effect.reason
     });
+  } else if (effect.type === "set_object_exhausted_on_matching_objects") {
+    const objectIds = Object.values(session.state.objects)
+      .filter((object) => objectMatchReasons(session.state, object, effect.match, objectMatchContext(session)).length === 0)
+      .map((object) => object.id);
+
+    if (effect.requireAny && objectIds.length === 0) {
+      throw new CommandRejectedError("missing_target", "No objects match the exhaustion filter");
+    }
+
+    for (const objectId of objectIds) {
+      if (session.state.objects[objectId]) {
+        emit<ObjectExhaustedPayload>(session, "object_exhausted", {
+          objectId,
+          exhausted: effect.exhausted,
+          reason: effect.reason
+        });
+      }
+    }
+  } else if (effect.type === "set_object_keyword") {
+    const objectId = resolveObjectRef(session, effect.object);
+    if (!session.state.objects[objectId]) {
+      throw new CommandRejectedError("missing_object", `Object ${objectId} does not exist`);
+    }
+    emit<ObjectKeywordChangedPayload>(session, "object_keyword_changed", {
+      objectId,
+      keyword: effect.keyword,
+      present: effect.present,
+      reason: effect.reason
+    });
+  } else if (effect.type === "set_object_keyword_on_matching_objects") {
+    const objectIds = Object.values(session.state.objects)
+      .filter((object) => objectMatchReasons(session.state, object, effect.match, objectMatchContext(session)).length === 0)
+      .map((object) => object.id);
+
+    if (effect.requireAny && objectIds.length === 0) {
+      throw new CommandRejectedError("missing_target", "No objects match the keyword filter");
+    }
+
+    for (const objectId of objectIds) {
+      if (session.state.objects[objectId]) {
+        emit<ObjectKeywordChangedPayload>(session, "object_keyword_changed", {
+          objectId,
+          keyword: effect.keyword,
+          present: effect.present,
+          reason: effect.reason
+        });
+      }
+    }
+  } else if (effect.type === "transform_object") {
+    const objectId = resolveObjectRef(session, effect.object);
+    if (!session.state.objects[objectId]) {
+      throw new CommandRejectedError("missing_object", `Object ${objectId} does not exist`);
+    }
+
+    emit<ObjectTransformedPayload>(session, "object_transformed", {
+      objectId,
+      templateId: effect.templateId,
+      objectType: effect.objectType,
+      visibility: effect.visibility,
+      stats: effect.stats,
+      counters: effect.counters,
+      tags: effect.tags,
+      keywords: effect.keywords,
+      attachments: effect.attachments,
+      modifiers: effect.modifiers,
+      exhausted: effect.exhausted,
+      reason: effect.reason
+    });
+  } else if (effect.type === "change_object_control") {
+    const objectId = resolveObjectRef(session, effect.object);
+    const object = session.state.objects[objectId];
+    if (!object) {
+      throw new CommandRejectedError("missing_object", `Object ${objectId} does not exist`);
+    }
+
+    emit<ObjectControlChangedPayload>(session, "object_control_changed", {
+      objectId,
+      controllerId: resolvePlayerRef(session, effect.controller),
+      fromZoneId: object.zoneId,
+      toZoneId: effect.toZoneId ? resolveZoneRef(session, effect.toZoneId) : undefined,
+      toPosition: effect.toPosition,
+      exhausted: effect.exhausted,
+      reason: effect.reason
+    });
+  } else if (effect.type === "create_object") {
+    const toZoneId = resolveZoneRef(session, effect.toZoneId);
+    const zone = session.state.zones[toZoneId];
+
+    if (!zone) {
+      throw new CommandRejectedError("missing_zone", `Create object target zone ${toZoneId} does not exist`);
+    }
+
+    const ownerId = resolveOptionalPlayerRef(session, effect.object.owner, session.controllerId ?? session.command.playerId);
+    const controllerId = resolveOptionalPlayerRef(session, effect.object.controller, ownerId);
+    const creatorId = resolveCreationActorRef(session, effect.object.creator, session.controllerId ?? session.command.playerId);
+    const objectId = resolveTemplateId(session, effect.object.id);
+    const object: GameObjectState = {
+      id: objectId,
+      templateId: effect.object.templateId,
+      objectType: effect.object.objectType,
+      ownerId,
+      controllerId,
+      creatorId,
+      zoneId: toZoneId,
+      position: effect.toPosition ?? zone.objectIds.length,
+      visibility: effect.object.visibility ?? zone.visibility,
+      stats: structuredClone(effect.object.stats ?? {}),
+      counters: structuredClone(effect.object.counters ?? {}),
+      tags: [...(effect.object.tags ?? [])],
+      keywords: [...(effect.object.keywords ?? [])],
+      attachments: [...(effect.object.attachments ?? [])],
+      modifiers: [...(effect.object.modifiers ?? [])],
+      exhausted: effect.object.exhausted,
+      createdAtSequence: session.state.lastSequence + 1,
+      lastChangedAtSequence: session.state.lastSequence + 1
+    };
+
+    emit<ObjectCreatedPayload>(session, "object_created", { object });
   } else if (effect.type === "adjust_object_counter") {
     const objectId = resolveObjectRef(session, effect.object);
     const object = session.state.objects[objectId];
@@ -1664,6 +2925,74 @@ function runEffect(session: ResolutionSession, effect: EffectDefinition): void {
       value,
       reason: effect.reason ?? "adjust"
     });
+  } else if (effect.type === "set_object_stat") {
+    const objectId = resolveObjectRef(session, effect.object);
+    if (!session.state.objects[objectId]) {
+      throw new CommandRejectedError("missing_object", `Object ${objectId} does not exist`);
+    }
+
+    emit<ObjectStatChangedPayload>(session, "object_stat_changed", {
+      objectId,
+      stat: effect.stat,
+      value: resolveNumericValue(session, effect.value),
+      reason: effect.reason ?? "set"
+    });
+  } else if (effect.type === "adjust_object_stat") {
+    const objectId = resolveObjectRef(session, effect.object);
+    const object = session.state.objects[objectId];
+
+    if (!object) {
+      throw new CommandRejectedError("missing_object", `Object ${objectId} does not exist`);
+    }
+
+    let value = (object.stats[effect.stat] ?? 0) + resolveNumericValue(session, effect.delta);
+
+    if (effect.min !== undefined) {
+      value = Math.max(value, effect.min);
+    }
+
+    if (effect.max !== undefined) {
+      value = Math.min(value, effect.max);
+    }
+
+    emit<ObjectStatChangedPayload>(session, "object_stat_changed", {
+      objectId,
+      stat: effect.stat,
+      value,
+      reason: effect.reason ?? "adjust"
+    });
+  } else if (effect.type === "adjust_object_stat_on_matching_objects") {
+    const objectIds = Object.values(session.state.objects)
+      .filter((object) => objectMatchReasons(session.state, object, effect.match, objectMatchContext(session)).length === 0)
+      .map((object) => object.id);
+
+    if (effect.requireAny && objectIds.length === 0) {
+      throw new CommandRejectedError("missing_target", "No objects match the stat adjustment filter");
+    }
+
+    for (const objectId of objectIds) {
+      const object = session.state.objects[objectId];
+      if (!object) {
+        continue;
+      }
+
+      let value = (object.stats[effect.stat] ?? 0) + resolveNumericValue(session, effect.delta);
+
+      if (effect.min !== undefined) {
+        value = Math.max(value, effect.min);
+      }
+
+      if (effect.max !== undefined) {
+        value = Math.min(value, effect.max);
+      }
+
+      emit<ObjectStatChangedPayload>(session, "object_stat_changed", {
+        objectId,
+        stat: effect.stat,
+        value,
+        reason: effect.reason ?? "adjust"
+      });
+    }
   } else if (effect.type === "destroy_object_if_counter_at_most") {
     const objectId = resolveObjectRef(session, effect.object);
     const object = session.state.objects[objectId];

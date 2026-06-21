@@ -17,13 +17,17 @@ test("generates TypeScript declarations from hand-authored schemas", () => {
   assert.match(declarations, /"ownerScope": "player" \| "opponent" \| "shared" \| "match" \| "spectator";/);
   assert.match(declarations, /export interface PresentationCatalogJson/);
   assert.match(declarations, /"kind": "presentation_catalog";/);
+  assert.match(declarations, /"targetMode"\?: "enemyHero" \| "selfHero" \| "battlefield" \| "targetObject" \| "targeted";/);
   assert.match(declarations, /"heroes"\?: \{/);
   assert.match(declarations, /export interface UiPreviewFixtureJson/);
   assert.match(declarations, /"kind": "ui_preview_fixture";/);
   assert.match(declarations, /"focus": "card" \| "hero" \| "equipment" \| "minion" \| "full-board";/);
   assert.match(declarations, /export interface UiPlaytestScriptJson/);
   assert.match(declarations, /"kind": "ui_playtest_script";/);
-  assert.match(declarations, /"action": "create_match" \| "submit_command" \| "fetch_state" \| "fetch_replay" \| "assert_resource";/);
+  assert.match(
+    declarations,
+    /"action": "create_match" \| "submit_command" \| "fetch_state" \| "fetch_replay" \| "assert_resource" \| "assert_object_stat" \| "assert_zone_count";/
+  );
   assert.match(declarations, /export interface AssetManifestJson/);
   assert.match(declarations, /"assets": \{\n\s+"assetId": string;/);
   assert.match(declarations, /"mediaType"\?: string;/);

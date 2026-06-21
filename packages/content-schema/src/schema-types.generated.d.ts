@@ -133,7 +133,7 @@ export interface BoardLayoutJson {
   };
   "regions": {
     "id": string;
-    "kind": "hero" | "hand" | "deck" | "discard" | "graveyard" | "battlefield" | "equipment" | "judgment" | "prompt" | "action_window" | "chat" | "history_log" | "opponent_summary" | "spectator_overlay" | "debug_overlay" | "custom";
+    "kind": "hero" | "hand" | "deck" | "discard" | "graveyard" | "battlefield" | "land" | "equipment" | "judgment" | "prompt" | "action_window" | "chat" | "history_log" | "opponent_summary" | "spectator_overlay" | "debug_overlay" | "custom";
     "ownerScope": "player" | "opponent" | "shared" | "match" | "spectator";
     "dataSource"?: {
       "zoneType"?: string;
@@ -200,9 +200,19 @@ export interface PresentationCatalogJson {
     };
     "behavior"?: {
       "behaviorId"?: string;
-      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
       "targetSelector"?: string;
+      "sourceZoneKinds"?: string[];
+      "targetZoneKinds"?: string[];
     };
+    "actions"?: {
+      "label"?: string;
+      "behaviorId": string;
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
+      "targetSelector"?: string;
+      "sourceZoneKinds"?: string[];
+      "targetZoneKinds"?: string[];
+    }[];
   }[];
   "equipment"?: {
     "templateId": string;
@@ -235,9 +245,19 @@ export interface PresentationCatalogJson {
     };
     "behavior"?: {
       "behaviorId"?: string;
-      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
       "targetSelector"?: string;
+      "sourceZoneKinds"?: string[];
+      "targetZoneKinds"?: string[];
     };
+    "actions"?: {
+      "label"?: string;
+      "behaviorId": string;
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
+      "targetSelector"?: string;
+      "sourceZoneKinds"?: string[];
+      "targetZoneKinds"?: string[];
+    }[];
   }[];
   "minions"?: {
     "templateId": string;
@@ -270,9 +290,19 @@ export interface PresentationCatalogJson {
     };
     "behavior"?: {
       "behaviorId"?: string;
-      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
       "targetSelector"?: string;
+      "sourceZoneKinds"?: string[];
+      "targetZoneKinds"?: string[];
     };
+    "actions"?: {
+      "label"?: string;
+      "behaviorId": string;
+      "targetMode"?: "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
+      "targetSelector"?: string;
+      "sourceZoneKinds"?: string[];
+      "targetZoneKinds"?: string[];
+    }[];
   }[];
   "heroes"?: {
     "playerId": string;
@@ -304,7 +334,7 @@ export interface PresentationCatalogJson {
       "behaviorId": string;
       "text": string;
       "action": string;
-      "targetMode": "enemyHero" | "selfHero" | "battlefield" | "targeted";
+      "targetMode": "enemyHero" | "selfHero" | "battlefield" | "targetObject" | "targeted";
       "manaCost"?: number;
       "display"?: {
         "property": string;
@@ -409,7 +439,7 @@ export interface UiPlaytestScriptJson {
     "steps": {
       "id": string;
       "label"?: string;
-      "action": "create_match" | "submit_command" | "fetch_state" | "fetch_replay" | "assert_resource";
+      "action": "create_match" | "submit_command" | "fetch_state" | "fetch_replay" | "assert_resource" | "assert_object_stat" | "assert_zone_count";
       "match"?: {
         "rulesetId"?: string;
         "playerCount"?: number;

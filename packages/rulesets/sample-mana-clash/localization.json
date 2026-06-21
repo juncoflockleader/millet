@@ -1,0 +1,23 @@
+{
+  "id": "sample-mana-clash-en",
+  "version": "0.1.0",
+  "locale": "en",
+  "strings": {
+    "game.sample_mana_clash.name": "Mana Clash",
+    "card.verdant_land.name": "Verdant Land",
+    "card.verdant_land.description": "Play once each turn. Tap to gain 1 mana this turn.",
+    "card.ember_land.name": "Ember Land",
+    "card.ember_land.description": "Play once each turn. Tap to gain 1 mana this turn.",
+    "card.river_bear.name": "River Bear",
+    "card.river_bear.description": "Summon a 2/3 creature. It enters tapped.",
+    "card.sky_drake.name": "Sky Drake",
+    "card.sky_drake.description": "Summon a 3/2 flying creature. It enters tapped.",
+    "card.briar_guard.name": "Briar Guard",
+    "card.briar_guard.description": "A 2/2 creature already defending the lane.",
+    "card.cinder_bolt.name": "Cinder Bolt",
+    "card.cinder_bolt.description": "Deal 3 damage to a player or creature.",
+    "card.growth_charm.name": "Growth Charm",
+    "card.growth_charm.description": "Give a friendly creature +1/+1.",
+    "prompt.mana_clash_main": "Choose a Mana Clash action."
+  }
+}

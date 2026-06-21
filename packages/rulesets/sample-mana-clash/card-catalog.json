@@ -1,0 +1,135 @@
+{
+  "id": "sample-mana-clash-cards",
+  "version": "0.1.0",
+  "templates": [
+    {
+      "templateId": "verdant_land",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.verdant_land.name",
+      "descriptionKey": "card.verdant_land.description",
+      "tags": ["land"],
+      "behaviorIds": ["play_land", "tap_land_for_mana"],
+      "assetRefs": ["card-frame-default", "card-art-verdant-land"],
+      "display": {
+        "layout": "mana-land",
+        "properties": []
+      }
+    },
+    {
+      "templateId": "ember_land",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.ember_land.name",
+      "descriptionKey": "card.ember_land.description",
+      "tags": ["land"],
+      "behaviorIds": ["play_land", "tap_land_for_mana"],
+      "assetRefs": ["card-frame-default", "card-art-ember-land"],
+      "display": {
+        "layout": "mana-land",
+        "properties": []
+      }
+    },
+    {
+      "templateId": "river_bear",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.river_bear.name",
+      "descriptionKey": "card.river_bear.description",
+      "tags": ["creature"],
+      "behaviorIds": ["play_river_bear", "creature_attack_hero", "creature_fight_creature"],
+      "assetRefs": ["card-frame-default", "card-art-river-bear"],
+      "manaCost": 2,
+      "stats": {
+        "attack": 2,
+        "health": 3
+      },
+      "display": {
+        "layout": "mana-creature",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 },
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Power", "priority": 20 },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Toughness", "priority": 30 }
+        ]
+      }
+    },
+    {
+      "templateId": "sky_drake",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.sky_drake.name",
+      "descriptionKey": "card.sky_drake.description",
+      "tags": ["creature", "flying"],
+      "behaviorIds": ["play_sky_drake", "creature_attack_hero", "creature_fight_creature"],
+      "assetRefs": ["card-frame-default", "card-art-sky-drake"],
+      "manaCost": 3,
+      "stats": {
+        "attack": 3,
+        "health": 2
+      },
+      "display": {
+        "layout": "mana-creature",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 },
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Power", "priority": 20 },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Toughness", "priority": 30 }
+        ]
+      }
+    },
+    {
+      "templateId": "briar_guard",
+      "version": "0.1.0",
+      "objectType": "minion",
+      "nameKey": "card.briar_guard.name",
+      "descriptionKey": "card.briar_guard.description",
+      "tags": ["creature"],
+      "behaviorIds": ["creature_attack_hero", "creature_fight_creature"],
+      "assetRefs": ["card-frame-default", "card-art-briar-guard"],
+      "stats": {
+        "attack": 2,
+        "health": 2
+      },
+      "display": {
+        "layout": "mana-creature",
+        "properties": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Power", "priority": 20 },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Toughness", "priority": 30 }
+        ]
+      }
+    },
+    {
+      "templateId": "cinder_bolt",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.cinder_bolt.name",
+      "descriptionKey": "card.cinder_bolt.description",
+      "tags": ["spell", "burn"],
+      "behaviorIds": ["cinder_bolt_hero", "cinder_bolt_creature"],
+      "assetRefs": ["card-frame-default", "card-art-cinder-bolt"],
+      "manaCost": 1,
+      "display": {
+        "layout": "mana-spell",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
+    },
+    {
+      "templateId": "growth_charm",
+      "version": "0.1.0",
+      "objectType": "card",
+      "nameKey": "card.growth_charm.name",
+      "descriptionKey": "card.growth_charm.description",
+      "tags": ["spell", "buff"],
+      "behaviorIds": ["growth_charm"],
+      "assetRefs": ["card-frame-default", "card-art-growth-charm"],
+      "manaCost": 1,
+      "display": {
+        "layout": "mana-spell",
+        "properties": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost", "priority": 10 }
+        ]
+      }
+    }
+  ]
+}

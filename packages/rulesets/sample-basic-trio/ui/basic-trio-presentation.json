@@ -1,0 +1,1373 @@
+{
+  "id": "basic-trio-presentation",
+  "version": "0.1.0",
+  "kind": "presentation_catalog",
+  "metadata": {
+    "name": "Basic Trio Presentation",
+    "description": "Original presentation for the early-basic behavior dogfood."
+  },
+  "cards": [
+    {
+      "templateId": "ember_lance",
+      "name": "Ember Lance",
+      "text": "Deal 6 damage to an enemy hero or minion.",
+      "action": "Cast",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ember-lance.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 4,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "ember_lance",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      },
+      "actions": [
+        {
+          "label": "Hero",
+          "behaviorId": "ember_lance",
+          "targetMode": "enemyHero",
+          "targetSelector": "target"
+        },
+        {
+          "label": "Minion",
+          "behaviorId": "ember_lance_minion",
+          "targetMode": "targetObject",
+          "targetSelector": "target",
+          "targetZoneKinds": ["board"]
+        }
+      ]
+    },
+    {
+      "templateId": "study_scroll",
+      "name": "Study Scroll",
+      "text": "Draw 2 cards.",
+      "action": "Study",
+      "assets": {
+        "art": "/assets/cards/basic-trio/study-scroll.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 3,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "study_scroll",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "mirror_guard",
+      "name": "Mirror Guard",
+      "text": "Summon two 0/2 Mirror Guards with Taunt.",
+      "action": "Summon",
+      "assets": {
+        "art": "/assets/cards/basic-trio/study-scroll.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "mirror_guard",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "frost_pin",
+      "name": "Frost Pin",
+      "text": "Deal 3 damage to an enemy character and Freeze it.",
+      "action": "Pin",
+      "assets": {
+        "art": "/assets/cards/basic-trio/frost-pin.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "frost_pin",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      },
+      "actions": [
+        {
+          "label": "Minion",
+          "behaviorId": "frost_pin",
+          "targetMode": "targetObject",
+          "targetSelector": "target",
+          "targetZoneKinds": ["board"]
+        },
+        {
+          "label": "Hero",
+          "behaviorId": "frost_pin_hero",
+          "targetMode": "enemyHero",
+          "targetSelector": "target"
+        }
+      ]
+    },
+    {
+      "templateId": "null_form",
+      "name": "Null Form",
+      "text": "Transform an enemy minion into a 1/1 Training Spark.",
+      "action": "Transform",
+      "assets": {
+        "art": "/assets/cards/basic-trio/null-form.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 4,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "null_form",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "ember_wave",
+      "name": "Ember Wave",
+      "text": "Deal 1 damage to all enemy minions.",
+      "action": "Wave",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ember-wave.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "ember_wave",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "cinder_sparks",
+      "name": "Cinder Sparks",
+      "text": "Deal 1 damage three times to random enemies.",
+      "action": "Spark",
+      "assets": {
+        "art": "/assets/cards/basic-trio/cinder-sparks.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "cinder_sparks",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "winter_stasis",
+      "name": "Winter Stasis",
+      "text": "Freeze all enemy minions.",
+      "action": "Freeze",
+      "assets": {
+        "art": "/assets/cards/basic-trio/winter-stasis.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 3,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "winter_stasis",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "ember_column",
+      "name": "Ember Column",
+      "text": "Deal 4 damage to all enemy minions.",
+      "action": "Column",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ember-column.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 7,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "ember_column",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "guard_stance",
+      "name": "Guard Stance",
+      "text": "Gain 5 armor. Draw a card.",
+      "action": "Guard",
+      "assets": {
+        "art": "/assets/cards/basic-trio/guard-stance.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 3,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "guard_stance",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "ring_sweep",
+      "name": "Ring Sweep",
+      "text": "Deal 1 damage to all minions.",
+      "action": "Sweep",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ring-sweep.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "ring_sweep",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "split_strike",
+      "name": "Split Strike",
+      "text": "Deal 2 damage to two random enemy minions.",
+      "action": "Strike",
+      "assets": {
+        "art": "/assets/cards/basic-trio/split-strike.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "split_strike",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "battle_edict",
+      "name": "Battle Edict",
+      "text": "Destroy a damaged enemy minion.",
+      "action": "Edict",
+      "assets": {
+        "art": "/assets/cards/basic-trio/battle-edict.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "battle_edict",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "battle_rush",
+      "name": "Battle Rush",
+      "text": "Give a friendly minion +2 Attack and ready it.",
+      "action": "Rush",
+      "assets": {
+        "art": "/assets/cards/basic-trio/battle-rush.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 3,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "battle_rush",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "battle_focus",
+      "name": "Battle Focus",
+      "text": "Give your hero +4 Attack this turn.",
+      "action": "Focus",
+      "assets": {
+        "art": "/assets/cards/basic-trio/battle-focus.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "battle_focus",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "dawn_smite",
+      "name": "Dawn Smite",
+      "text": "Deal 2 damage to the enemy hero.",
+      "action": "Smite",
+      "assets": {
+        "art": "/assets/cards/basic-trio/dawn-smite.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "dawn_smite",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "mind_spark",
+      "name": "Mind Spark",
+      "text": "Deal 5 damage to the enemy hero.",
+      "action": "Focus",
+      "assets": {
+        "art": "/assets/cards/basic-trio/mind-spark.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "mind_spark",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "mind_glimpse",
+      "name": "Mind Glimpse",
+      "text": "Copy a random card from the enemy hand into your hand.",
+      "action": "Glimpse",
+      "assets": {
+        "art": "/assets/cards/basic-trio/mind-glimpse.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "mind_glimpse",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "aegis_word",
+      "name": "Aegis Word",
+      "text": "Give a minion +2 Health. Draw a card.",
+      "action": "Shield",
+      "assets": {
+        "art": "/assets/cards/basic-trio/aegis-word.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "aegis_word",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "spirit_echo",
+      "name": "Spirit Echo",
+      "text": "Double a minion's Health.",
+      "action": "Echo",
+      "assets": {
+        "art": "/assets/cards/basic-trio/spirit-echo.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "spirit_echo",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "holy_bloom",
+      "name": "Holy Bloom",
+      "text": "Deal 2 damage to all enemies. Restore 2 health to friendly characters.",
+      "action": "Bloom",
+      "assets": {
+        "art": "/assets/cards/basic-trio/holy-bloom.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 5,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "holy_bloom",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "quiet_verdict",
+      "name": "Quiet Verdict",
+      "text": "Destroy an enemy minion with 3 or less Attack.",
+      "action": "Judge",
+      "assets": {
+        "art": "/assets/cards/basic-trio/quiet-verdict.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "quiet_verdict",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "final_verdict",
+      "name": "Final Verdict",
+      "text": "Destroy an enemy minion with 5 or more Attack.",
+      "action": "Judge",
+      "assets": {
+        "art": "/assets/cards/basic-trio/final-verdict.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 3,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "final_verdict",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "borrowed_command",
+      "name": "Borrowed Command",
+      "text": "Take control of an enemy minion. It enters exhausted.",
+      "action": "Command",
+      "assets": {
+        "art": "/assets/cards/basic-trio/borrowed-command.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 10,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "borrowed_command",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    }
+  ],
+  "equipment": [
+    {
+      "templateId": "forge_axe",
+      "name": "Forge Axe",
+      "text": "Attack for 3 damage. Lose 1 durability.",
+      "action": "Strike",
+      "assets": {
+        "art": "/assets/cards/basic-trio/forge-axe.png"
+      },
+      "layout": {
+        "variant": "weapon"
+      },
+      "properties": {
+        "stats": {
+          "attack": 3,
+          "durability": 2
+        },
+        "display": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "durability",
+            "source": "counter",
+            "slot": "bottom-right",
+            "icon": "durability",
+            "label": "Durability"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "forge_axe_attack",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "heavy_reaper",
+      "name": "Heavy Reaper",
+      "text": "Equip a 5/2 weapon.",
+      "action": "Equip",
+      "assets": {
+        "art": "/assets/cards/basic-trio/heavy-reaper.png"
+      },
+      "layout": {
+        "variant": "weapon"
+      },
+      "properties": {
+        "manaCost": 5,
+        "stats": {
+          "attack": 5,
+          "durability": 2
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "durability",
+            "source": "counter",
+            "slot": "bottom-right",
+            "icon": "durability",
+            "label": "Durability"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "equip_heavy_reaper",
+        "targetMode": "selfHero"
+      }
+    }
+  ],
+  "minions": [
+    {
+      "templateId": "glacier_warden",
+      "name": "Glacier Warden",
+      "text": "A 3/6 minion. Its attack freezes damaged characters.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/glacier-warden.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "manaCost": 4,
+        "stats": {
+          "attack": 3,
+          "health": 6,
+          "maxHealth": 6
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_glacier_warden",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "spark_adept",
+      "name": "Spark Adept",
+      "text": "Spell Power +1.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/spark-adept.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "manaCost": 2,
+        "stats": {
+          "attack": 2,
+          "health": 2,
+          "maxHealth": 2,
+          "spellPower": 1
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "spellPower",
+            "source": "stats",
+            "slot": "top-right",
+            "icon": "spark",
+            "label": "Spell Power"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_spark_adept",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "storm_runner",
+      "name": "Storm Runner",
+      "text": "A ready 4/3 minion.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/storm-runner.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "manaCost": 4,
+        "stats": {
+          "attack": 4,
+          "health": 3,
+          "maxHealth": 3
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_storm_runner",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "war_drummer",
+      "name": "War Drummer",
+      "text": "After you play a minion with 3 or less Attack, ready it.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/war-drummer.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "manaCost": 3,
+        "stats": {
+          "attack": 2,
+          "health": 3,
+          "maxHealth": 3
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_war_drummer",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "banner_captain",
+      "name": "Banner Captain",
+      "text": "Your other minions have +1 Attack.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/banner-captain.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "manaCost": 3,
+        "stats": {
+          "attack": 2,
+          "health": 2,
+          "maxHealth": 2
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_banner_captain",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "river_guard",
+      "name": "River Guard",
+      "text": "A simple 2/3 neutral minion body.",
+      "action": "Attack",
+      "assets": {
+        "art": "/assets/cards/basic-trio/river-guard.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "stats": {
+          "attack": 2,
+          "health": 3,
+          "maxHealth": 3
+        },
+        "display": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "river_guard_attack",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "needle_scout",
+      "name": "Needle Scout",
+      "text": "Battlecry: Deal 1 damage to an enemy minion.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/needle-scout.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "manaCost": 1,
+        "stats": {
+          "attack": 1,
+          "health": 1,
+          "maxHealth": 1
+        },
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          },
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_needle_scout",
+        "targetMode": "targetObject",
+        "targetSelector": "target",
+        "targetZoneKinds": ["board"]
+      }
+    },
+    {
+      "templateId": "dawn_cleric",
+      "name": "Dawn Cleric",
+      "text": "Whenever a minion is healed, draw a card.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/dawn-cleric.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "stats": {
+          "attack": 1,
+          "health": 3,
+          "maxHealth": 3
+        },
+        "display": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "play_dawn_cleric",
+        "targetMode": "selfHero"
+      }
+    },
+    {
+      "templateId": "arena_ogre",
+      "name": "Arena Ogre",
+      "text": "A simple 6/7 neutral minion body.",
+      "action": "Attack",
+      "assets": {
+        "art": "/assets/cards/basic-trio/arena-ogre.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "stats": {
+          "attack": 6,
+          "health": 7,
+          "maxHealth": 7
+        },
+        "display": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "arena_ogre_attack",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "training_spark",
+      "name": "Training Spark",
+      "text": "A transformed 1/1 minion body.",
+      "action": "Attack",
+      "assets": {
+        "art": "/assets/cards/basic-trio/null-form.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "stats": {
+          "attack": 1,
+          "health": 1,
+          "maxHealth": 1
+        },
+        "display": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      },
+      "behavior": {
+        "behaviorId": "training_spark_attack",
+        "targetMode": "enemyHero",
+        "targetSelector": "target"
+      }
+    },
+    {
+      "templateId": "mirror_guard_token",
+      "name": "Mirror Guard",
+      "text": "Taunt.",
+      "assets": {
+        "art": "/assets/cards/basic-trio/study-scroll.png"
+      },
+      "layout": {
+        "variant": "minion"
+      },
+      "properties": {
+        "stats": {
+          "attack": 0,
+          "health": 2,
+          "maxHealth": 2
+        },
+        "display": [
+          {
+            "property": "attack",
+            "source": "stats",
+            "slot": "bottom-left",
+            "icon": "sword",
+            "label": "Attack"
+          },
+          {
+            "property": "health",
+            "source": "stats",
+            "slot": "bottom-right",
+            "icon": "heart",
+            "label": "Health"
+          }
+        ]
+      }
+    }
+  ],
+  "heroes": [
+    {
+      "playerId": "p1",
+      "name": "Ember Scholar",
+      "title": "Mage Class",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ember-lance.png"
+      },
+      "layout": {
+        "variant": "mage",
+        "artFit": "cover",
+        "artPositionX": 50,
+        "artPositionY": 42
+      },
+      "ability": {
+        "name": "Spark",
+        "text": "Deal 1 damage to the enemy hero.",
+        "action": "Spark",
+        "behaviorId": "ember_ping",
+        "targetMode": "enemyHero",
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      }
+    },
+    {
+      "playerId": "p2",
+      "name": "Iron Vanguard",
+      "title": "Warrior Class",
+      "assets": {
+        "art": "/assets/cards/basic-trio/forge-axe.png"
+      },
+      "layout": {
+        "variant": "warrior",
+        "artFit": "cover",
+        "artPositionX": 50,
+        "artPositionY": 48
+      },
+      "ability": {
+        "name": "Brace",
+        "text": "Gain 2 armor.",
+        "action": "Brace",
+        "behaviorId": "vanguard_armor",
+        "targetMode": "selfHero",
+        "manaCost": 2,
+        "display": [
+          {
+            "property": "manaCost",
+            "source": "template",
+            "slot": "top-left",
+            "icon": "mana",
+            "label": "Cost"
+          }
+        ]
+      }
+    }
+  ]
+}

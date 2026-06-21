@@ -43,9 +43,9 @@ function send(res: ServerResponse, status: number, payload: unknown): void {
   res.end(JSON.stringify(payload));
 }
 
-function sendBytes(res: ServerResponse, status: number, bytes: Buffer | string, contentType: string): void {
+function sendBytes(res: ServerResponse, status: number, bytes: Buffer | string, contentType: string, omitBody = false): void {
   res.writeHead(status, { "content-type": contentType });
-  res.end(bytes);
+  res.end(omitBody ? undefined : bytes);
 }
 
 function headerValue(value: string | string[] | undefined): string | undefined {
@@ -115,14 +115,16 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
 
       if (req.method === "POST" && url.pathname === "/matches") {
-        const body = (await readJson(req)) as { rulesetId?: string; playerCount?: 6 | 8; demoDuel?: boolean };
+        const body = (await readJson(req)) as { rulesetId?: string; playerCount?: 6 | 8; demoDuel?: boolean; p1Class?: "mage" | "warrior" | "priest"; p2Class?: "mage" | "warrior" | "priest" };
         const rulesetId = body.rulesetId ?? "sample-duel";
         if (!isRegisteredRulesetId(rulesetId)) {
           throw new BadRequestError(`Unsupported ruleset ${rulesetId}.`);
         }
         const match = service.createMatch(rulesetId, {
           playerCount: body.playerCount,
-          demoDuel: body.demoDuel
+          demoDuel: body.demoDuel,
+          p1Class: body.p1Class,
+          p2Class: body.p2Class
         });
         send(res, 201, { matchId: match.id, status: match.state.status, lastSequence: match.state.lastSequence });
         return;
@@ -262,7 +264,7 @@ export function createMilletHttpServer(service = new InMemoryMatchService(), opt
         return;
       }
 
-      if (req.method === "GET" && options.staticRoot && tryServeStatic(options.staticRoot, url.pathname, res)) {
+      if ((req.method === "GET" || req.method === "HEAD") && options.staticRoot && tryServeStatic(options.staticRoot, url.pathname, res, req.method === "HEAD")) {
         return;
       }
 
@@ -502,7 +504,7 @@ function tryServeRulesetContent(rulesetRoot: string, rulesetId: string, contentP
   return tryServeStatic(rulesetRoot, `/${rulesetId}/${contentPath}`, res);
 }
 
-function tryServeStatic(staticRoot: string, pathname: string, res: ServerResponse): boolean {
+function tryServeStatic(staticRoot: string, pathname: string, res: ServerResponse, omitBody = false): boolean {
   const normalizedRoot = normalize(staticRoot);
   const filePath = pathname === "/" || pathname === "/basic-duel"
     ? join(normalizedRoot, "index.html")
@@ -524,7 +526,7 @@ function tryServeStatic(staticRoot: string, pathname: string, res: ServerRespons
     return false;
   }
 
-  sendBytes(res, 200, readFileSync(normalizedFile), contentTypeForPath(normalizedFile));
+  sendBytes(res, 200, readFileSync(normalizedFile), contentTypeForPath(normalizedFile), omitBody);
   return true;
 }
 

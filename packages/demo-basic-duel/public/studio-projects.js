@@ -19,5 +19,19 @@ globalThis.MILLET_STUDIO_PROJECTS = [
     rulesetId: "sample-rune-duel",
     mode: "playable",
     summary: "Second 1v1 dogfood project using generic presentation-driven card actions."
+  },
+  {
+    id: "basic-trio",
+    label: "Basic Trio",
+    rulesetId: "sample-basic-trio",
+    mode: "playable",
+    summary: "Early-basic behavior dogfood for Mage, Warrior, and Priest style classes."
+  },
+  {
+    id: "mana-clash",
+    label: "Mana Clash",
+    rulesetId: "sample-mana-clash",
+    mode: "playable",
+    summary: "Magic-like dogfood project for lands, tap/untap, mana, creatures, combat, and graveyard flow."
   }
 ];

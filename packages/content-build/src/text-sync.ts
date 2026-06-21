@@ -32,14 +32,62 @@ const BASE_PUBLIC_PLACEHOLDERS = new Set([
   "value"
 ]);
 
+function numericText(value: unknown): string {
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  if (typeof value === "object" && value !== null && "source" in value) {
+    const definition = value as {
+      source?: string;
+      values?: unknown[];
+      stat?: string;
+      counter?: string;
+      resource?: string;
+      base?: number;
+      multiplier?: number;
+      delta?: number;
+    };
+    if (definition.source === "sum") {
+      return (definition.values ?? []).map((part) => numericText(part)).join(" + ") || "0";
+    }
+
+    const source =
+      definition.source === "object_stat"
+        ? definition.stat
+        : definition.source === "object_counter"
+          ? definition.counter
+          : definition.source === "matching_object_stat_sum"
+            ? `${definition.base ?? 0} + ${definition.stat ?? "matching stat"}`
+            : definition.resource;
+    const multiplier = definition.multiplier === undefined ? "" : ` x${definition.multiplier}`;
+    const delta = definition.delta === undefined ? "" : definition.delta >= 0 ? ` +${definition.delta}` : ` ${definition.delta}`;
+    return `${source ?? "value"}${multiplier}${delta}`;
+  }
+
+  return "value";
+}
+
 function effectText(effect: EffectDefinition): string {
   switch (effect.type) {
     case "deal_damage":
-      return `Deal ${effect.amount} damage.`;
+      return `Deal ${numericText(effect.amount)} damage.`;
+    case "deal_damage_to_object":
+      return `Deal ${numericText(effect.amount)} damage to an object.`;
+    case "deal_damage_to_matching_objects":
+      return `Deal ${numericText(effect.amount)} damage to matching objects.`;
+    case "deal_damage_to_random_targets":
+      return `Deal ${numericText(effect.amount)} damage to ${numericText(effect.count)} random targets.`;
     case "deal_damage_all_players":
-      return `Deal ${effect.amount} damage to all players.`;
+      return `Deal ${numericText(effect.amount)} damage to all players.`;
+    case "deal_damage_to_matching_players":
+      return `Deal ${numericText(effect.amount)} damage to matching players.`;
     case "heal":
-      return `Restore ${effect.amount} health.`;
+      return `Restore ${numericText(effect.amount)} health.`;
+    case "heal_object":
+      return `Restore ${numericText(effect.amount)} health to an object.`;
+    case "heal_matching_objects":
+      return `Restore ${numericText(effect.amount)} health to matching objects.`;
     case "prevent_next_damage":
       return `Prevent the next ${effect.amount} damage.`;
     case "draw_cards":
@@ -48,6 +96,10 @@ function effectText(effect: EffectDefinition): string {
       return "Move this card.";
     case "equip_object":
       return `Equip an object as ${effect.slotTag}.`;
+    case "play_object":
+      return `Play a ${effect.objectType ?? "object"}.`;
+    case "copy_random_object_from_zone":
+      return "Copy a random object into a zone.";
     case "resolve_delayed_effect":
       return "Resolve a delayed effect.";
     case "resolve_delayed_effects_in_zone":
@@ -62,8 +114,26 @@ function effectText(effect: EffectDefinition): string {
       return "Discard down to hand limit.";
     case "set_object_exhausted":
       return effect.exhausted ? "Exhaust an object." : "Ready an object.";
+    case "set_object_exhausted_on_matching_objects":
+      return effect.exhausted ? "Exhaust matching objects." : "Ready matching objects.";
+    case "set_object_keyword":
+      return effect.present ? `Give an object ${effect.keyword}.` : `Remove ${effect.keyword} from an object.`;
+    case "set_object_keyword_on_matching_objects":
+      return effect.present ? `Give matching objects ${effect.keyword}.` : `Remove ${effect.keyword} from matching objects.`;
+    case "transform_object":
+      return `Transform an object${effect.templateId ? ` into ${effect.templateId}` : ""}.`;
+    case "change_object_control":
+      return "Change control of an object.";
+    case "create_object":
+      return `Create a ${effect.object.objectType}.`;
     case "adjust_object_counter":
       return `Adjust ${effect.counter} by ${effect.delta}.`;
+    case "set_object_stat":
+      return `Set ${effect.stat} to ${numericText(effect.value)}.`;
+    case "adjust_object_stat":
+      return `Adjust ${effect.stat} by ${numericText(effect.delta)}.`;
+    case "adjust_object_stat_on_matching_objects":
+      return `Adjust matching ${effect.stat} by ${numericText(effect.delta)}.`;
     case "destroy_object_if_counter_at_most":
       return `Destroy an object if ${effect.counter} is at most ${effect.value}.`;
     case "register_trigger":
@@ -173,18 +243,49 @@ function publicPlaceholderSet(behavior: BehaviorDefinition): Set<string> {
     placeholders.add(effect.type);
     switch (effect.type) {
       case "deal_damage":
+      case "deal_damage_to_object":
+      case "deal_damage_to_matching_objects":
+      case "deal_damage_to_random_targets":
       case "deal_damage_all_players":
+      case "deal_damage_to_matching_players":
         placeholders.add("amount");
+        placeholders.add("count");
         placeholders.add("damageType");
         break;
       case "heal":
+      case "heal_object":
+      case "heal_matching_objects":
       case "prevent_next_damage":
       case "draw_cards":
         placeholders.add("count");
         placeholders.add("amount");
+        placeholders.add("reason");
         break;
       case "equip_object":
         placeholders.add("slotTag");
+        break;
+      case "play_object":
+        placeholders.add("objectType");
+        placeholders.add("fromZoneType");
+        placeholders.add("reason");
+        placeholders.add("behaviorId");
+        break;
+      case "copy_random_object_from_zone":
+        placeholders.add("reason");
+        break;
+      case "set_object_keyword":
+      case "set_object_keyword_on_matching_objects":
+        placeholders.add("keyword");
+        placeholders.add("reason");
+        break;
+      case "transform_object":
+        placeholders.add("templateId");
+        placeholders.add("objectType");
+        placeholders.add("reason");
+        break;
+      case "change_object_control":
+        placeholders.add("controller");
+        placeholders.add("reason");
         break;
       case "open_prompt":
         placeholders.add("promptType");
@@ -203,6 +304,15 @@ function publicPlaceholderSet(behavior: BehaviorDefinition): Set<string> {
       case "destroy_object_if_counter_at_most":
         placeholders.add("counter");
         placeholders.add("value");
+        break;
+      case "set_object_stat":
+      case "adjust_object_stat":
+      case "adjust_object_stat_on_matching_objects":
+        placeholders.add("stat");
+        placeholders.add("value");
+        break;
+      case "create_object":
+        placeholders.add("objectType");
         break;
     }
   }

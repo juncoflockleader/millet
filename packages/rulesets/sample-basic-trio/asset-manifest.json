@@ -1,0 +1,672 @@
+{
+  "id": "sample-basic-trio-assets",
+  "version": "0.1.0",
+  "assets": [
+    {
+      "assetId": "card-frame-default",
+      "version": "0.1.0",
+      "kind": "card_frame",
+      "contentHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sourceUri": "memory://sample-basic-trio/card-frame-default",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 512,
+      "height": 768,
+      "previewRole": "card-frame",
+      "usage": [
+        "card-catalog default frame"
+      ]
+    },
+    {
+      "assetId": "card-art-ember-lance",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:9c429ba781d42ff80e2b3661668292e0cded1700efc5664052f96934ec77ca3e",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/ember-lance",
+      "publicPath": "/assets/cards/basic-trio/ember-lance.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-ember-lance",
+      "prompt": "Original mage spell art: blue-white arcane bolt in a training arena, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Ember Lance art",
+        "Ember Scholar hero art"
+      ]
+    },
+    {
+      "assetId": "card-art-ember-wave",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:73f3f101b65ed6a69d2b28b1ce87cafb6737202837d6a62cc0c0e4bac1dfab0e",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/ember-wave",
+      "publicPath": "/assets/cards/basic-trio/ember-wave.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-ember-wave",
+      "prompt": "Original mage area spell art: a blue-orange arcane ember wave sweeping across a training arena, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Ember Wave art"
+      ]
+    },
+    {
+      "assetId": "card-art-cinder-sparks",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:64becdf34fe3087ce7cb703a555aca7ab2fa9965243b57142077140b78798e4e",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/cinder-sparks",
+      "publicPath": "/assets/cards/basic-trio/cinder-sparks.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-cinder-sparks",
+      "prompt": "Original mage random spell art: three blue-orange arcane sparks ricocheting unpredictably through a stone training arena toward abstract enemy targets, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Cinder Sparks art"
+      ]
+    },
+    {
+      "assetId": "card-art-winter-stasis",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:75d2a9c37d4798d8f4098a5a982a4a5d894ff44771fbd8f8f555e547d974e1cf",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/winter-stasis",
+      "publicPath": "/assets/cards/basic-trio/winter-stasis.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-winter-stasis",
+      "prompt": "Original mage area freeze spell art: a blue-white frost ring locking several abstract training minions in place across a stone arena floor, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Winter Stasis art"
+      ]
+    },
+    {
+      "assetId": "card-art-ember-column",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:df6707edb773581129d0bd60d7776784b41444e813178ca27031a5ffadcf16f1",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/ember-column",
+      "publicPath": "/assets/cards/basic-trio/ember-column.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-ember-column",
+      "prompt": "Original mage heavy area spell art: a towering blue-orange arcane fire column erupting from a stone arena and scorching abstract enemy training minions, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Ember Column art"
+      ]
+    },
+    {
+      "assetId": "card-art-glacier-warden",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:510c83aca85a543cd5dae210355dbda0e161de944b4fd68bd2dc4b0d78398730",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/glacier-warden",
+      "publicPath": "/assets/cards/basic-trio/glacier-warden.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-glacier-warden",
+      "prompt": "Original mage freeze minion art: a sturdy ice-armored training sentinel in a stone arena with one gauntlet radiating frost, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Glacier Warden art"
+      ]
+    },
+    {
+      "assetId": "card-art-spark-adept",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:79edccabe15141ee7c04cd9d892ec8a884c1ca10e483645f15dd18d65eb900df",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/spark-adept",
+      "publicPath": "/assets/cards/basic-trio/spark-adept.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-spark-adept",
+      "prompt": "Original neutral spell-power minion art: a battlefield scholar holding a hovering blue-white rune lantern that amplifies nearby magic in a stone practice arena, vertical portrait crop, no text, no logo, no card frame, no recognizable franchise symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Spark Adept art"
+      ]
+    },
+    {
+      "assetId": "card-art-frost-pin",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:6093271e792ea4d22ac76b9e14735253a51fcd6c011fd0ebb7c1ab628ea79e2b",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/frost-pin",
+      "publicPath": "/assets/cards/basic-trio/frost-pin.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-frost-pin",
+      "prompt": "Original mage freeze spell art: a blue-white frost sigil pinning an abstract training minion in a stone arena, crystalline ice spreading from impact, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Frost Pin art"
+      ]
+    },
+    {
+      "assetId": "card-art-null-form",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:1da402ee93d0eedc227b81bf2d88833d91d218a0120d990d95a280bea4e8755c",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/null-form",
+      "publicPath": "/assets/cards/basic-trio/null-form.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-null-form",
+      "prompt": "Original mage transform spell art: a blue-white null sigil collapsing a large training-arena minion into a small arcane spark, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Null Form art",
+        "Training Spark transformed minion art"
+      ]
+    },
+    {
+      "assetId": "card-art-study-scroll",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:6020c8281a4e011f8430ab3017ad372c105789c1dac9938a4ecd66e748f8dbd0",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/study-scroll",
+      "publicPath": "/assets/cards/basic-trio/study-scroll.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-study-scroll",
+      "prompt": "Original arcane study scroll card art, luminous pages and abstract sigils, vertical portrait crop, no text, no logo, no card frame.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Study Scroll art"
+      ]
+    },
+    {
+      "assetId": "card-art-forge-axe",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:4be30fb4ac38561b861e98e4e05a365cfb6b722d2bf09aa8c31e68bf675a52fa",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/forge-axe",
+      "publicPath": "/assets/cards/basic-trio/forge-axe.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-forge-axe",
+      "prompt": "Original warrior weapon art: sturdy practice axe in a forge-yard training ground, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Forge Axe art",
+        "Iron Vanguard hero art"
+      ]
+    },
+    {
+      "assetId": "card-art-heavy-reaper",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:6996b1b21d35156984b33dcde553ac2734ecdbd84eb8b64c91f4abb06cd881f4",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/heavy-reaper",
+      "publicPath": "/assets/cards/basic-trio/heavy-reaper.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-heavy-reaper",
+      "prompt": "Original warrior heavy weapon art: a massive two-handed practice axe with a crescent blade and bronze battle energy in a stone arena weapon rack, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Heavy Reaper art"
+      ]
+    },
+    {
+      "assetId": "card-art-guard-stance",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:dcc3ae57566c633886852690464656628ee9762f1f59bd9fded86aa63fe025bc",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/guard-stance",
+      "publicPath": "/assets/cards/basic-trio/guard-stance.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-guard-stance",
+      "prompt": "Original warrior defensive stance art, bronze shield aura and disciplined training yard, vertical portrait crop, no text, no logo, no card frame.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Guard Stance art"
+      ]
+    },
+    {
+      "assetId": "card-art-ring-sweep",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:9abdc68b82f9820beb6d5b36923be7707b45dd59e47a329d5f4a39b097c97b8b",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/ring-sweep",
+      "publicPath": "/assets/cards/basic-trio/ring-sweep.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-ring-sweep",
+      "prompt": "Original warrior area strike art: a disciplined warrior sweeps a practice axe in a circular bronze shockwave across multiple training minions, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Ring Sweep art"
+      ]
+    },
+    {
+      "assetId": "card-art-split-strike",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:168e9d963a0c6d1692b5669c083be66afce86345df4bbb921535d3045df260d0",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/split-strike",
+      "publicPath": "/assets/cards/basic-trio/split-strike.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-split-strike",
+      "prompt": "Original warrior random strike art: two crossing bronze blade arcs from one axe swing hit two abstract enemy training minions, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Split Strike art"
+      ]
+    },
+    {
+      "assetId": "card-art-battle-edict",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:17813a5f096f5dfe138553b741aeabd3972e436cc46d498f51fb4fdf227ffe42",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/battle-edict",
+      "publicPath": "/assets/cards/basic-trio/battle-edict.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-battle-edict",
+      "prompt": "Original warrior spell art: bronze-gold command seal over a damaged training minion silhouette in a disciplined arena, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Battle Edict art"
+      ]
+    },
+    {
+      "assetId": "card-art-battle-rush",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:0a169c2a16dce14aeabe529fd4c6aad0335c810453c4bad95b311992f349a7c5",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/battle-rush",
+      "publicPath": "/assets/cards/basic-trio/battle-rush.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-battle-rush",
+      "prompt": "Original warrior charge buff art: bronze-red battle energy wrapping a friendly training minion as it lunges forward in a stone arena, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Battle Rush art"
+      ]
+    },
+    {
+      "assetId": "card-art-battle-focus",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:687985b6be71d8710f1a73b498cec034fd5fe0db3a97773e9cd9d03cb9d79e61",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/battle-focus",
+      "publicPath": "/assets/cards/basic-trio/battle-focus.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-battle-focus",
+      "prompt": "Original warrior hero-attack spell art: an armored hero silhouette in a stone arena channeling bronze battle energy into a raised weapon for one focused strike, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Battle Focus art"
+      ]
+    },
+    {
+      "assetId": "card-art-storm-runner",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:5337285646dd12e4a132fbc21a15439af5afa87ffda377b92e23d5408429b62a",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/storm-runner",
+      "publicPath": "/assets/cards/basic-trio/storm-runner.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-storm-runner",
+      "prompt": "Original warrior charge minion art: an armored arena runner sprinting forward with spear and shield, bronze-red battle wind trailing behind, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Storm Runner art"
+      ]
+    },
+    {
+      "assetId": "card-art-war-drummer",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:86310c0efd4c68daeaee186881f371978cd275dd5109c06b861c52a6205edaf9",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/war-drummer",
+      "publicPath": "/assets/cards/basic-trio/war-drummer.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-war-drummer",
+      "prompt": "Original warrior summon-trigger minion art: a disciplined arena captain beating a bronze war drum that rallies small recruits into motion, vertical portrait crop, no text, no logo, no card frame, no recognizable franchise symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "War Drummer art"
+      ]
+    },
+    {
+      "assetId": "card-art-banner-captain",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:a37630c3a814e4fc78c4e78339d13f88525a7b15467bcff50bdddd98d7142885",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/banner-captain",
+      "publicPath": "/assets/cards/basic-trio/banner-captain.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-banner-captain",
+      "prompt": "Original neutral aura minion art: a disciplined adult banner-bearing field captain holding a tall blue-and-bronze rally standard that inspires nearby adult fighters in a stone training arena, vertical portrait crop, no text, no logo, no card frame, no recognizable franchise symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Banner Captain art"
+      ]
+    },
+    {
+      "assetId": "card-art-dawn-smite",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:b71a7d176cba45dd09ae1650b38244a38fa19570973499e9c5ed4d43e8c0605a",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/dawn-smite",
+      "publicPath": "/assets/cards/basic-trio/dawn-smite.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-dawn-smite",
+      "prompt": "Original priest spell art: ivory-gold light and abstract sigils in a serene hall, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Dawn Smite art",
+        "Dawn Oracle hero art"
+      ]
+    },
+    {
+      "assetId": "card-art-mind-spark",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:76f8ba3f362ed977af3c1c28bb2bed75c0cc64377c8a192ce9d81c06e2dbd4b9",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/mind-spark",
+      "publicPath": "/assets/cards/basic-trio/mind-spark.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-mind-spark",
+      "prompt": "Original psychic light spell art, lavender and gold thought sparks, vertical portrait crop, no text, no logo, no card frame.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Mind Spark art"
+      ]
+    },
+    {
+      "assetId": "card-art-mind-glimpse",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:02c27b837312fca10e5ffc969bce9081d41d9163f7fb94aea123cf083a072b3c",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/mind-glimpse",
+      "publicPath": "/assets/cards/basic-trio/mind-glimpse.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-mind-glimpse",
+      "prompt": "Original priest random hand-copy spell art: ivory-gold thought-lantern revealing one hazy unreadable card-shaped silhouette from a distant shadowed hand, vertical portrait crop, no readable text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Mind Glimpse art"
+      ]
+    },
+    {
+      "assetId": "card-art-dawn-cleric",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:6a78e1dd7cce2377f8a2f46ceb20d625fba685a79de1bb7eb7aa171d8da67273",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/dawn-cleric",
+      "publicPath": "/assets/cards/basic-trio/dawn-cleric.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-dawn-cleric",
+      "prompt": "Original priest minion art: ivory-robed cleric holding a warm dawn lantern in a serene training sanctuary, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Dawn Cleric art"
+      ]
+    },
+    {
+      "assetId": "card-art-aegis-word",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:ff7c95dc7ff8201100813059893861f4827e84670628f5d20e10e2e1d10993dc",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/aegis-word",
+      "publicPath": "/assets/cards/basic-trio/aegis-word.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-aegis-word",
+      "prompt": "Original priest protective buff art: unreadable ivory-gold light strokes wrapping a small training minion silhouette in a translucent shield, vertical portrait crop, no readable text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Aegis Word art"
+      ]
+    },
+    {
+      "assetId": "card-art-spirit-echo",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:6bcd1762c9007cf1c940bc7d8ebe7ed344933b54a4ccc3171a6e7811605836c5",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/spirit-echo",
+      "publicPath": "/assets/cards/basic-trio/spirit-echo.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-spirit-echo",
+      "prompt": "Original priest health-doubling buff art: a small training minion silhouette mirrored by a larger luminous ivory-gold spirit echo, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Spirit Echo art"
+      ]
+    },
+    {
+      "assetId": "card-art-holy-bloom",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:aa306c6ed2b4a0727731b06bcd5db221fed3d74954b17e0f47fff42838e72e30",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/holy-bloom",
+      "publicPath": "/assets/cards/basic-trio/holy-bloom.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-holy-bloom",
+      "prompt": "Original priest area spell art: an ivory-gold bloom of light soothes friendly sigils while sending sharp petals toward shadowed enemy training silhouettes, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Holy Bloom art"
+      ]
+    },
+    {
+      "assetId": "card-art-quiet-verdict",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:38853106dd2773df7f6a44a5153cdae4b64f1b19220d6ddf522df263cdd004ee",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/quiet-verdict",
+      "publicPath": "/assets/cards/basic-trio/quiet-verdict.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-quiet-verdict",
+      "prompt": "Original priest-like low-attack judgment spell art: a modest training minion kneeling in a calm ivory-gold verdict circle, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Quiet Verdict art"
+      ]
+    },
+    {
+      "assetId": "card-art-final-verdict",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:c69817c7e44b56098ceaa05a0dddb5e4c3f5fd28ddadf159a0fe39a787c88bbd",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/final-verdict",
+      "publicPath": "/assets/cards/basic-trio/final-verdict.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-final-verdict",
+      "prompt": "Original priest-like high-attack judgment spell art: a towering training minion halted by a monumental ivory-gold verdict sigil in a stone arena, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Final Verdict art"
+      ]
+    },
+    {
+      "assetId": "card-art-borrowed-command",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:9f4641ad0b6ffc9c6b95fb6f4515d4b16269e4e6da8d1d6f8ac98cc3585e4d3e",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/borrowed-command",
+      "publicPath": "/assets/cards/basic-trio/borrowed-command.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-borrowed-command",
+      "prompt": "Original priest-like control spell art: ivory-gold command sigil guiding a large training minion across a stone arena, vertical portrait crop, no text, no logo, no card frame, no recognizable Hearthstone or Warcraft symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Borrowed Command art"
+      ]
+    },
+    {
+      "assetId": "card-art-river-guard",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:1cf45c3c185a980b2d1b3dcff06a51bb71f8ceba1dc31a4d053f001fad43ad29",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/river-guard",
+      "publicPath": "/assets/cards/basic-trio/river-guard.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-river-guard",
+      "prompt": "Original neutral minion art: sturdy river-road guard with simple training gear, vertical portrait crop, no text, no logo, no card frame.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "River Guard art"
+      ]
+    },
+    {
+      "assetId": "card-art-needle-scout",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:ce6c9c1ad46ec088fe7d465e3ddf310e378d26131333312ad7994c78d2230ea9",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/needle-scout",
+      "publicPath": "/assets/cards/basic-trio/needle-scout.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1536,
+      "generationId": "codex-imagegen-20260620-needle-scout",
+      "prompt": "Original neutral Battlecry minion art: a nimble adult scout in light leather-and-cloth armor flicking a glowing silver training needle toward a target dummy in a stone training arena, vertical portrait crop, no text, no logo, no card frame, no recognizable franchise symbols.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Needle Scout art"
+      ]
+    },
+    {
+      "assetId": "card-art-arena-ogre",
+      "version": "0.1.0",
+      "kind": "card_art",
+      "contentHash": "sha256:322c74fb8243036a4ecfca769c321ba7b5a8aeb7ab3cb9747c33601950a6c33e",
+      "sourceUri": "memory://sample-basic-trio/imagegen-20260620/arena-ogre",
+      "publicPath": "/assets/cards/basic-trio/arena-ogre.png",
+      "license": "first-party-dev",
+      "owner": "millet",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1535,
+      "generationId": "codex-imagegen-20260620-arena-ogre",
+      "prompt": "Original neutral large arena bruiser art, broad silhouette and simple training arena, vertical portrait crop, no text, no logo, no card frame.",
+      "previewRole": "card-portrait",
+      "usage": [
+        "Arena Ogre art"
+      ]
+    }
+  ]
+}

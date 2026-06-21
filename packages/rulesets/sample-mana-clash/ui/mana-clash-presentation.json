@@ -1,0 +1,204 @@
+{
+  "id": "mana-clash-presentation",
+  "version": "0.1.0",
+  "kind": "presentation_catalog",
+  "metadata": {
+    "name": "Mana Clash Presentation",
+    "description": "Original MTG-like presentation for land, spell, creature, tap, and combat actions."
+  },
+  "cards": [
+    {
+      "templateId": "verdant_land",
+      "name": "Verdant Land",
+      "text": "Play once each turn. Tap to gain 1 mana this turn.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/river-guard.png"
+      },
+      "layout": {
+        "variant": "land",
+        "artFit": "cover"
+      },
+      "properties": {
+        "display": []
+      },
+      "actions": [
+        { "label": "Play", "behaviorId": "play_land", "targetMode": "selfHero", "sourceZoneKinds": ["hand"] },
+        { "label": "Tap", "behaviorId": "tap_land_for_mana", "targetMode": "selfHero", "sourceZoneKinds": ["land"] }
+      ]
+    },
+    {
+      "templateId": "ember_land",
+      "name": "Ember Land",
+      "text": "Play once each turn. Tap to gain 1 mana this turn.",
+      "action": "Play",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ember-lance.png"
+      },
+      "layout": {
+        "variant": "land",
+        "artFit": "cover"
+      },
+      "properties": {
+        "display": []
+      },
+      "actions": [
+        { "label": "Play", "behaviorId": "play_land", "targetMode": "selfHero", "sourceZoneKinds": ["hand"] },
+        { "label": "Tap", "behaviorId": "tap_land_for_mana", "targetMode": "selfHero", "sourceZoneKinds": ["land"] }
+      ]
+    },
+    {
+      "templateId": "cinder_bolt",
+      "name": "Cinder Bolt",
+      "text": "Deal 3 damage to a player or creature.",
+      "action": "Cast",
+      "assets": {
+        "art": "/assets/cards/basic-trio/cinder-sparks.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      },
+      "actions": [
+        { "label": "Hero", "behaviorId": "cinder_bolt_hero", "targetMode": "enemyHero", "targetSelector": "target", "sourceZoneKinds": ["hand"] },
+        { "label": "Creature", "behaviorId": "cinder_bolt_creature", "targetMode": "targetObject", "targetSelector": "target", "sourceZoneKinds": ["hand"], "targetZoneKinds": ["board"] }
+      ]
+    },
+    {
+      "templateId": "growth_charm",
+      "name": "Growth Charm",
+      "text": "Give a friendly creature +1/+1.",
+      "action": "Cast",
+      "assets": {
+        "art": "/assets/cards/basic-trio/aegis-word.png"
+      },
+      "layout": {
+        "variant": "spell"
+      },
+      "properties": {
+        "manaCost": 1,
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" }
+        ]
+      },
+      "actions": [
+        { "label": "Buff", "behaviorId": "growth_charm", "targetMode": "targeted", "targetSelector": "target", "sourceZoneKinds": ["hand"], "targetZoneKinds": ["board"] }
+      ]
+    }
+  ],
+  "minions": [
+    {
+      "templateId": "river_bear",
+      "name": "River Bear",
+      "text": "2/3 creature. Enters tapped.",
+      "action": "Summon",
+      "assets": {
+        "art": "/assets/cards/basic-trio/river-guard.png"
+      },
+      "layout": {
+        "variant": "creature"
+      },
+      "properties": {
+        "manaCost": 2,
+        "stats": {
+          "attack": 2,
+          "health": 3
+        },
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" },
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Power" },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Toughness" }
+        ]
+      },
+      "actions": [
+        { "label": "Summon", "behaviorId": "play_river_bear", "targetMode": "battlefield", "sourceZoneKinds": ["hand"] },
+        { "label": "Attack", "behaviorId": "creature_attack_hero", "targetMode": "enemyHero", "targetSelector": "target", "sourceZoneKinds": ["board"] },
+        { "label": "Fight", "behaviorId": "creature_fight_creature", "targetMode": "targetObject", "targetSelector": "target", "sourceZoneKinds": ["board"], "targetZoneKinds": ["board"] }
+      ]
+    },
+    {
+      "templateId": "sky_drake",
+      "name": "Sky Drake",
+      "text": "3/2 flying creature. Enters tapped.",
+      "action": "Summon",
+      "assets": {
+        "art": "/assets/cards/basic-trio/storm-runner.png"
+      },
+      "layout": {
+        "variant": "creature"
+      },
+      "properties": {
+        "manaCost": 3,
+        "stats": {
+          "attack": 3,
+          "health": 2
+        },
+        "display": [
+          { "property": "manaCost", "source": "template", "slot": "top-left", "icon": "mana", "label": "Cost" },
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Power" },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Toughness" }
+        ]
+      },
+      "actions": [
+        { "label": "Summon", "behaviorId": "play_sky_drake", "targetMode": "battlefield", "sourceZoneKinds": ["hand"] },
+        { "label": "Attack", "behaviorId": "creature_attack_hero", "targetMode": "enemyHero", "targetSelector": "target", "sourceZoneKinds": ["board"] },
+        { "label": "Fight", "behaviorId": "creature_fight_creature", "targetMode": "targetObject", "targetSelector": "target", "sourceZoneKinds": ["board"], "targetZoneKinds": ["board"] }
+      ]
+    },
+    {
+      "templateId": "briar_guard",
+      "name": "Briar Guard",
+      "text": "2/2 creature.",
+      "action": "Attack",
+      "assets": {
+        "art": "/assets/cards/basic-trio/arena-ogre.png"
+      },
+      "layout": {
+        "variant": "creature"
+      },
+      "properties": {
+        "stats": {
+          "attack": 2,
+          "health": 2
+        },
+        "display": [
+          { "property": "attack", "source": "stats", "slot": "bottom-left", "icon": "sword", "label": "Power" },
+          { "property": "health", "source": "stats", "slot": "bottom-right", "icon": "heart", "label": "Toughness" }
+        ]
+      },
+      "actions": [
+        { "label": "Attack", "behaviorId": "creature_attack_hero", "targetMode": "enemyHero", "targetSelector": "target", "sourceZoneKinds": ["board"] },
+        { "label": "Fight", "behaviorId": "creature_fight_creature", "targetMode": "targetObject", "targetSelector": "target", "sourceZoneKinds": ["board"], "targetZoneKinds": ["board"] }
+      ]
+    }
+  ],
+  "heroes": [
+    {
+      "playerId": "p1",
+      "name": "Player 1",
+      "title": "Verdant Adept",
+      "assets": {
+        "art": "/assets/cards/basic-trio/river-guard.png"
+      },
+      "layout": {
+        "variant": "duel-hero-card"
+      }
+    },
+    {
+      "playerId": "p2",
+      "name": "Player 2",
+      "title": "Ember Adept",
+      "assets": {
+        "art": "/assets/cards/basic-trio/ember-lance.png"
+      },
+      "layout": {
+        "variant": "duel-hero-card"
+      }
+    }
+  ]
+}

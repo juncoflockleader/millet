@@ -35,6 +35,8 @@ export interface StoredMatch {
 export interface CreateMatchOptions {
   playerCount?: 6 | 8;
   demoDuel?: boolean;
+  p1Class?: "mage" | "warrior" | "priest";
+  p2Class?: "mage" | "warrior" | "priest";
 }
 
 const COMMAND_ALLOWED_PLAYER_STATUSES: PlayerStatus[] = ["alive", "dying"];

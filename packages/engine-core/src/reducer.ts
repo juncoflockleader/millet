@@ -5,16 +5,22 @@ import type {
   MatchEvent,
   MatchInitializedPayload,
   MatchState,
+  ObjectControlChangedPayload,
   ObjectCreatedPayload,
   ObjectCounterChangedPayload,
   ObjectDestroyedPayload,
   ObjectExhaustedPayload,
+  ObjectKeywordChangedPayload,
+  ObjectPlayedPayload,
+  ObjectStatChangedPayload,
+  ObjectTransformedPayload,
   OutcomeDeclaredPayload,
   PlayerSeatedPayload,
   PlayerStatusChangedPayload,
   PromptAnsweredPayload,
   PromptClosedPayload,
   PromptOpenedPayload,
+  RandomChoiceMadePayload,
   ResourceChangedPayload,
   TriggerFiredPayload,
   TriggerRegisteredPayload,
@@ -152,6 +158,76 @@ function reduceObjectCreated(state: MatchState, event: MatchEvent<ObjectCreatedP
   return next;
 }
 
+function reduceObjectPlayed(state: MatchState, event: MatchEvent<ObjectPlayedPayload>): MatchState {
+  const next = cloneMatchState(state);
+  const {
+    objectId,
+    fromZoneId,
+    toZoneId,
+    toPosition,
+    objectType,
+    ownerId,
+    controllerId,
+    visibility,
+    stats,
+    counters,
+    tags,
+    keywords,
+    exhausted
+  } = event.payload;
+  const object = next.objects[objectId];
+
+  if (!object) {
+    throw new Error(`Cannot play missing object ${objectId}`);
+  }
+
+  const actualFromZoneId = fromZoneId ?? object.zoneId;
+
+  if (object.zoneId !== actualFromZoneId) {
+    throw new Error(`Object ${objectId} is in ${object.zoneId}, not ${actualFromZoneId}`);
+  }
+
+  if (!next.zones[toZoneId]) {
+    throw new Error(`Cannot play object ${objectId}; target zone ${toZoneId} does not exist`);
+  }
+
+  removeObjectId(next, actualFromZoneId, objectId);
+  object.zoneId = toZoneId;
+  object.lastChangedAtSequence = event.sequence;
+
+  if (objectType !== undefined) {
+    object.objectType = objectType;
+  }
+  if (ownerId !== undefined) {
+    object.ownerId = ownerId;
+  }
+  if (controllerId !== undefined) {
+    object.controllerId = controllerId;
+  }
+  if (visibility !== undefined) {
+    object.visibility = structuredClone(visibility);
+  }
+  if (stats !== undefined) {
+    object.stats = { ...object.stats, ...structuredClone(stats) };
+  }
+  if (counters !== undefined) {
+    object.counters = { ...object.counters, ...structuredClone(counters) };
+  }
+  if (tags !== undefined) {
+    object.tags = [...tags];
+  }
+  if (keywords !== undefined) {
+    object.keywords = [...keywords];
+  }
+  if (exhausted !== undefined) {
+    object.exhausted = exhausted;
+  }
+
+  insertObjectId(next, toZoneId, objectId, toPosition);
+  next.lastSequence = event.sequence;
+  return next;
+}
+
 function reduceCardMoved(state: MatchState, event: MatchEvent<CardMovedPayload>): MatchState {
   const next = cloneMatchState(state);
   const { objectId, fromZoneId, toZoneId, toPosition } = event.payload;
@@ -198,8 +274,16 @@ function reduceResourceChanged(state: MatchState, event: MatchEvent<ResourceChan
 function reduceDamageDealt(state: MatchState, event: MatchEvent<DamageDealtPayload>): MatchState {
   const next = cloneMatchState(state);
 
-  if (!next.players[event.payload.targetPlayerId]) {
+  if (!event.payload.targetPlayerId && !event.payload.targetObjectId) {
+    throw new Error("Damage event must target a player or object");
+  }
+
+  if (event.payload.targetPlayerId && !next.players[event.payload.targetPlayerId]) {
     throw new Error(`Cannot deal damage to missing player ${event.payload.targetPlayerId}`);
+  }
+
+  if (event.payload.targetObjectId && !next.objects[event.payload.targetObjectId]) {
+    throw new Error(`Cannot deal damage to missing object ${event.payload.targetObjectId}`);
   }
 
   if (event.payload.sourcePlayerId && !next.players[event.payload.sourcePlayerId]) {
@@ -392,6 +476,128 @@ function reduceObjectExhausted(state: MatchState, event: MatchEvent<ObjectExhaus
   return next;
 }
 
+function reduceObjectKeywordChanged(state: MatchState, event: MatchEvent<ObjectKeywordChangedPayload>): MatchState {
+  const next = cloneMatchState(state);
+  const object = next.objects[event.payload.objectId];
+
+  if (!object) {
+    throw new Error(`Cannot change keyword for missing object ${event.payload.objectId}`);
+  }
+
+  if (event.payload.present && !object.keywords.includes(event.payload.keyword)) {
+    object.keywords.push(event.payload.keyword);
+  }
+
+  if (!event.payload.present) {
+    object.keywords = object.keywords.filter((keyword) => keyword !== event.payload.keyword);
+  }
+
+  object.lastChangedAtSequence = event.sequence;
+  next.lastSequence = event.sequence;
+  return next;
+}
+
+function reduceObjectTransformed(state: MatchState, event: MatchEvent<ObjectTransformedPayload>): MatchState {
+  const next = cloneMatchState(state);
+  const {
+    objectId,
+    templateId,
+    objectType,
+    visibility,
+    stats,
+    counters,
+    tags,
+    keywords,
+    attachments,
+    modifiers,
+    exhausted
+  } = event.payload;
+  const object = next.objects[objectId];
+
+  if (!object) {
+    throw new Error(`Cannot transform missing object ${objectId}`);
+  }
+
+  if (templateId !== undefined) {
+    object.templateId = templateId;
+  }
+  if (objectType !== undefined) {
+    object.objectType = objectType;
+  }
+  if (visibility !== undefined) {
+    object.visibility = structuredClone(visibility);
+  }
+  if (stats !== undefined) {
+    object.stats = structuredClone(stats);
+  }
+  if (counters !== undefined) {
+    object.counters = structuredClone(counters);
+  }
+  if (tags !== undefined) {
+    object.tags = [...tags];
+  }
+  if (keywords !== undefined) {
+    object.keywords = [...keywords];
+  }
+  if (attachments !== undefined) {
+    object.attachments = [...attachments];
+  }
+  if (modifiers !== undefined) {
+    object.modifiers = [...modifiers];
+  }
+  if (exhausted !== undefined) {
+    object.exhausted = exhausted;
+  }
+
+  object.lastChangedAtSequence = event.sequence;
+  next.lastSequence = event.sequence;
+  return next;
+}
+
+function reduceObjectControlChanged(state: MatchState, event: MatchEvent<ObjectControlChangedPayload>): MatchState {
+  const next = cloneMatchState(state);
+  const { objectId, controllerId, fromZoneId, toZoneId, toPosition, exhausted } = event.payload;
+  const object = next.objects[objectId];
+
+  if (!object) {
+    throw new Error(`Cannot change control for missing object ${objectId}`);
+  }
+
+  if (!next.players[controllerId]) {
+    throw new Error(`Cannot change control of ${objectId}; controller ${controllerId} does not exist`);
+  }
+
+  const actualFromZoneId = fromZoneId ?? object.zoneId;
+
+  if (object.zoneId !== actualFromZoneId) {
+    throw new Error(`Object ${objectId} is in ${object.zoneId}, not ${actualFromZoneId}`);
+  }
+
+  const actualToZoneId = toZoneId ?? object.zoneId;
+
+  if (!next.zones[actualToZoneId]) {
+    throw new Error(`Cannot change control of ${objectId}; target zone ${actualToZoneId} does not exist`);
+  }
+
+  if (actualToZoneId !== object.zoneId) {
+    removeObjectId(next, object.zoneId, objectId);
+    object.zoneId = actualToZoneId;
+  }
+
+  object.controllerId = controllerId;
+  if (exhausted !== undefined) {
+    object.exhausted = exhausted;
+  }
+  object.lastChangedAtSequence = event.sequence;
+
+  if (actualToZoneId !== actualFromZoneId) {
+    insertObjectId(next, actualToZoneId, objectId, toPosition);
+  }
+
+  next.lastSequence = event.sequence;
+  return next;
+}
+
 function reduceObjectCounterChanged(state: MatchState, event: MatchEvent<ObjectCounterChangedPayload>): MatchState {
   const next = cloneMatchState(state);
   const object = next.objects[event.payload.objectId];
@@ -402,6 +608,40 @@ function reduceObjectCounterChanged(state: MatchState, event: MatchEvent<ObjectC
 
   object.counters[event.payload.counter] = event.payload.value;
   object.lastChangedAtSequence = event.sequence;
+  next.lastSequence = event.sequence;
+  return next;
+}
+
+function reduceObjectStatChanged(state: MatchState, event: MatchEvent<ObjectStatChangedPayload>): MatchState {
+  const next = cloneMatchState(state);
+  const object = next.objects[event.payload.objectId];
+
+  if (!object) {
+    throw new Error(`Cannot change stat for missing object ${event.payload.objectId}`);
+  }
+
+  if (!Number.isFinite(event.payload.value)) {
+    throw new Error(`Object stat ${event.payload.stat} must be finite, got ${event.payload.value}`);
+  }
+
+  object.stats[event.payload.stat] = event.payload.value;
+  object.lastChangedAtSequence = event.sequence;
+  next.lastSequence = event.sequence;
+  return next;
+}
+
+function reduceRandomChoiceMade(state: MatchState, event: MatchEvent<RandomChoiceMadePayload>): MatchState {
+  const next = cloneMatchState(state);
+
+  if (event.payload.rngCursorBefore !== state.rngCursor) {
+    throw new Error(`Expected random cursor ${state.rngCursor}, got ${event.payload.rngCursorBefore}`);
+  }
+
+  if (!Number.isInteger(event.payload.rngCursorAfter) || event.payload.rngCursorAfter < event.payload.rngCursorBefore) {
+    throw new Error(`Invalid random cursor ${event.payload.rngCursorAfter}`);
+  }
+
+  next.rngCursor = event.payload.rngCursorAfter;
   next.lastSequence = event.sequence;
   return next;
 }
@@ -435,6 +675,8 @@ export function reduceEvent(state: MatchState, event: MatchEvent): MatchState {
       return reduceZoneCreated(state, event as MatchEvent<ZoneCreatedPayload>);
     case "object_created":
       return reduceObjectCreated(state, event as MatchEvent<ObjectCreatedPayload>);
+    case "object_played":
+      return reduceObjectPlayed(state, event as MatchEvent<ObjectPlayedPayload>);
     case "card_moved":
       return reduceCardMoved(state, event as MatchEvent<CardMovedPayload>);
     case "resource_changed":
@@ -461,8 +703,18 @@ export function reduceEvent(state: MatchState, event: MatchEvent): MatchState {
       return reduceObjectDestroyed(state, event as MatchEvent<ObjectDestroyedPayload>);
     case "object_exhausted":
       return reduceObjectExhausted(state, event as MatchEvent<ObjectExhaustedPayload>);
+    case "object_keyword_changed":
+      return reduceObjectKeywordChanged(state, event as MatchEvent<ObjectKeywordChangedPayload>);
+    case "object_transformed":
+      return reduceObjectTransformed(state, event as MatchEvent<ObjectTransformedPayload>);
+    case "object_control_changed":
+      return reduceObjectControlChanged(state, event as MatchEvent<ObjectControlChangedPayload>);
     case "object_counter_changed":
       return reduceObjectCounterChanged(state, event as MatchEvent<ObjectCounterChangedPayload>);
+    case "object_stat_changed":
+      return reduceObjectStatChanged(state, event as MatchEvent<ObjectStatChangedPayload>);
+    case "random_choice_made":
+      return reduceRandomChoiceMade(state, event as MatchEvent<RandomChoiceMadePayload>);
     case "turn_advanced":
       return reduceTurnAdvanced(state, event as MatchEvent<TurnAdvancedPayload>);
     default:

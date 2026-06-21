@@ -1,0 +1,84 @@
+{
+  "id": "mana-clash-playtests",
+  "version": "0.1.0",
+  "kind": "ui_playtest_script",
+  "metadata": {
+    "name": "Mana Clash Playtests",
+    "description": "Scripted local API smoke runs for lands, mana, spells, creatures, and graveyard movement."
+  },
+  "scripts": [
+    {
+      "id": "land-mana-creature-smoke",
+      "label": "Land Mana Creature Smoke",
+      "description": "Create a demo match, play and tap one land, and verify mana plus exhaust state.",
+      "mode": "live_match",
+      "match": {
+        "rulesetId": "sample-mana-clash",
+        "demoDuel": true
+      },
+      "steps": [
+        {
+          "id": "create-demo-match",
+          "label": "Create Mana Clash match",
+          "action": "create_match"
+        },
+        {
+          "id": "play-first-land",
+          "label": "P1 plays Verdant Land",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "play_land",
+              "sourceObjectId": "card_verdant_land_p1"
+            }
+          }
+        },
+        {
+          "id": "tap-first-land",
+          "label": "P1 taps Verdant Land",
+          "action": "submit_command",
+          "command": {
+            "playerId": "p1",
+            "userId": "u1",
+            "type": "execute_behavior",
+            "payload": {
+              "behaviorId": "tap_land_for_mana",
+              "sourceObjectId": "card_verdant_land_p1"
+            }
+          }
+        },
+        {
+          "id": "fetch-state",
+          "label": "Fetch admin state",
+          "action": "fetch_state"
+        },
+        {
+          "id": "assert-p1-mana",
+          "label": "Assert P1 has 1 mana",
+          "action": "assert_resource",
+          "expect": {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 1
+          }
+        }
+      ],
+      "expect": {
+        "resources": [
+          {
+            "playerId": "p1",
+            "resource": "mana",
+            "current": 1
+          }
+        ],
+        "eventTypes": {
+          "object_played": 1,
+          "object_exhausted": 1
+        }
+      }
+    }
+  ]
+}

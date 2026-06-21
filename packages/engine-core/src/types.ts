@@ -219,6 +219,23 @@ export interface ObjectCreatedPayload {
   object: GameObjectState;
 }
 
+export interface ObjectPlayedPayload {
+  objectId: Id;
+  fromZoneId?: Id;
+  toZoneId: Id;
+  toPosition?: number;
+  objectType?: string;
+  ownerId?: Id;
+  controllerId?: Id;
+  visibility?: Visibility;
+  stats?: Record<string, number>;
+  counters?: Record<string, number>;
+  tags?: string[];
+  keywords?: string[];
+  exhausted?: boolean;
+  reason?: string;
+}
+
 export interface CardMovedPayload {
   objectId: Id;
   fromZoneId?: Id;
@@ -237,7 +254,8 @@ export interface ResourceChangedPayload {
 export interface DamageDealtPayload {
   sourceObjectId?: Id;
   sourcePlayerId?: Id;
-  targetPlayerId: Id;
+  targetPlayerId?: Id;
+  targetObjectId?: Id;
   amount: number;
   damageType?: string;
 }
@@ -291,10 +309,58 @@ export interface ObjectExhaustedPayload {
   reason?: string;
 }
 
+export interface ObjectKeywordChangedPayload {
+  objectId: Id;
+  keyword: string;
+  present: boolean;
+  reason?: string;
+}
+
+export interface ObjectTransformedPayload {
+  objectId: Id;
+  templateId?: Id;
+  objectType?: string;
+  visibility?: Visibility;
+  stats?: Record<string, number>;
+  counters?: Record<string, number>;
+  tags?: string[];
+  keywords?: string[];
+  attachments?: Id[];
+  modifiers?: Id[];
+  exhausted?: boolean;
+  reason?: string;
+}
+
+export interface ObjectControlChangedPayload {
+  objectId: Id;
+  controllerId: Id;
+  fromZoneId?: Id;
+  toZoneId?: Id;
+  toPosition?: number;
+  exhausted?: boolean;
+  reason?: string;
+}
+
 export interface ObjectCounterChangedPayload {
   objectId: Id;
   counter: string;
   value: number;
+  reason?: string;
+}
+
+export interface ObjectStatChangedPayload {
+  objectId: Id;
+  stat: string;
+  value: number;
+  reason?: string;
+}
+
+export interface RandomChoiceMadePayload {
+  candidateIds: Id[];
+  selectedId: Id;
+  selectedKind: "player" | "object";
+  rngCursorBefore: number;
+  rngCursorAfter: number;
   reason?: string;
 }
 

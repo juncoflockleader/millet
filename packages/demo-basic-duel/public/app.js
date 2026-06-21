@@ -114,8 +114,8 @@ const STORAGE_PREFIX = "millet.studio";
 const LEGACY_STORAGE_PREFIX = "ember-duel";
 
 let PLAY_AREA = {
-  width: 1120,
-  height: 620,
+  width: 1240,
+  height: 700,
   minScale: 0.2
 };
 
@@ -142,27 +142,27 @@ const FALLBACK_PLAYTEST_SCRIPT_URL = "/content/rulesets/sample-duel/ui/ember-due
 const DEFAULT_LAYOUT = {
   version: 1,
   arena: {
-    padding: 12,
-    rowGap: 10,
-    opponentRow: 214,
-    centerRow: 96,
-    playerRow: 254
+    padding: 10,
+    rowGap: 8,
+    opponentRow: 250,
+    centerRow: 142,
+    playerRow: 272
   },
   player: {
-    heroWidth: 172,
+    heroWidth: 160,
     gap: 8
   },
   zones: {
-    boardWidth: 292,
+    boardWidth: 300,
     gap: 8
   },
   center: {
-    turnWidth: 420,
+    turnWidth: 390,
     gap: 8
   },
   card: {
-    width: 118,
-    artHeight: 50
+    width: 108,
+    artHeight: 54
   }
 };
 
@@ -187,7 +187,7 @@ const LAYOUT_LIMITS = {
     gap: [4, 20]
   },
   card: {
-    width: [94, 150],
+    width: [80, 150],
     artHeight: [40, 76]
   }
 };
@@ -199,7 +199,7 @@ const LAYOUT_CONTROLS = [
   { path: "player.heroWidth", label: "Hero column", min: 128, max: 260, step: 1, unit: "px" },
   { path: "zones.boardWidth", label: "Board zone", min: 220, max: 520, step: 1, unit: "px" },
   { path: "center.turnWidth", label: "Turn panel", min: 320, max: 650, step: 1, unit: "px" },
-  { path: "card.width", label: "Card width", min: 94, max: 150, step: 1, unit: "px" },
+  { path: "card.width", label: "Card width", min: 80, max: 150, step: 1, unit: "px" },
   { path: "card.artHeight", label: "Card art", min: 40, max: 76, step: 1, unit: "px" },
   { path: "arena.rowGap", label: "Row gap", min: 4, max: 22, step: 1, unit: "px" },
   { path: "arena.padding", label: "Board padding", min: 6, max: 24, step: 1, unit: "px" }
@@ -209,6 +209,7 @@ const REGION_KIND_OPTIONS = [
   "hero",
   "battlefield",
   "hand",
+  "land",
   "equipment",
   "deck",
   "discard",
@@ -228,7 +229,7 @@ const REGION_OWNER_OPTIONS = ["player", "opponent", "shared", "match", "spectato
 const REGION_VISIBILITY_OPTIONS = ["public", "owner", "opponent", "admin"];
 const REGION_DROP_OPTIONS = ["none", "select_player_target", "select_object_target", "play_to_region", "move_to_region"];
 const REGION_OVERFLOW_OPTIONS = ["fan", "scroll", "stack", "compact", "hidden"];
-const REGION_ZONE_TYPE_OPTIONS = ["", "hand", "deck", "board", "weapon", "equipment", "discard", "graveyard", "judgment", "roles", "custom"];
+const REGION_ZONE_TYPE_OPTIONS = ["", "hand", "deck", "board", "land", "weapon", "equipment", "discard", "graveyard", "judgment", "roles", "custom"];
 const WIDGET_KIND_OPTIONS = ["card_collection", "single_object", "system", "debug", "custom"];
 const WIDGET_COMPONENT_OPTIONS = [
   "HeroCard",
@@ -245,7 +246,7 @@ const WIDGET_COMPONENT_OPTIONS = [
   "RoleSummary",
   "CustomWidget"
 ];
-const TARGET_MODE_OPTIONS = ["enemyHero", "selfHero", "battlefield", "targeted"];
+const TARGET_MODE_OPTIONS = ["enemyHero", "selfHero", "battlefield", "targetObject", "targeted"];
 const EQUIPMENT_SLOT_OPTIONS = ["weapon", "armor", "mount", "treasure", "custom"];
 const EQUIPMENT_REPLACEMENT_MODE_OPTIONS = ["replace", "reject", "stack", "custom"];
 const MINION_KIND_OPTIONS = ["minion", "token", "summon", "companion", "custom"];
@@ -427,7 +428,8 @@ const DEFAULT_PROPERTY_DISPLAY_ICONS = [
   { id: "mana", label: "Mana" },
   { id: "sword", label: "Attack" },
   { id: "heart", label: "Health" },
-  { id: "durability", label: "Durability" }
+  { id: "durability", label: "Durability" },
+  { id: "spark", label: "Spell Power" }
 ];
 
 const RUNTIME_WIDGET_RENDERERS = {
@@ -438,6 +440,9 @@ const RUNTIME_WIDGET_RENDERERS = {
     }
     if (region.kind === "hand") {
       return renderHandRegion(context.playerId, region);
+    }
+    if (region.kind === "land") {
+      return renderLandRegion(context.playerId, region);
     }
     return renderRuntimeWidgetFallback(region, `CardRow is not bound for ${labelFromId(region.kind)} regions.`);
   },
@@ -483,6 +488,10 @@ const KEYWORDS = {
     title: "Attack",
     body: "A card or object deals combat damage to the enemy hero. Minions exhaust after attacking."
   },
+  battlecry: {
+    title: "Battlecry",
+    body: "An effect that resolves when the card is played from hand."
+  },
   damage: {
     title: "Damage",
     body: "Damage lowers health. A hero at zero or less health loses unless both heroes die together."
@@ -502,6 +511,10 @@ const KEYWORDS = {
   mana: {
     title: "Mana",
     body: "A spendable resource used to pay card costs during the active player's turn."
+  },
+  spell_power: {
+    title: "Spell Power",
+    body: "Adds to this player's spell damage while the object remains on board."
   }
 };
 
@@ -1496,7 +1509,7 @@ function renderHeroPresentationEditor(hero) {
             <label class="card-frame-field">
               <span>Target</span>
               <select data-hero-presentation-field="ability.targetMode">
-                ${renderSelectOptions(["enemyHero", "selfHero", "battlefield", "targeted"], ability.targetMode ?? "enemyHero")}
+                ${renderSelectOptions(TARGET_MODE_OPTIONS, ability.targetMode ?? "enemyHero")}
               </select>
             </label>
             ${renderHeroPresentationNumberField("ability.manaCost", "Mana", ability.manaCost ?? 0, 0, 20, 1)}
@@ -2193,6 +2206,12 @@ async function executePlaytestScript(script) {
     } else if (action === "assert_resource") {
       statePayload ??= await fetchPlaytestState(nextMatchId);
       assertPlaytestResource(step, statePayload.state);
+    } else if (action === "assert_object_stat") {
+      statePayload ??= await fetchPlaytestState(nextMatchId);
+      assertPlaytestObjectStat(step, statePayload.state);
+    } else if (action === "assert_zone_count") {
+      statePayload ??= await fetchPlaytestState(nextMatchId);
+      assertPlaytestZoneCount(step, statePayload.state);
     }
   }
 
@@ -2263,6 +2282,35 @@ function assertPlaytestResource(step, playtestState) {
   const current = playtestState?.players?.[playerId]?.resources?.[resource]?.current;
   if (current !== expectedCurrent) {
     throw new Error(`Expected ${playerId} ${resource} to be ${expectedCurrent}, got ${current ?? "missing"}.`);
+  }
+}
+
+function assertPlaytestObjectStat(step, playtestState) {
+  const expect = step.expect && typeof step.expect === "object" ? step.expect : {};
+  const objectId = expect.objectId;
+  const stat = expect.stat;
+  const expectedValue = expect.value;
+  if (typeof objectId !== "string" || typeof stat !== "string" || typeof expectedValue !== "number") {
+    throw new Error(`Playtest assert_object_stat step ${step.id ?? ""} requires objectId, stat, and value.`);
+  }
+
+  const value = playtestState?.objects?.[objectId]?.stats?.[stat];
+  if (value !== expectedValue) {
+    throw new Error(`Expected ${objectId} ${stat} to be ${expectedValue}, got ${value ?? "missing"}.`);
+  }
+}
+
+function assertPlaytestZoneCount(step, playtestState) {
+  const expect = step.expect && typeof step.expect === "object" ? step.expect : {};
+  const zoneId = expect.zoneId;
+  const expectedCount = expect.count;
+  if (typeof zoneId !== "string" || typeof expectedCount !== "number") {
+    throw new Error(`Playtest assert_zone_count step ${step.id ?? ""} requires zoneId and count.`);
+  }
+
+  const count = playtestState?.zones?.[zoneId]?.objectIds?.length;
+  if (count !== expectedCount) {
+    throw new Error(`Expected ${zoneId} to contain ${expectedCount} objects, got ${count ?? "missing"}.`);
   }
 }
 
@@ -4484,7 +4532,7 @@ function heroStudioValidation(hero) {
       errors.push(`Hero ability requires ${field}.`);
     }
   }
-  if (ability.targetMode && !["enemyHero", "selfHero", "battlefield", "targeted"].includes(ability.targetMode)) {
+  if (ability.targetMode && !TARGET_MODE_OPTIONS.includes(ability.targetMode)) {
     errors.push(`Hero ability targetMode ${ability.targetMode} is unsupported.`);
   }
   if (ability.manaCost !== undefined && (!Number.isInteger(ability.manaCost) || ability.manaCost < 0)) {
@@ -6627,6 +6675,9 @@ function defaultZoneTypeForRegionKind(kind) {
   if (kind === "battlefield") {
     return "board";
   }
+  if (kind === "land") {
+    return "land";
+  }
   if (["hand", "deck", "discard", "graveyard", "judgment"].includes(kind)) {
     return kind;
   }
@@ -6640,7 +6691,7 @@ function componentForRegionKind(kind) {
   if (kind === "hero") {
     return "HeroCard";
   }
-  if (kind === "battlefield" || kind === "hand") {
+  if (kind === "battlefield" || kind === "hand" || kind === "land") {
     return "CardRow";
   }
   if (kind === "equipment") {
@@ -6674,7 +6725,7 @@ function componentForRegionKind(kind) {
 }
 
 function defaultWidgetKindForRegionKind(kind) {
-  if (["battlefield", "hand", "deck", "discard", "graveyard", "judgment", "equipment"].includes(kind)) {
+  if (["battlefield", "hand", "land", "deck", "discard", "graveyard", "judgment", "equipment"].includes(kind)) {
     return "card_collection";
   }
   if (kind === "hero") {
@@ -6715,6 +6766,8 @@ function inferRegionMetadata(regionId) {
     ? "hero"
     : id.endsWith("_battlefield")
       ? "battlefield"
+      : id.endsWith("_land")
+        ? "land"
       : id.endsWith("_equipment")
         ? "equipment"
       : id.endsWith("_hand")
@@ -7419,7 +7472,12 @@ function presentationObjectToCardDef(entry) {
     display: entry.properties?.display ?? [],
     behavior: entry.behavior && typeof entry.behavior === "object" && !Array.isArray(entry.behavior)
       ? cloneJson(entry.behavior)
-      : null
+      : null,
+    actions: Array.isArray(entry.actions)
+      ? entry.actions
+          .filter((action) => action && typeof action.behaviorId === "string" && action.behaviorId.length > 0)
+          .map((action) => cloneJson(action))
+      : []
   };
 }
 
@@ -8270,7 +8328,7 @@ function playerIdForSeatRegion(regionId) {
 function renderPlayer(playerId) {
   const regionIds = runtimeRegionIdsForPlayer(playerId);
   const heroRegionId = regionIds.find((regionId) => layoutRegionMetadata(regionId).kind === "hero") ?? runtimeRegionIdForPlayer(playerId, "hero");
-  const collectionRegionIds = regionIds.filter((regionId) => ["battlefield", "equipment", "hand", "deck"].includes(layoutRegionMetadata(regionId).kind));
+  const collectionRegionIds = regionIds.filter((regionId) => ["battlefield", "land", "equipment", "hand", "deck"].includes(layoutRegionMetadata(regionId).kind));
 
   return `
     ${renderRuntimeRegion(heroRegionId, { playerId })}
@@ -8284,13 +8342,15 @@ function runtimeRegionIdsForPlayer(playerId) {
   const ownerScope = playerId === "p2" ? "opponent" : "player";
   const authored = Array.isArray(boardLayoutDocument?.regions)
     ? boardLayoutDocument.regions
-      .filter((region) => region && typeof region === "object" && region.ownerScope === ownerScope && ["hero", "battlefield", "equipment", "hand", "deck"].includes(region.kind))
+      .filter((region) => region && typeof region === "object" && region.ownerScope === ownerScope && ["hero", "battlefield", "land", "equipment", "hand", "deck"].includes(region.kind))
       .sort((left, right) => Number(left.geometry?.x ?? 0) - Number(right.geometry?.x ?? 0))
       .map((region) => region.id)
       .filter((regionId) => typeof regionId === "string" && regionId.length > 0)
     : [];
 
-  const fallback = ["hero", "battlefield", "equipment", "hand", "deck"].map((kind) => runtimeRegionIdForPlayer(playerId, kind));
+  const fallback = authored.length > 0
+    ? []
+    : ["hero", "battlefield", "equipment", "hand", "deck"].map((kind) => runtimeRegionIdForPlayer(playerId, kind));
   return uniqueValues([...authored, ...fallback]);
 }
 
@@ -8332,10 +8392,23 @@ function renderBattlefieldRegion(playerId, region) {
   ];
 
   return `
-    <div class="zone" ${layoutRegionAttrs(region.id, { targetArea: targetAreaForRegion(region) })}>
+    <div class="zone" data-zone-kind="board" ${layoutRegionAttrs(region.id, { targetArea: targetAreaForRegion(region) })}>
       <h3>${escapeHtml(region.label)}</h3>
       <div class="cards">
         ${zones.flatMap((zone) => cardsInZone(zone.id).map((object) => renderCard(playerId, object, zone))).join("") || `<div class="empty">No board pieces</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderLandRegion(playerId, region) {
+  const zoneId = zoneIdForRegion(playerId, region, "land");
+
+  return `
+    <div class="zone land-zone" data-zone-kind="land" ${layoutRegionAttrs(region.id)}>
+      <h3>${escapeHtml(region.label)}</h3>
+      <div class="cards">
+        ${cardsInZone(zoneId).map((object) => renderCard(playerId, object, { zoneKind: "land", target: playerId })).join("") || `<div class="empty">No lands</div>`}
       </div>
     </div>
   `;
@@ -8347,7 +8420,7 @@ function renderEquipmentRegion(playerId, region) {
   const objects = cardsInZone(zoneId);
 
   return `
-    <div class="equipment-slot" ${layoutRegionAttrs(region.id)}>
+    <div class="equipment-slot" data-zone-kind="weapon" ${layoutRegionAttrs(region.id)}>
       <h3>${escapeHtml(region.label)}</h3>
       <div class="equipment-cards">
         ${objects.map((object) => renderCard(playerId, object, { zoneKind: "weapon", target: opponentId })).join("") || `<div class="empty equipment-empty">No weapon</div>`}
@@ -8361,7 +8434,7 @@ function renderHandRegion(playerId, region) {
   const zoneId = zoneIdForRegion(playerId, region, "hand");
 
   return `
-    <div class="zone" ${layoutRegionAttrs(region.id)}>
+    <div class="zone" data-zone-kind="hand" ${layoutRegionAttrs(region.id)}>
       <h3>${escapeHtml(region.label)}</h3>
       <div class="cards">
         ${cardsInZone(zoneId).map((object) => renderCard(playerId, object, { zoneKind: "hand", target: opponentId })).join("") || `<div class="empty">No cards</div>`}
@@ -8469,7 +8542,8 @@ function renderCard(playerId, object, context) {
   }
 
   const info = CARD_DEFS[object.templateId] ?? { name: object.templateId ?? object.id, text: object.objectType, action: "Use", display: [] };
-  const action = actionForObject(playerId, object, context);
+  const actions = actionsForObject(playerId, object, context);
+  const action = actions[0] ?? null;
   const disabled = !action;
   const detail = cardDetail(info, object);
   const style = cardPresentationStyle(info);
@@ -8479,6 +8553,9 @@ function renderCard(playerId, object, context) {
       class="card ${disabled ? "disabled-card" : ""}"
       ${style}
       data-template="${escapeHtml(object.templateId ?? "unknown")}"
+      data-target-object="${escapeAttr(object.id)}"
+      data-target-owner="${escapeAttr(object.ownerId ?? playerId)}"
+      data-target-zone-kind="${escapeAttr(context.zoneKind)}"
       ${actionDataAttrs(action)}
       data-tooltip-title="${escapeAttr(info.name)}"
       data-tooltip-body="${escapeAttr(tooltip)}"
@@ -8493,15 +8570,26 @@ function renderCard(playerId, object, context) {
         <div class="meta">${escapeHtml(detail)}</div>
       </div>
       <div class="text">${renderRulesText(info.text)}</div>
-      <button
-        class="card-action"
-        type="button"
-        data-player="${playerId}"
-        data-object="${object.id}"
-        data-zone-kind="${context.zoneKind}"
-        ${disabled ? "disabled" : ""}
-      >${escapeHtml(info.action || "Use")}</button>
+      <div class="card-action-row">
+        ${actions.length > 0
+          ? actions.map((cardAction) => renderCardActionButton(cardAction, object, context)).join("")
+          : renderCardActionButton(null, object, context, inactiveActionLabelForObject(info, context))}
+      </div>
     </article>
+  `;
+}
+
+function renderCardActionButton(action, object, context, fallbackLabel = "Use") {
+  return `
+    <button
+      class="card-action"
+      type="button"
+      data-player="${escapeAttr(action?.playerId ?? "")}"
+      data-object="${escapeAttr(object.id)}"
+      data-zone-kind="${escapeAttr(context.zoneKind)}"
+      ${actionDataAttrs(action)}
+      ${action ? "" : "disabled"}
+    >${escapeHtml(action?.label || fallbackLabel)}</button>
   `;
 }
 
@@ -8539,7 +8627,8 @@ function actionDataAttrs(action) {
     `data-action-behavior="${escapeAttr(action.behaviorId)}"`,
     action.sourceObjectId ? `data-action-source-object="${escapeAttr(action.sourceObjectId)}"` : "",
     `data-action-target-mode="${escapeAttr(action.targetMode)}"`,
-    action.targetSelector ? `data-action-target-selector="${escapeAttr(action.targetSelector)}"` : ""
+    action.targetSelector ? `data-action-target-selector="${escapeAttr(action.targetSelector)}"` : "",
+    action.targetZoneKinds?.length ? `data-action-target-zone-kinds="${escapeAttr(action.targetZoneKinds.join(","))}"` : ""
   ].filter(Boolean).join(" ");
 }
 
@@ -8614,8 +8703,8 @@ function cardTooltipBody(info, object, playerId, detail, context) {
 
 function renderRulesText(text) {
   const escaped = escapeHtml(text);
-  return escaped.replace(/\b(Attack|attack|Damage|damage|Draw|draw|drawn|Durability|durability|Mana|mana)\b/g, (term) => {
-    const keyword = KEYWORDS[term.toLowerCase()];
+  return escaped.replace(/\b(Spell Power|spell power|Attack|attack|Damage|damage|Draw|draw|drawn|Durability|durability|Mana|mana)\b/g, (term) => {
+    const keyword = KEYWORDS[term.toLowerCase().replace(/\s+/g, "_")];
     if (!keyword) {
       return term;
     }
@@ -8641,22 +8730,25 @@ function actionForHero(playerId) {
 }
 
 function actionForObject(playerId, object, context) {
+  return actionsForObject(playerId, object, context)[0] ?? null;
+}
+
+function actionsForObject(playerId, object, context) {
   if (!canObjectAct(playerId, object, context)) {
-    return null;
+    return [];
   }
 
   const info = CARD_DEFS[object.templateId] ?? {};
-  const behavior = behaviorForObject(info, context);
-  return behavior
-    ? {
-        kind: "card",
-        playerId,
-        behaviorId: behavior.behaviorId,
-        sourceObjectId: object.id,
-        targetMode: behavior.targetMode ?? "battlefield",
-        targetSelector: behavior.targetSelector
-      }
-    : null;
+  return behaviorActionsForObject(info, context).map((behavior, index) => ({
+    kind: "card",
+    playerId,
+    behaviorId: behavior.behaviorId,
+    sourceObjectId: object.id,
+    targetMode: behavior.targetMode ?? "battlefield",
+    targetSelector: behavior.targetSelector,
+    targetZoneKinds: Array.isArray(behavior.targetZoneKinds) ? behavior.targetZoneKinds : undefined,
+    label: behavior.label ?? (index === 0 ? info.action : undefined) ?? labelFromId(behavior.behaviorId)
+  }));
 }
 
 function canObjectAct(playerId, object, context) {
@@ -8674,7 +8766,7 @@ function canObjectAct(playerId, object, context) {
     return (state?.players?.[playerId]?.resources?.mana?.current ?? 0) >= (info.manaCost ?? 0);
   }
 
-  if (context.zoneKind === "board") {
+  if (context.zoneKind === "board" || context.zoneKind === "land") {
     return !object.exhausted;
   }
 
@@ -8687,14 +8779,34 @@ function canObjectAct(playerId, object, context) {
 }
 
 function behaviorForObject(info, context) {
+  return behaviorActionsForObject(info, context)[0] ?? null;
+}
+
+function inactiveActionLabelForObject(info, context) {
+  const action = behaviorActionsForObject(info, context)[0];
+  return action?.label ?? info.action ?? "Use";
+}
+
+function behaviorActionsForObject(info, context) {
+  if (!["hand", "board", "land", "weapon"].includes(context.zoneKind)) {
+    return [];
+  }
+
+  const configuredActions = Array.isArray(info?.actions)
+    ? info.actions.filter((action) => action && typeof action.behaviorId === "string" && action.behaviorId.length > 0 && actionSupportsSourceZone(action, context.zoneKind))
+    : [];
+  if (configuredActions.length > 0) {
+    return configuredActions;
+  }
+
   const behavior = info?.behavior;
-  if (!behavior || typeof behavior.behaviorId !== "string" || behavior.behaviorId.length === 0) {
-    return null;
-  }
-  if (!["hand", "board", "weapon"].includes(context.zoneKind)) {
-    return null;
-  }
-  return behavior;
+  return behavior && typeof behavior.behaviorId === "string" && behavior.behaviorId.length > 0 && actionSupportsSourceZone(behavior, context.zoneKind)
+    ? [behavior]
+    : [];
+}
+
+function actionSupportsSourceZone(action, zoneKind) {
+  return !Array.isArray(action.sourceZoneKinds) || action.sourceZoneKinds.length === 0 || action.sourceZoneKinds.includes(zoneKind);
 }
 
 function canSelectedPlayerAct() {
@@ -8719,7 +8831,7 @@ function bindActionButtons() {
       const source = button.closest("[data-action-behavior]");
       const action = actionFromElement(source);
       if (action) {
-        quickApplyAction(action);
+        quickApplyAction(action, source);
       }
     });
   });
@@ -8733,7 +8845,7 @@ function bindActionButtons() {
       const source = button.closest("[data-action-behavior]");
       const action = actionFromElement(source);
       if (action) {
-        quickApplyAction(action);
+        quickApplyAction(action, source);
       }
     });
   });
@@ -8749,16 +8861,14 @@ function bindNaturalActions() {
         return;
       }
 
-      const target = event.target.closest("[data-target-player], [data-target-area]");
+      const target = event.target.closest("[data-target-player], [data-target-area], [data-target-object]");
       if (selectedAction && target && applySelectedToTarget(target)) {
         return;
       }
 
       const action = actionFromElement(source);
       if (action) {
-        selectedAction = action;
-        selectedPlayerId = action.playerId;
-        paintSelectionState(source);
+        startActionSelection(action, source);
       }
     });
 
@@ -8780,7 +8890,7 @@ function bindNaturalActions() {
     });
   });
 
-  document.querySelectorAll("[data-target-player], [data-target-area]").forEach((target) => {
+  document.querySelectorAll("[data-target-player], [data-target-area], [data-target-object]").forEach((target) => {
     target.addEventListener("click", (event) => {
       if (layoutEditorOpen || assetLibraryOpen || previewPanelOpen || playtestPanelOpen) {
         return;
@@ -8829,11 +8939,24 @@ function actionFromElement(element) {
     behaviorId: element.dataset.actionBehavior,
     sourceObjectId: element.dataset.actionSourceObject || undefined,
     targetMode: element.dataset.actionTargetMode,
-    targetSelector: element.dataset.actionTargetSelector || undefined
+    targetSelector: element.dataset.actionTargetSelector || undefined,
+    targetZoneKinds: element.dataset.actionTargetZoneKinds
+      ? element.dataset.actionTargetZoneKinds.split(",").filter(Boolean)
+      : undefined
   };
 }
 
-function quickApplyAction(action) {
+function startActionSelection(action, source) {
+  selectedAction = action;
+  selectedPlayerId = action.playerId;
+  paintSelectionState(source);
+}
+
+function quickApplyAction(action, source) {
+  if (action.targetMode === "targetObject" || action.targetMode === "targeted") {
+    startActionSelection(action, source);
+    return;
+  }
   if (action.targetMode === "enemyHero") {
     return executeAction(action, { playerId: opponentOf(action.playerId) });
   }
@@ -8850,7 +8973,9 @@ function applySelectedToTarget(target) {
 
   const targetInfo = target.dataset.targetPlayer
     ? { playerId: target.dataset.targetPlayer }
-    : { area: target.dataset.targetArea };
+    : target.dataset.targetObject
+      ? { objectId: target.dataset.targetObject }
+      : { area: target.dataset.targetArea };
   executeAction(selectedAction, targetInfo);
   selectedAction = null;
   paintSelectionState();
@@ -8864,6 +8989,9 @@ function isValidTarget(action, target) {
 
   const playerId = target.dataset.targetPlayer;
   const area = target.dataset.targetArea;
+  const objectId = target.dataset.targetObject;
+  const objectOwner = target.dataset.targetOwner;
+  const objectZoneKind = target.dataset.targetZoneKind;
 
   if (action.targetMode === "enemyHero") {
     return Boolean(playerId && playerId !== action.playerId && targetRegionAllows(target, "hero"));
@@ -8873,6 +9001,18 @@ function isValidTarget(action, target) {
   }
   if (action.targetMode === "battlefield") {
     return area === "battlefield" && targetRegionAllows(target, "battlefield");
+  }
+  if (action.targetMode === "targetObject") {
+    if (action.targetZoneKinds?.length && !action.targetZoneKinds.includes(objectZoneKind)) {
+      return false;
+    }
+    return Boolean(objectId && objectOwner !== action.playerId);
+  }
+  if (action.targetMode === "targeted") {
+    if (action.targetZoneKinds?.length && !action.targetZoneKinds.includes(objectZoneKind)) {
+      return false;
+    }
+    return Boolean(objectId);
   }
   return false;
 }
@@ -8893,8 +9033,8 @@ function executeAction(action, target) {
     ...(action.sourceObjectId ? { sourceObjectId: action.sourceObjectId } : {})
   };
 
-  if (action.targetSelector && target.playerId) {
-    payload.selections = { [action.targetSelector]: [target.playerId] };
+  if (action.targetSelector && (target.playerId || target.objectId)) {
+    payload.selections = { [action.targetSelector]: [target.playerId ?? target.objectId] };
   }
 
   selectedAction = null;
@@ -8919,7 +9059,7 @@ function paintSelectionState(preferredSource) {
     );
   source?.classList.add("selected-source");
 
-  document.querySelectorAll("[data-target-player], [data-target-area]").forEach((target) => {
+  document.querySelectorAll("[data-target-player], [data-target-area], [data-target-object]").forEach((target) => {
     target.classList.toggle("valid-target", isValidTarget(selectedAction, target));
   });
 }
@@ -9094,13 +9234,28 @@ function renderLog() {
 function logLine(event) {
   const payload = event.payload ?? {};
   if (event.type === "damage_dealt") {
-    return `#${event.sequence} ${payload.targetPlayerId} took ${payload.amount} damage`;
+    return `#${event.sequence} ${payload.targetPlayerId || payload.targetObjectId} took ${payload.amount} damage`;
   }
   if (event.type === "resource_changed") {
     return `#${event.sequence} ${payload.playerId} ${payload.resource} is ${payload.current}`;
   }
   if (event.type === "card_moved") {
     return `#${event.sequence} ${payload.objectId} moved to ${payload.toZoneId}`;
+  }
+  if (event.type === "object_played") {
+    return `#${event.sequence} ${payload.objectId} played to ${payload.toZoneId}`;
+  }
+  if (event.type === "object_keyword_changed") {
+    return `#${event.sequence} ${payload.objectId} ${payload.present ? "gained" : "lost"} ${payload.keyword}`;
+  }
+  if (event.type === "object_transformed") {
+    return `#${event.sequence} ${payload.objectId} transformed${payload.templateId ? ` into ${payload.templateId}` : ""}`;
+  }
+  if (event.type === "object_control_changed") {
+    return `#${event.sequence} ${payload.objectId} controlled by ${payload.controllerId}`;
+  }
+  if (event.type === "random_choice_made") {
+    return `#${event.sequence} random chose ${payload.selectedKind}:${payload.selectedId}`;
   }
   if (event.type === "outcome_declared") {
     return `#${event.sequence} Match completed`;

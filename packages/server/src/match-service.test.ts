@@ -217,6 +217,32 @@ test("match service creates registered Rune Duel matches without sample-duel tem
   assert.equal(updated.state.players.p2?.resources.health.current, 10);
 });
 
+test("match service creates registered Basic Trio class matches", () => {
+  const service = new InMemoryMatchService();
+  const match = service.createMatch("sample-basic-trio", { demoDuel: true, p1Class: "priest", p2Class: "mage" });
+
+  assert.equal(match.id, "basic_trio_match");
+  assert.equal(match.state.turn.activePlayerId, "p1");
+  assert.equal(match.state.turn.phaseId, "main");
+  assert.equal(match.state.players.p1?.heroRef, "hero_dawn_oracle");
+  assert.ok(match.state.zones.zone_hand_p1?.objectIds.includes("card_mind_spark_p1"));
+
+  const updated = service.submitCommand(match.id, {
+    id: "cmd_mind_spark",
+    matchId: match.id,
+    playerId: "p1",
+    type: "execute_behavior",
+    payload: {
+      behaviorId: "mind_spark",
+      sourceObjectId: "card_mind_spark_p1",
+      selections: { target: ["p2"] }
+    }
+  });
+
+  assert.equal(updated.state.players.p1?.resources.mana.current, 8);
+  assert.equal(updated.state.players.p2?.resources.health.current, 25);
+});
+
 test("match service end_turn runs identity discard/finish and starts next identity turn", () => {
   const service = new InMemoryMatchService();
   const match = service.createMatch("sample-identity");
