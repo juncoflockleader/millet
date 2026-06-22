@@ -7,7 +7,7 @@ Millet is a generalized multiplayer, turn-based card game engine. These docs are
 | Goal | Read |
 | --- | --- |
 | Play the demo and run the tests | [Quick Start](quick-start.md) |
-| Use a guided browser page | [Interactive Quick Start](quick-start.html) |
+| Use a guided browser page to create a tiny game | [Interactive Quick Start](quick-start.html) |
 | Understand the engine model | [Core Concepts](concepts.md) |
 | Build or modify a ruleset | [Ruleset Authoring Guide](ruleset-authoring.md) |
 | Integrate with the server API | [Server API Guide](server-api.md) |

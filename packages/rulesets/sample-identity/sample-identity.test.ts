@@ -83,8 +83,11 @@ test("sample-identity reveals only lord role to unrelated players", () => {
 
   assert.equal(p2View.objects.role_p1?.templateId, "lord");
   assert.equal(p2View.objects.role_p2?.templateId, "loyalist");
-  assert.equal(p2View.objects.role_p3?.objectType, "hidden");
-  assert.equal(p2View.objects.role_p3?.templateId, undefined);
+  const p3RoleRef = p2View.players.p3?.roleRef;
+  assert.match(p3RoleRef ?? "", /^hidden_/);
+  assert.equal(p2View.objects.role_p3, undefined);
+  assert.equal(p2View.objects[p3RoleRef!]?.objectType, "hidden");
+  assert.equal(p2View.objects[p3RoleRef!]?.templateId, undefined);
 });
 
 test("nextAliveSeat skips dead players in circular order", () => {

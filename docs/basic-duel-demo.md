@@ -109,5 +109,5 @@ The same generated assets are declared in `packages/rulesets/sample-duel/asset-m
 
 ## Known Follow-Up
 
-- The UI uses an admin projection because it is hotseat and intentionally shows both hands on one screen. A networked two-browser version should use player projections and hide the opponent hand.
+- The default Studio UI uses an admin projection because it is hotseat and intentionally shows both hands on one screen. Player and spectator client modes are available through `?client=player&playerId=p1`, `?client=player&playerId=p2`, and `?client=spectator`; these modes fetch server projections, ignore local Studio drafts, hide authoring panels, render hidden hands as card backs, and block spectator or wrong-seat commands.
 - The current 1v1 runtime now resolves core hand, battlefield, weapon, and deck widgets through board region `dataSource.zoneType`. Future generic widgets still need richer data-source selectors for non-zone collections, filtered object sets, and table summaries.

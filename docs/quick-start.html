@@ -262,6 +262,10 @@
         gap: 10px;
       }
 
+      .steps.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .step {
         min-height: 128px;
         padding: 12px;
@@ -274,6 +278,87 @@
         display: block;
         margin-bottom: 6px;
         color: var(--teal);
+      }
+
+      .build-hero {
+        padding: 14px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
+        gap: 14px;
+        border: 1px solid #b9d9d4;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(223, 240, 237, 0.94), rgba(255, 255, 255, 0.86));
+      }
+
+      .mini-board {
+        min-height: 188px;
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+        border: 1px solid rgba(31, 118, 109, 0.28);
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.86)),
+          url("../packages/demo-basic-duel/public/assets/ember-duel-board.png") center / cover;
+      }
+
+      .mini-zone {
+        min-height: 48px;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        border: 1px solid rgba(30, 37, 37, 0.14);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .mini-card {
+        width: 92px;
+        min-height: 116px;
+        padding: 8px;
+        display: grid;
+        align-content: space-between;
+        border: 1px solid rgba(184, 85, 47, 0.36);
+        border-radius: 8px;
+        color: #fff;
+        background:
+          linear-gradient(180deg, rgba(31, 118, 109, 0.88), rgba(184, 85, 47, 0.88)),
+          url("../packages/demo-basic-duel/public/assets/cards/firebolt.png") center / cover;
+        box-shadow: 0 12px 24px rgba(34, 30, 24, 0.22);
+      }
+
+      .mini-card b,
+      .mini-card span {
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+      }
+
+      .file-map {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .file-item {
+        padding: 10px;
+        display: grid;
+        gap: 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .file-item code {
+        color: var(--accent-strong);
+        font-weight: 760;
+      }
+
+      .callout {
+        padding: 12px;
+        border: 1px solid rgba(200, 138, 37, 0.36);
+        border-radius: 8px;
+        background: #fff7e8;
       }
 
       .code-card {
@@ -320,6 +405,10 @@
         gap: 10px;
       }
 
+      .builder.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
       label {
         display: grid;
         gap: 5px;
@@ -362,7 +451,10 @@
       @media (max-width: 880px) {
         .topbar,
         .layout,
-        .builder {
+        .builder,
+        .builder.three,
+        .build-hero,
+        .file-map {
           grid-template-columns: 1fr;
         }
 
@@ -371,6 +463,7 @@
         }
 
         .steps,
+        .steps.two,
         .cards {
           grid-template-columns: 1fr;
         }
@@ -382,7 +475,7 @@
       <header class="topbar">
         <div>
           <h1>Millet Quick Start</h1>
-          <p class="subtle">Run the engine, play a Studio project, send your first API command, and pick the next doc to read.</p>
+          <p class="subtle">Create a tiny card game, run the engine, test a match, and learn which files to edit next.</p>
         </div>
         <nav class="top-actions" aria-label="Quick links">
           <a class="link-button" href="quick-start.md">Markdown Guide</a>
@@ -397,14 +490,16 @@
             <h2>Setup Checklist</h2>
             <p class="subtle">Progress is saved in this browser.</p>
             <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
-            <p class="status" id="progressText">0 of 6 complete</p>
+            <p class="status" id="progressText">0 of 8 complete</p>
           </div>
 
           <div class="checklist" id="checklist">
             <label class="check-item"><input type="checkbox" data-check="node"><span><strong>Node is ready</strong><br><span class="meta">Use Node.js 24 or newer.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="tests"><span><strong>Tests pass</strong><br><span class="meta">Run <code>npm test</code>.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="shape"><span><strong>Game shape chosen</strong><br><span class="meta">Pick one core loop, one card, and one win condition.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="scaffold"><span><strong>Starter files copied</strong><br><span class="meta">Create a ruleset folder from the generated scaffold commands.</span></span></label>
+            <label class="check-item"><input type="checkbox" data-check="registered"><span><strong>Project registered</strong><br><span class="meta">Add the ruleset to the server registry and Studio project list.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="server"><span><strong>Demo server runs</strong><br><span class="meta">Run <code>npm run demo</code>.</span></span></label>
-            <label class="check-item"><input type="checkbox" data-check="match"><span><strong>Created a match</strong><br><span class="meta">Click <code>New Match</code> in Ember Duel, Rune Duel, or Basic Trio.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="api"><span><strong>Sent an API command</strong><br><span class="meta">Use the command builder below.</span></span></label>
             <label class="check-item"><input type="checkbox" data-check="docs"><span><strong>Picked next doc</strong><br><span class="meta">Choose a role in the doc router.</span></span></label>
           </div>
@@ -414,13 +509,100 @@
 
         <section class="panel stack">
           <div class="tabs" role="tablist" aria-label="Quick start sections">
-            <button class="tab active" type="button" data-tab="play">Play</button>
+            <button class="tab active" type="button" data-tab="build">Build Game</button>
+            <button class="tab" type="button" data-tab="play">Play</button>
             <button class="tab" type="button" data-tab="api">API</button>
             <button class="tab" type="button" data-tab="author">Author</button>
             <button class="tab" type="button" data-tab="debug">Debug</button>
           </div>
 
-          <section class="tab-panel active" id="tab-play">
+          <section class="tab-panel active" id="tab-build">
+            <div class="build-hero">
+              <div class="stack">
+                <h2>Create A Simplified Card Game</h2>
+                <p class="subtle">This workshop builds the smallest useful Millet game: two players, health, a hand, a deck, one spell card, turn passing, state projection, and a browser Studio project. Keep the first version tiny; add lands, minions, prompts, or classes after the loop works.</p>
+                <div class="builder three">
+                  <label>Game name<input id="gameNameInput" value="Spark Garden"></label>
+                  <label>Ruleset id<input id="rulesetIdInput" value="spark-garden"></label>
+                  <label>Hero health<input id="healthInput" type="number" min="1" max="99" value="12"></label>
+                  <label>Spell name<input id="spellNameInput" value="Spark Bolt"></label>
+                  <label>Damage<input id="damageInput" type="number" min="1" max="20" value="3"></label>
+                  <label>Project label<input id="projectLabelInput" value="Spark Garden"></label>
+                </div>
+              </div>
+              <div class="mini-board" aria-label="Tiny game preview">
+                <div class="mini-zone"><strong>Opponent</strong><span id="miniOpponentHealth">12 health</span></div>
+                <div class="mini-zone">
+                  <div class="mini-card"><b id="miniSpellName">Spark Bolt</b><span id="miniSpellText">Deal 3 damage.</span></div>
+                  <span>Your hand</span>
+                </div>
+                <div class="mini-zone"><strong>You</strong><span id="miniPlayerHealth">12 health</span></div>
+              </div>
+            </div>
+
+            <div class="steps two">
+              <article class="step">
+                <strong>1. Define the loop</strong>
+                <p>Write the win condition first: each player starts at <span id="inlineHealth">12</span> health, casts <span id="inlineSpell">Spark Bolt</span>, and wins when the opponent reaches zero. Do not add more mechanics until this loop is playable.</p>
+              </article>
+              <article class="step">
+                <strong>2. Copy a small reference</strong>
+                <p>Use <code>sample-rune-duel</code> as the fastest template because it already has a compact 1v1 ruleset, browser presentation, tests, and project registration shape.</p>
+              </article>
+              <article class="step">
+                <strong>3. Rename the content</strong>
+                <p>Update ids, names, localization keys, card template ids, and behavior ids. Keep one card and one behavior until validation passes.</p>
+              </article>
+              <article class="step">
+                <strong>4. Register the ruleset</strong>
+                <p>Add the ruleset to <code>packages/server/src/ruleset-registry.ts</code> and add a project entry to <code>packages/demo-basic-duel/public/studio-projects.js</code>.</p>
+              </article>
+              <article class="step">
+                <strong>5. Prove it with tests</strong>
+                <p>Add one ruleset test: create setup events, cast the spell, assert opponent health changed, and assert the card moved to discard.</p>
+              </article>
+              <article class="step">
+                <strong>6. Open it in Studio</strong>
+                <p>Start the demo server and open <code>?project=<span id="inlineProjectId">spark-garden</span></code>. Click <code>New Match</code>, cast the spell, then check the battle log.</p>
+              </article>
+            </div>
+
+            <div class="file-map" aria-label="Files created by a tiny ruleset">
+              <div class="file-item"><code>game-definition.json</code><span>Declares players, zones, resources, UI catalogs, and behavior ids.</span></div>
+              <div class="file-item"><code>card-catalog.json</code><span>Declares card template ids, tags, text keys, and asset refs.</span></div>
+              <div class="file-item"><code>localization.json</code><span>Gives human names and rules text for cards and UI.</span></div>
+              <div class="file-item"><code>behaviors.json</code><span>Lists behavior ids expected by validation and tooling.</span></div>
+              <div class="file-item"><code>&lt;ruleset&gt;.ts</code><span>Creates setup events and structured behavior definitions.</span></div>
+              <div class="file-item"><code>ui/*.json</code><span>Board layout, presentation catalog, and playtest script for Studio.</span></div>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>1. Scaffold from the smallest 1v1 reference</span><button type="button" data-copy="scaffoldCommands">Copy</button></div>
+              <pre><code id="scaffoldCommands"></code></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>2. Minimal game-definition.json</span><button type="button" data-copy="gameDefinitionSnippet">Copy</button></div>
+              <pre><code id="gameDefinitionSnippet"></code></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>3. Minimal card and behavior content</span><button type="button" data-copy="contentSnippet">Copy</button></div>
+              <pre><code id="contentSnippet"></code></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-head"><span>4. Register and verify</span><button type="button" data-copy="verifyTinyGameCommands">Copy</button></div>
+              <pre><code id="verifyTinyGameCommands"></code></pre>
+            </div>
+
+            <div class="callout">
+              <h3>What to avoid in the first pass</h3>
+              <p class="subtle">Skip deck construction, matchmaking, custom art, elaborate timing windows, and many-card balance. First make one card change health through the command endpoint, then add one mechanic at a time.</p>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-play">
             <div class="steps">
               <article class="step">
                 <strong>1. Run tests</strong>
@@ -542,6 +724,23 @@ node --experimental-strip-types scripts/millet.mjs diff-state /tmp/left.json /tm
       const progressBar = document.querySelector("#progressBar");
       const progressText = document.querySelector("#progressText");
       const copyStatus = document.querySelector("#copyStatus");
+      const gameNameInput = document.querySelector("#gameNameInput");
+      const rulesetIdInput = document.querySelector("#rulesetIdInput");
+      const projectLabelInput = document.querySelector("#projectLabelInput");
+      const healthInput = document.querySelector("#healthInput");
+      const spellNameInput = document.querySelector("#spellNameInput");
+      const damageInput = document.querySelector("#damageInput");
+      const miniOpponentHealth = document.querySelector("#miniOpponentHealth");
+      const miniPlayerHealth = document.querySelector("#miniPlayerHealth");
+      const miniSpellName = document.querySelector("#miniSpellName");
+      const miniSpellText = document.querySelector("#miniSpellText");
+      const inlineHealth = document.querySelector("#inlineHealth");
+      const inlineSpell = document.querySelector("#inlineSpell");
+      const inlineProjectId = document.querySelector("#inlineProjectId");
+      const scaffoldCommands = document.querySelector("#scaffoldCommands");
+      const gameDefinitionSnippet = document.querySelector("#gameDefinitionSnippet");
+      const contentSnippet = document.querySelector("#contentSnippet");
+      const verifyTinyGameCommands = document.querySelector("#verifyTinyGameCommands");
 
       function readProgress() {
         try {
@@ -588,6 +787,161 @@ node --experimental-strip-types scripts/millet.mjs diff-state /tmp/left.json /tm
           document.querySelectorAll("[data-tab]").forEach((candidate) => candidate.classList.toggle("active", candidate === button));
           document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === "tab-" + button.dataset.tab));
         });
+      });
+
+      function slug(value, fallback) {
+        const normalized = String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        return normalized || fallback;
+      }
+
+      function snake(value, fallback) {
+        return slug(value, fallback).replace(/-/g, "_");
+      }
+
+      function clampInt(value, fallback, min, max) {
+        const number = Number.parseInt(value, 10);
+        if (!Number.isFinite(number)) {
+          return fallback;
+        }
+        return Math.min(max, Math.max(min, number));
+      }
+
+      function updateBuildGuide() {
+        const gameName = gameNameInput.value.trim() || "Spark Garden";
+        const rulesetId = slug(rulesetIdInput.value || gameName, "spark-garden");
+        const projectLabel = projectLabelInput.value.trim() || gameName;
+        const health = clampInt(healthInput.value, 12, 1, 99);
+        const damage = clampInt(damageInput.value, 3, 1, 20);
+        const spellName = spellNameInput.value.trim() || "Spark Bolt";
+        const spellTemplate = snake(spellName, "spark_bolt");
+        const spellBehavior = spellTemplate;
+        const titleKey = "card." + spellTemplate + ".name";
+        const textKey = "card." + spellTemplate + ".description";
+
+        rulesetIdInput.value = rulesetId;
+        miniOpponentHealth.textContent = health + " health";
+        miniPlayerHealth.textContent = health + " health";
+        miniSpellName.textContent = spellName;
+        miniSpellText.textContent = "Deal " + damage + " damage.";
+        inlineHealth.textContent = String(health);
+        inlineSpell.textContent = spellName;
+        inlineProjectId.textContent = rulesetId;
+
+        scaffoldCommands.textContent = [
+          '# Create a tiny 1v1 ruleset from the compact reference project.',
+          'RULESET_ID="' + rulesetId + '"',
+          'cp -R packages/rulesets/sample-rune-duel "packages/rulesets/$RULESET_ID"',
+          'mv "packages/rulesets/$RULESET_ID/sample-rune-duel.ts" "packages/rulesets/$RULESET_ID/$RULESET_ID.ts"',
+          'mv "packages/rulesets/$RULESET_ID/sample-rune-duel.test.ts" "packages/rulesets/$RULESET_ID/$RULESET_ID.test.ts"',
+          '',
+          '# Then rename ids inside the copied files.',
+          'rg "sample-rune-duel|sampleRuneDuel|rune-duel|Rune Duel|rune_duel|rune_dart|Rune Dart" "packages/rulesets/$RULESET_ID"'
+        ].join("\n");
+
+        gameDefinitionSnippet.textContent = JSON.stringify({
+          id: rulesetId,
+          version: "0.1.0",
+          metadata: {
+            name: gameName,
+            description: "A tiny Millet 1v1 game with one spell, health, turns, and projected hands."
+          },
+          playerConfig: {
+            minPlayers: 2,
+            maxPlayers: 2
+          },
+          zones: [
+            { id: "hand", zoneType: "hand", scope: "player" },
+            { id: "deck", zoneType: "deck", scope: "player" },
+            { id: "discard", zoneType: "discard", scope: "match" }
+          ],
+          resources: [
+            { id: "health", defaultMax: health },
+            { id: "mana", defaultMax: 1 },
+            { id: "fatigue", defaultCurrent: 0 }
+          ],
+          turnGraph: ["turn_start", "draw", "main", "turn_end"],
+          cardCatalog: "card-catalog.json",
+          ui: {
+            defaultBoardLayout: "ui/" + rulesetId + "-board-layout.json",
+            boardLayouts: ["ui/" + rulesetId + "-board-layout.json"],
+            defaultPresentationCatalog: "ui/" + rulesetId + "-presentation.json",
+            presentationCatalogs: ["ui/" + rulesetId + "-presentation.json"],
+            defaultPlaytestScript: "ui/" + rulesetId + "-playtests.json",
+            playtestScripts: ["ui/" + rulesetId + "-playtests.json"]
+          },
+          behaviors: [spellBehavior, "refresh_mana", "open_main_prompt"]
+        }, null, 2);
+
+        contentSnippet.textContent = [
+          'card-catalog.json',
+          JSON.stringify({
+            id: rulesetId + "-cards",
+            version: "0.1.0",
+            templates: [
+              {
+                templateId: spellTemplate,
+                version: "0.1.0",
+                objectType: "card",
+                nameKey: titleKey,
+                descriptionKey: textKey,
+                tags: ["spell"],
+                behaviorIds: [spellBehavior],
+                assetRefs: ["card-frame-default", "card-art-firebolt"]
+              }
+            ]
+          }, null, 2),
+          '',
+          'localization.json',
+          JSON.stringify({
+            id: rulesetId + "-en",
+            locale: "en-US",
+            strings: {
+              [titleKey]: spellName,
+              [textKey]: "Deal " + damage + " damage to the enemy hero."
+            }
+          }, null, 2),
+          '',
+          'Behavior idea for ' + rulesetId + '.ts',
+          spellBehavior + ': {',
+          '  id: "' + spellBehavior + '",',
+          '  version: "0.1.0",',
+          '  kind: "card",',
+          '  selectors: [{ id: "target", from: "players", count: { min: 1, max: 1 }, match: { status: "alive", notSelf: true } }],',
+          '  effects: [',
+          '    {',
+          '      type: "deal_damage",',
+          '      to: { selector: "target" },',
+          '      amount: ' + damage + ',',
+          '      reason: "' + spellBehavior + '"',
+          '    },',
+          '    { type: "move_card", object: "self", toZoneId: "zone_discard", reason: "played" }',
+          '  ],',
+          '}'
+        ].join("\n");
+
+        verifyTinyGameCommands.textContent = [
+          '# Register this ruleset in packages/server/src/ruleset-registry.ts.',
+          '# Register the Studio project in packages/demo-basic-duel/public/studio-projects.js:',
+          '{ id: "' + rulesetId + '", label: "' + projectLabel + '", rulesetId: "' + rulesetId + '", mode: "playable", summary: "Tiny 1v1 quick-start game." }',
+          '',
+          '# Then verify content and behavior.',
+          'node --experimental-strip-types scripts/millet.mjs validate packages/rulesets/' + rulesetId,
+          'node --experimental-strip-types scripts/millet.mjs deps-ruleset packages/rulesets/' + rulesetId,
+          'npm test',
+          'npm run demo',
+          '',
+          '# Open:',
+          'http://127.0.0.1:8787/?project=' + rulesetId
+        ].join("\n");
+      }
+
+      [gameNameInput, rulesetIdInput, projectLabelInput, healthInput, spellNameInput, damageInput].forEach((control) => {
+        control.addEventListener("input", updateBuildGuide);
+        control.addEventListener("change", updateBuildGuide);
       });
 
       const createMatchCommand = document.querySelector("#createMatchCommand");
@@ -727,6 +1081,7 @@ node --experimental-strip-types scripts/millet.mjs diff-state /tmp/left.json /tm
       });
 
       restoreProgress();
+      updateBuildGuide();
       updateApiCommand();
       updateDocLinks();
     </script>

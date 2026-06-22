@@ -107,6 +107,11 @@ if (STUDIO_PROJECTS.length === 0) {
 }
 
 const urlParams = new URLSearchParams(window.location.search);
+const CLIENT_MODE = normalizeClientMode(urlParams.get("client"));
+const VIEWER_PLAYER_ID = CLIENT_MODE === "player" ? normalizePlayerId(urlParams.get("playerId") ?? urlParams.get("player")) : "";
+const IS_STUDIO_CLIENT = CLIENT_MODE === "studio";
+const IS_PLAYER_CLIENT = CLIENT_MODE === "player";
+const IS_SPECTATOR_CLIENT = CLIENT_MODE === "spectator";
 const ACTIVE_PROJECT = resolveStudioProject(urlParams);
 const RULESET_ID = ACTIVE_PROJECT.rulesetId;
 const RULESET_BASE_URL = `/content/rulesets/${RULESET_ID}`;
@@ -523,8 +528,8 @@ const PLAYER_NAMES = {
   p2: "Player 2"
 };
 
-let matchId = "";
-let selectedPlayerId = "p1";
+let matchId = normalizeMatchId(urlParams.get("matchId"));
+let selectedPlayerId = defaultSelectedPlayerId();
 let state = null;
 let events = [];
 let commandCounter = 0;
@@ -708,6 +713,9 @@ loadAuthoredPresentationCatalog();
 loadAssetManifest();
 loadPreviewFixtures();
 loadPlaytestScripts();
+if (matchId) {
+  refresh().catch((error) => showError(error instanceof Error ? error.message : "Could not load match."));
+}
 
 function normalizeStudioProjects(projects) {
   if (!Array.isArray(projects)) {
@@ -740,6 +748,74 @@ function studioProjectText(value, fallback) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : fallback;
 }
 
+function normalizeClientMode(value) {
+  if (value === "player") {
+    return "player";
+  }
+  if (value === "spectator" || value === "watch") {
+    return "spectator";
+  }
+  return "studio";
+}
+
+function normalizePlayerId(value) {
+  return value === "p2" ? "p2" : "p1";
+}
+
+function normalizeMatchId(value) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : "";
+}
+
+function defaultSelectedPlayerId() {
+  return IS_PLAYER_CLIENT ? VIEWER_PLAYER_ID : "p1";
+}
+
+function clientModeLabel() {
+  if (IS_PLAYER_CLIENT) {
+    return `${PLAYER_NAMES[VIEWER_PLAYER_ID] ?? VIEWER_PLAYER_ID} Client`;
+  }
+  if (IS_SPECTATOR_CLIENT) {
+    return "Spectator Client";
+  }
+  return "Millet Studio";
+}
+
+function viewerUserId() {
+  return VIEWER_PLAYER_ID ? userIdForPlayer(VIEWER_PLAYER_ID) : "";
+}
+
+function readViewerQuery() {
+  if (IS_STUDIO_CLIENT) {
+    return "admin=true";
+  }
+  if (IS_PLAYER_CLIENT) {
+    return `playerId=${encodeURIComponent(VIEWER_PLAYER_ID)}`;
+  }
+  return "";
+}
+
+function readViewerHeaders() {
+  if (IS_STUDIO_CLIENT) {
+    return { "x-millet-admin": "true" };
+  }
+  if (IS_PLAYER_CLIENT) {
+    return { "x-millet-user-id": viewerUserId() };
+  }
+  return {};
+}
+
+function readViewerUrl(path) {
+  const query = readViewerQuery();
+  return query ? `${path}?${query}` : path;
+}
+
+function canClientSubmitForPlayer(playerId) {
+  if (IS_SPECTATOR_CLIENT) {
+    return false;
+  }
+  return IS_STUDIO_CLIENT || playerId === VIEWER_PLAYER_ID;
+}
+
 function labelFromProjectId(value) {
   return String(value ?? "Project")
     .replace(/[_-]+/g, " ")
@@ -755,6 +831,9 @@ function legacyStudioStorageKey(kind, rulesetId) {
 }
 
 function readStudioStorage(key, legacyKey = "") {
+  if (!IS_STUDIO_CLIENT) {
+    return null;
+  }
   const current = localStorage.getItem(key);
   return current !== null || !legacyKey ? current : localStorage.getItem(legacyKey);
 }
@@ -764,6 +843,9 @@ function hasStudioStorage(key, legacyKey = "") {
 }
 
 function writeStudioStorage(key, value, legacyKey = "") {
+  if (!IS_STUDIO_CLIENT) {
+    return;
+  }
   localStorage.setItem(key, value);
   if (legacyKey) {
     localStorage.removeItem(legacyKey);
@@ -771,6 +853,9 @@ function writeStudioStorage(key, value, legacyKey = "") {
 }
 
 function removeStudioStorage(key, legacyKey = "") {
+  if (!IS_STUDIO_CLIENT) {
+    return;
+  }
   localStorage.removeItem(key);
   if (legacyKey) {
     localStorage.removeItem(legacyKey);
@@ -786,17 +871,32 @@ function resolveStudioProject(params) {
 
   const rulesetId = params.get("ruleset");
   const rulesetProject = STUDIO_PROJECTS.find((project) => project.rulesetId === rulesetId);
-  return rulesetProject ?? STUDIO_PROJECTS[0];
+  if (rulesetProject) {
+    return rulesetProject;
+  }
+  if (!IS_STUDIO_CLIENT) {
+    return STUDIO_PROJECTS.find((project) => project.id === "mana-clash") ?? STUDIO_PROJECTS[0];
+  }
+  return STUDIO_PROJECTS[0];
 }
 
 function installStudioShell() {
-  document.title = `Millet Studio · ${ACTIVE_PROJECT.label}`;
+  document.title = `${clientModeLabel()} · ${ACTIVE_PROJECT.label}`;
   document.body.dataset.projectId = ACTIVE_PROJECT.id;
   document.body.dataset.rulesetId = ACTIVE_PROJECT.rulesetId;
   document.body.dataset.projectMode = ACTIVE_PROJECT.mode;
+  document.body.dataset.clientMode = CLIENT_MODE;
+  if (VIEWER_PLAYER_ID) {
+    document.body.dataset.viewerPlayerId = VIEWER_PLAYER_ID;
+  }
+  const eyebrow = document.querySelector(".studio-eyebrow");
+  if (eyebrow) {
+    eyebrow.textContent = clientModeLabel();
+  }
   if (dom.projectTitle) {
     dom.projectTitle.textContent = ACTIVE_PROJECT.label;
   }
+  configureClientShellControls();
   if (dom.projectSelect) {
     dom.projectSelect.innerHTML = STUDIO_PROJECTS.map((project) => `
       <option value="${escapeAttr(project.id)}" ${project.id === ACTIVE_PROJECT.id ? "selected" : ""}>
@@ -814,10 +914,45 @@ function installStudioShell() {
       : "This project currently provides authored preview fixtures.";
   }
   if (dom.playArea) {
-    dom.playArea.setAttribute("aria-label", `Scaled ${ACTIVE_PROJECT.label} project play area`);
+    dom.playArea.setAttribute("aria-label", `Scaled ${ACTIVE_PROJECT.label} ${CLIENT_MODE} play area`);
   }
   if (dom.arena) {
-    dom.arena.setAttribute("aria-label", `${ACTIVE_PROJECT.label} project board`);
+    dom.arena.setAttribute("aria-label", `${ACTIVE_PROJECT.label} ${CLIENT_MODE} board`);
+  }
+}
+
+function configureClientShellControls() {
+  const studioOnlyControls = [
+    dom.previewPanelButton,
+    dom.assetLibraryButton,
+    dom.cardStudioButton,
+    dom.presentationEditorButton,
+    dom.layoutEditorButton,
+    dom.playtestPanelButton,
+    dom.projectSelect?.closest(".project-switcher")
+  ];
+  studioOnlyControls.forEach((control) => {
+    if (control) {
+      control.hidden = !IS_STUDIO_CLIENT;
+    }
+  });
+
+  if (!IS_STUDIO_CLIENT) {
+    previewPanelOpen = false;
+    assetLibraryOpen = false;
+    cardStudioOpen = false;
+    presentationEditorOpen = false;
+    layoutEditorOpen = false;
+    playtestPanelOpen = false;
+    dom.previewPanel.hidden = true;
+    dom.assetLibrary.hidden = true;
+    dom.cardStudio.hidden = true;
+    dom.presentationEditor.hidden = true;
+    dom.layoutEditor.hidden = true;
+    dom.playtestPanel.hidden = true;
+    dom.layoutGuides?.setAttribute("aria-hidden", "true");
+    dom.arena?.classList.remove("layout-editing");
+    document.body.classList.remove("layout-editor-open");
   }
 }
 
@@ -833,6 +968,12 @@ function switchStudioProject(projectId) {
 }
 
 function studioIdleLine() {
+  if (IS_PLAYER_CLIENT) {
+    return `${ACTIVE_PROJECT.summary} ${PLAYER_NAMES[VIEWER_PLAYER_ID] ?? VIEWER_PLAYER_ID} sees only their projected seat. Start a match or join one with matchId in the URL.`;
+  }
+  if (IS_SPECTATOR_CLIENT) {
+    return `${ACTIVE_PROJECT.summary} Spectator view receives public state only and cannot submit commands.`;
+  }
   return ACTIVE_PROJECT.mode === "playable"
     ? `${ACTIVE_PROJECT.summary} Start a match, or edit the project's assets, cards, presentation, and layout.`
     : `${ACTIVE_PROJECT.summary} Open Preview, Layout, Assets, Cards, or Presentation to edit project content.`;
@@ -861,7 +1002,8 @@ async function startMatch() {
   }
 
   matchId = payload.matchId;
-  selectedPlayerId = "p1";
+  rememberMatchId(matchId);
+  selectedPlayerId = defaultSelectedPlayerId();
   selectedAction = null;
   await refresh();
 }
@@ -872,12 +1014,22 @@ async function refresh() {
   }
 
   const [statePayload, replayPayload] = await Promise.all([
-    fetchJson(`/matches/${matchId}/state?admin=true`, { "x-millet-admin": "true" }),
-    fetchJson(`/matches/${matchId}/replay?admin=true`, { "x-millet-admin": "true" })
+    fetchJson(readViewerUrl(`/matches/${matchId}/state`), readViewerHeaders()),
+    fetchJson(readViewerUrl(`/matches/${matchId}/replay`), readViewerHeaders())
   ]);
   state = statePayload.state;
   events = replayPayload.events ?? [];
   render();
+}
+
+function rememberMatchId(nextMatchId) {
+  if (!nextMatchId) {
+    return;
+  }
+  const params = new URLSearchParams(window.location.search);
+  params.set("matchId", nextMatchId);
+  const query = params.toString();
+  window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
 }
 
 async function fetchJson(url, headers = {}) {
@@ -904,6 +1056,11 @@ async function submitCommand(type, payload, playerId = selectedPlayerId) {
   }
 
   const actingPlayerId = playerId;
+  if (!canClientSubmitForPlayer(actingPlayerId)) {
+    showError(IS_SPECTATOR_CLIENT ? "Spectator clients cannot submit commands." : `This client cannot act as ${actingPlayerId}.`);
+    return;
+  }
+
   const command = {
     id: `cmd_demo_${actingPlayerId}_${++commandCounter}`,
     matchId,
@@ -916,7 +1073,7 @@ async function submitCommand(type, payload, playerId = selectedPlayerId) {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-millet-user-id": actingPlayerId === "p1" ? "u1" : "u2"
+      "x-millet-user-id": IS_PLAYER_CLIENT ? viewerUserId() : userIdForPlayer(actingPlayerId)
     },
     body: JSON.stringify({ command })
   });
@@ -929,7 +1086,7 @@ async function submitCommand(type, payload, playerId = selectedPlayerId) {
   await refresh();
   playCommandEffect(command);
   const activePlayerId = state?.turn?.activePlayerId;
-  if (activePlayerId) {
+  if (activePlayerId && IS_STUDIO_CLIENT) {
     selectedPlayerId = activePlayerId;
     render();
   }
@@ -940,6 +1097,9 @@ function answerPrompt(promptId, answer, responderId) {
 }
 
 function selectPlayer(playerId) {
+  if (!IS_STUDIO_CLIENT && playerId !== VIEWER_PLAYER_ID) {
+    return;
+  }
   selectedPlayerId = playerId;
   render();
 }
@@ -6629,9 +6789,15 @@ function layoutWidgetUsage(widgetId) {
   return layoutRegions().filter((region) => region.widgetId === widgetId).length;
 }
 
-function runtimeRegionIdForPlayer(playerId, kind) {
-  const side = playerId === "p2" ? "opponent" : "player";
+function runtimeRegionIdForPlayer(playerId, kind, side = defaultRenderSideForPlayer(playerId)) {
   return `${side}_${kind}`;
+}
+
+function defaultRenderSideForPlayer(playerId) {
+  if (IS_PLAYER_CLIENT) {
+    return playerId === VIEWER_PLAYER_ID ? "player" : "opponent";
+  }
+  return playerId === "p2" ? "opponent" : "player";
 }
 
 function layoutRegionMetadata(regionId) {
@@ -7888,6 +8054,8 @@ function render() {
   dom.endTurnButton.disabled = previewMode || !canSelectedPlayerAct();
   dom.selectP1.classList.toggle("selected", selectedPlayerId === "p1");
   dom.selectP2.classList.toggle("selected", selectedPlayerId === "p2");
+  dom.selectP1.disabled = !IS_STUDIO_CLIENT && VIEWER_PLAYER_ID !== "p1";
+  dom.selectP2.disabled = !IS_STUDIO_CLIENT && VIEWER_PLAYER_ID !== "p2";
   dom.previewPanelButton?.classList.toggle("selected", previewPanelOpen || previewMode);
   const absolutePreview = shouldRenderAbsolutePreviewBoard();
   dom.arena?.classList.toggle("absolute-preview-active", absolutePreview);
@@ -7913,9 +8081,11 @@ function render() {
     dom.turnText.textContent = `${PLAYER_NAMES[activePlayerId] ?? activePlayerId} preview`;
     dom.statusText.innerHTML = `<span class="result">Read-only fixture</span>`;
   } else {
-    dom.matchLine.textContent = `${matchId} · sequence ${state.lastSequence}`;
+    dom.matchLine.textContent = `${matchId} · sequence ${state.lastSequence} · ${clientModeLabel()}`;
     dom.turnText.textContent = `${PLAYER_NAMES[activePlayerId] ?? activePlayerId} to act`;
-    dom.statusText.innerHTML = state.status === "completed" ? `<span class="result">Completed</span>` : `Phase ${state.turn.phaseId ?? "setup"}`;
+    dom.statusText.innerHTML = state.status === "completed"
+      ? `<span class="result">Completed</span>`
+      : `Phase ${state.turn.phaseId ?? "setup"}${IS_STUDIO_CLIENT ? "" : ` · ${escapeHtml(IS_PLAYER_CLIENT ? VIEWER_PLAYER_ID : "public")}`}`;
   }
 
   renderActionPanel();
@@ -7927,8 +8097,9 @@ function render() {
     if (dom.absolutePreviewBoard) {
       dom.absolutePreviewBoard.innerHTML = "";
     }
-    dom.p2Panel.innerHTML = renderPlayer("p2");
-    dom.p1Panel.innerHTML = renderPlayer("p1");
+    const slots = boardPlayerSlots();
+    dom.p2Panel.innerHTML = renderPlayer(slots.top.playerId, slots.top.side);
+    dom.p1Panel.innerHTML = renderPlayer(slots.bottom.playerId, slots.bottom.side);
   }
   bindActionButtons();
   bindNaturalActions();
@@ -7942,6 +8113,20 @@ function render() {
 
 function shouldRenderAbsolutePreviewBoard() {
   return previewMode && Boolean(state) && (Object.keys(state.players ?? {}).length > 2 || boardLayoutDocument?.id === "sanguosha-eight-player-board");
+}
+
+function boardPlayerSlots() {
+  if (IS_PLAYER_CLIENT && VIEWER_PLAYER_ID === "p2") {
+    return {
+      top: { playerId: "p1", side: "opponent" },
+      bottom: { playerId: "p2", side: "player" }
+    };
+  }
+
+  return {
+    top: { playerId: "p2", side: "opponent" },
+    bottom: { playerId: "p1", side: "player" }
+  };
 }
 
 function renderActionPanel() {
@@ -8076,6 +8261,10 @@ function renderPromptPassAction(prompt, responder, actions) {
 
 function canAnswerPrompt(prompt, responder) {
   if (previewMode || !state || !prompt || prompt.status !== "open" || !responder) {
+    return false;
+  }
+
+  if (!canClientSubmitForPlayer(responder)) {
     return false;
   }
 
@@ -8325,21 +8514,21 @@ function playerIdForSeatRegion(regionId) {
   return match ? `p${match[1]}` : null;
 }
 
-function renderPlayer(playerId) {
-  const regionIds = runtimeRegionIdsForPlayer(playerId);
-  const heroRegionId = regionIds.find((regionId) => layoutRegionMetadata(regionId).kind === "hero") ?? runtimeRegionIdForPlayer(playerId, "hero");
+function renderPlayer(playerId, side = defaultRenderSideForPlayer(playerId)) {
+  const regionIds = runtimeRegionIdsForPlayer(playerId, side);
+  const heroRegionId = regionIds.find((regionId) => layoutRegionMetadata(regionId).kind === "hero") ?? runtimeRegionIdForPlayer(playerId, "hero", side);
   const collectionRegionIds = regionIds.filter((regionId) => ["battlefield", "land", "equipment", "hand", "deck"].includes(layoutRegionMetadata(regionId).kind));
 
   return `
     ${renderRuntimeRegion(heroRegionId, { playerId })}
-    <section class="zones" data-region-group="${escapeAttr(playerId === "p2" ? "opponent" : "player")}">
+    <section class="zones" data-region-group="${escapeAttr(side)}">
       ${collectionRegionIds.map((regionId) => renderRuntimeRegion(regionId, { playerId })).join("")}
     </section>
   `;
 }
 
-function runtimeRegionIdsForPlayer(playerId) {
-  const ownerScope = playerId === "p2" ? "opponent" : "player";
+function runtimeRegionIdsForPlayer(playerId, side = defaultRenderSideForPlayer(playerId)) {
+  const ownerScope = side;
   const authored = Array.isArray(boardLayoutDocument?.regions)
     ? boardLayoutDocument.regions
       .filter((region) => region && typeof region === "object" && region.ownerScope === ownerScope && ["hero", "battlefield", "land", "equipment", "hand", "deck"].includes(region.kind))
@@ -8350,7 +8539,7 @@ function runtimeRegionIdsForPlayer(playerId) {
 
   const fallback = authored.length > 0
     ? []
-    : ["hero", "battlefield", "equipment", "hand", "deck"].map((kind) => runtimeRegionIdForPlayer(playerId, kind));
+    : ["hero", "battlefield", "equipment", "hand", "deck"].map((kind) => runtimeRegionIdForPlayer(playerId, kind, side));
   return uniqueValues([...authored, ...fallback]);
 }
 
@@ -8815,6 +9004,10 @@ function canSelectedPlayerAct() {
 
 function canPlayerAct(playerId) {
   if (!state || state.status === "completed") {
+    return false;
+  }
+
+  if (!canClientSubmitForPlayer(playerId)) {
     return false;
   }
 

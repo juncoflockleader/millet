@@ -97,12 +97,15 @@ test("identity projection does not leak hidden non-owner role templates", () => 
   for (const viewerId of Object.keys(state.players)) {
     const projected = projectState(state, { playerId: viewerId });
     for (const roleId of roleIds) {
-      const object = projected.objects[roleId]!;
       const ownerId = state.objects[roleId]!.ownerId;
       const isLord = state.objects[roleId]!.templateId === "lord";
       if (ownerId !== viewerId && !isLord) {
-        assert.equal(object.templateId, undefined, `${viewerId} should not see ${roleId}`);
-        assert.equal(object.objectType, "hidden");
+        const projectedRoleRef = ownerId ? projected.players[ownerId]?.roleRef : undefined;
+        assert.match(projectedRoleRef ?? "", /^hidden_/, `${viewerId} should receive a redacted ref for ${roleId}`);
+        assert.equal(projected.objects[roleId], undefined, `${viewerId} should not receive original id ${roleId}`);
+        const object = projectedRoleRef ? projected.objects[projectedRoleRef] : undefined;
+        assert.equal(object?.templateId, undefined, `${viewerId} should not see ${roleId}`);
+        assert.equal(object?.objectType, "hidden");
       }
     }
   }

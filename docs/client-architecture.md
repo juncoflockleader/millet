@@ -1,10 +1,10 @@
 # Client Architecture
 
-Status: proposed next architecture slice
+Status: first player/spectator browser slice implemented
 
 Millet currently has a strong Studio/Admin client. It is excellent for server setup, ruleset debugging, replay inspection, content authoring, and local hotseat dogfooding because it can see both players' hands and can exercise any authored action. That is intentionally not the player experience.
 
-The next client milestone is to split runtime clients by trust level and viewer role.
+The implemented first slice splits the existing browser shell by trust level and viewer role. Studio/Admin remains the authoring and hotseat surface; player and spectator modes now request server-projected state/replay payloads.
 
 ## Goals
 
@@ -75,11 +75,13 @@ Command authorization remains server-side. Even if a malicious client sends a co
 
 ## Player Client Shell
 
-The player client should be a separate runtime shell from Studio.
+The long-term player client should be a separate runtime shell from Studio. The first implemented slice uses the same browser bundle with a separate client mode so the projection and UX boundaries can be dogfooded immediately.
 
 Recommended first slice:
 
-- route: `?client=player&playerId=p1` or a dedicated package such as `packages/player-client`
+- route: `?client=player&playerId=p1` or `?client=player&playerId=p2`
+- spectator route: `?client=spectator`
+- optional reconnect/join parameter: `matchId=<id>`
 - no authoring panels
 - no admin replay button
 - no project editor controls
@@ -95,6 +97,14 @@ The shell still loads:
 - asset manifest
 - projected match state
 - projected replay/events
+
+Current local-development routes:
+
+- P1 client: `http://127.0.0.1:8787/?project=mana-clash&client=player&playerId=p1`
+- P2 client for the same match: `http://127.0.0.1:8787/?project=mana-clash&client=player&playerId=p2&matchId=<matchId>`
+- Spectator for the same match: `http://127.0.0.1:8787/?project=mana-clash&client=spectator&matchId=<matchId>`
+
+In player/spectator mode, local Studio drafts are ignored, authoring panels are hidden, the selected acting player is locked to the viewer, and spectator commands are disabled.
 
 ## Rendering Model
 
@@ -209,7 +219,7 @@ Acceptance checks:
 
 After the first player shell works:
 
-- Add spectator client mode.
+- Split the player client into a dedicated package or route-owned bundle.
 - Add projected legal-action metadata.
 - Add private prompt renderers for response windows.
 - Add reconnect UI using projected replay from `lastSequence`.

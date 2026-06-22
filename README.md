@@ -9,7 +9,7 @@ The current implementation covers the M0-M8 milestone path as a set of tested pr
 Start with `docs/index.md`.
 
 - `docs/quick-start.md` gets you from checkout to a playable match and API command.
-- `docs/quick-start.html` is a standalone interactive quick-start page with checklist, command builder, and doc router.
+- `docs/quick-start.html` is a standalone interactive quick-start page with a tiny-game workshop, checklist, command builder, and doc router.
 - `docs/concepts.md` explains the engine model.
 - `docs/ruleset-authoring.md` explains how to modify or create rulesets.
 - `docs/server-api.md` covers HTTP, SSE, WebSocket, projection, and command submission.

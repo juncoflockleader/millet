@@ -47,13 +47,15 @@ test("projected SSE backlog redacts hidden identity events", () => {
   const match = service.createMatch("sample-identity");
   const events = projectedBacklogEvents(match, { playerId: "p2", seatId: "seat_2" });
   const hiddenRoleEvent = events.find((event) => {
-    const payload = event.payload as { object?: { id?: string } };
-    return event.type === "object_created" && payload.object?.id === "role_p3";
+    const payload = event.payload as { object?: { id?: string; objectType?: string } };
+    return event.type === "object_created" && payload.object?.objectType === "hidden";
   });
 
   assert.ok(hiddenRoleEvent);
-  assert.equal((hiddenRoleEvent.payload as { object?: { objectType?: string; templateId?: string } }).object?.objectType, "hidden");
-  assert.equal((hiddenRoleEvent.payload as { object?: { objectType?: string; templateId?: string } }).object?.templateId, undefined);
+  const payload = hiddenRoleEvent.payload as { object?: { id?: string; objectType?: string; templateId?: string } };
+  assert.match(payload.object?.id ?? "", /^hidden_/);
+  assert.equal(payload.object?.templateId, undefined);
+  assert.doesNotMatch(JSON.stringify(events), /role_p3/);
 });
 
 test("attached SSE stream writes future projected match events and can unsubscribe", () => {

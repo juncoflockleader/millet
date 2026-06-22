@@ -1,4 +1,4 @@
-import type { GameObjectState, MatchEvent, MatchState, PromptState, Visibility } from "./types.ts";
+import type { GameObjectState, Id, MatchEvent, MatchState, PlayerState, PromptState, Visibility } from "./types.ts";
 
 export interface ViewerContext {
   playerId?: string;
@@ -31,9 +31,14 @@ function canView(visibility: Visibility, object: Pick<GameObjectState, "ownerId"
   }
 }
 
-function redactObject(object: GameObjectState): GameObjectState {
+function redactedObjectId(object: GameObjectState): Id {
+  const zone = object.zoneId.replace(/[^a-zA-Z0-9_-]+/g, "_");
+  return `hidden_${zone}_${object.createdAtSequence}`;
+}
+
+function redactObject(object: GameObjectState, id = redactedObjectId(object)): GameObjectState {
   return {
-    id: object.id,
+    id,
     objectType: "hidden",
     zoneId: object.zoneId,
     position: object.position,
@@ -51,10 +56,39 @@ function redactObject(object: GameObjectState): GameObjectState {
 
 export function projectState(state: MatchState, viewer: ViewerContext): MatchState {
   const projected = structuredClone(state);
+  const redactedIds = new Map<Id, Id>();
 
-  for (const [objectId, object] of Object.entries(projected.objects)) {
+  for (const [objectId, object] of Object.entries(state.objects)) {
     if (!canView(object.visibility, object, viewer)) {
-      projected.objects[objectId] = redactObject(object);
+      redactedIds.set(objectId, redactedObjectId(object));
+    }
+  }
+
+  projected.objects = Object.fromEntries(
+    Object.entries(state.objects).map(([objectId, object]) => {
+      const redactedId = redactedIds.get(objectId);
+      return redactedId
+        ? [redactedId, redactObject(object, redactedId)]
+        : [objectId, structuredClone(object)];
+    })
+  );
+
+  for (const zone of Object.values(projected.zones)) {
+    zone.objectIds = zone.objectIds.map((objectId) => redactedIds.get(objectId) ?? objectId);
+  }
+
+  for (const object of Object.values(projected.objects)) {
+    object.attachments = object.attachments.map((objectId) => redactedIds.get(objectId) ?? objectId);
+    object.modifiers = object.modifiers.map((objectId) => redactedIds.get(objectId) ?? objectId);
+  }
+
+  for (const player of Object.values(projected.players)) {
+    projectPlayerRefs(player, redactedIds);
+  }
+
+  for (const trigger of projected.triggers) {
+    if (trigger.sourceObjectId && redactedIds.has(trigger.sourceObjectId)) {
+      trigger.sourceObjectId = redactedIds.get(trigger.sourceObjectId)!;
     }
   }
 
@@ -89,7 +123,9 @@ export function projectEvent(event: MatchEvent, _state: MatchState, viewer: View
     }
   }
 
-  return structuredClone(event);
+  const projected = structuredClone(event);
+  projected.payload = projectPayloadReferences(projected.payload, _state, viewer);
+  return projected;
 }
 
 export function projectPrompt(prompt: PromptState, viewer: ViewerContext): PromptState | null {
@@ -98,4 +134,72 @@ export function projectPrompt(prompt: PromptState, viewer: ViewerContext): Promp
   }
 
   return null;
+}
+
+function projectPlayerRefs(player: PlayerState, redactedIds: Map<Id, Id>): void {
+  for (const key of ["roleRef", "characterRef", "heroRef"] as const) {
+    const ref = player[key];
+    if (ref && redactedIds.has(ref)) {
+      player[key] = redactedIds.get(ref);
+    }
+  }
+}
+
+function projectPayloadReferences(payload: unknown, state: MatchState, viewer: ViewerContext): unknown {
+  if (Array.isArray(payload)) {
+    return payload.map((value) => projectPayloadReferences(value, state, viewer));
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return payload;
+  }
+
+  const source = payload as Record<string, unknown>;
+  const hiddenObjectRef = hiddenReferencedObject(source, state, viewer);
+  const next: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(source)) {
+    if (key === "templateId" && hiddenObjectRef) {
+      continue;
+    }
+
+    if (isObjectReferenceKey(key) && typeof value === "string") {
+      next[key] = projectObjectReference(value, state, viewer);
+      continue;
+    }
+
+    if (key === "objectIds" && Array.isArray(value)) {
+      next[key] = value.map((objectId) =>
+        typeof objectId === "string" ? projectObjectReference(objectId, state, viewer) : objectId
+      );
+      continue;
+    }
+
+    next[key] = projectPayloadReferences(value, state, viewer);
+  }
+
+  return next;
+}
+
+function hiddenReferencedObject(payload: Record<string, unknown>, state: MatchState, viewer: ViewerContext): GameObjectState | undefined {
+  for (const key of ["objectId", "sourceObjectId", "targetObjectId", "roleRef", "characterRef", "heroRef"]) {
+    const objectId = payload[key];
+    if (typeof objectId === "string") {
+      const object = state.objects[objectId];
+      if (object && !canView(object.visibility, object, viewer)) {
+        return object;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function isObjectReferenceKey(key: string): boolean {
+  return key === "objectId" || key === "sourceObjectId" || key === "targetObjectId" || key === "roleRef" || key === "characterRef" || key === "heroRef";
+}
+
+function projectObjectReference(objectId: Id, state: MatchState, viewer: ViewerContext): Id {
+  const object = state.objects[objectId];
+  return object && !canView(object.visibility, object, viewer) ? redactedObjectId(object) : objectId;
 }

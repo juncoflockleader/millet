@@ -51,6 +51,22 @@ async function dispatch(
   };
 }
 
+type ProjectedStateShape = {
+  players: Record<string, { resources: Record<string, { current: number; max?: number }> }>;
+  zones: Record<string, { objectIds: string[] }>;
+  objects: Record<string, { id?: string; objectType?: string; templateId?: string; exhausted?: boolean }>;
+};
+
+function assertProjectedHand(state: ProjectedStateShape, playerId: "p1" | "p2") {
+  const objectIds = state.zones[`zone_hand_${playerId}`]?.objectIds ?? [];
+  assert.ok(objectIds.length > 0);
+  for (const objectId of objectIds) {
+    assert.match(objectId, /^hidden_/);
+    assert.equal(state.objects[objectId]?.objectType, "hidden");
+    assert.equal(state.objects[objectId]?.templateId, undefined);
+  }
+}
+
 test("HTTP server can be constructed around the match API handler", () => {
   const server = createMilletHttpServer();
   assert.equal(typeof server.listen, "function");
@@ -421,13 +437,120 @@ test("HTTP state endpoint returns viewer-projected match state", async () => {
 
   assert.equal(response.statusCode, 200);
   const state = response.json.state as {
-    objects: Record<string, { objectType?: string; templateId?: string }>;
+    objects: Record<string, { id?: string; objectType?: string; templateId?: string }>;
   };
   assert.equal(state.objects.card_coin_p2?.templateId, "coin");
-  assert.equal(state.objects.card_firebolt?.objectType, "hidden");
-  assert.equal(state.objects.card_firebolt?.templateId, undefined);
+  assert.equal(state.objects.card_firebolt, undefined);
+  const hiddenObject = Object.values(state.objects).find((object) => object.objectType === "hidden");
+  assert.match(hiddenObject?.id ?? "", /^hidden_/);
+  assert.equal(hiddenObject?.templateId, undefined);
+  assert.doesNotMatch(JSON.stringify(response.json), /card_firebolt/);
   assert.equal(state.objects.minion_loot?.templateId, "loot_minion");
   assert.equal(state.objects.weapon_axe_p1?.templateId, "training_axe");
+});
+
+test("HTTP Mana Clash player and spectator projections hide hands and enforce command sessions", async () => {
+  const service = new InMemoryMatchService();
+  const match = service.createMatch("sample-mana-clash", { demoDuel: true });
+  const server = createMilletHttpServer(service);
+
+  const p1 = await dispatch(server, {
+    method: "GET",
+    url: `/matches/${match.id}/state?playerId=p1`,
+    headers: { "x-millet-user-id": "u1" }
+  });
+  const p2 = await dispatch(server, {
+    method: "GET",
+    url: `/matches/${match.id}/state?playerId=p2`,
+    headers: { "x-millet-user-id": "u2" }
+  });
+  const spectator = await dispatch(server, {
+    method: "GET",
+    url: `/matches/${match.id}/state`
+  });
+
+  assert.equal(p1.statusCode, 200);
+  assert.equal(p2.statusCode, 200);
+  assert.equal(spectator.statusCode, 200);
+  assertProjectedHand(p1.json.state as ProjectedStateShape, "p2");
+  assertProjectedHand(p2.json.state as ProjectedStateShape, "p1");
+  assertProjectedHand(spectator.json.state as ProjectedStateShape, "p1");
+  assertProjectedHand(spectator.json.state as ProjectedStateShape, "p2");
+  assert.doesNotMatch(JSON.stringify(p1.json), /card_(verdant_land|ember_land|river_bear|cinder_bolt|sky_drake)_p2/);
+  assert.doesNotMatch(JSON.stringify(p2.json), /card_(verdant_land|ember_land|river_bear|cinder_bolt|sky_drake)_p1/);
+  assert.doesNotMatch(JSON.stringify(spectator.json), /card_(verdant_land|ember_land|river_bear|cinder_bolt|sky_drake)_p[12]/);
+
+  const replay = await dispatch(server, {
+    method: "GET",
+    url: `/matches/${match.id}/replay?playerId=p1`,
+    headers: { "x-millet-user-id": "u1" }
+  });
+  assert.equal(replay.statusCode, 200);
+  assert.doesNotMatch(JSON.stringify(replay.json), /card_(verdant_land|ember_land|river_bear|cinder_bolt|sky_drake)_p2/);
+
+  const spoofed = await dispatch(server, {
+    method: "POST",
+    url: `/matches/${match.id}/commands`,
+    headers: { "x-millet-user-id": "u1" },
+    body: {
+      command: {
+        id: "cmd_http_spoofed_p2_end_turn",
+        matchId: match.id,
+        playerId: "p2",
+        type: "end_turn",
+        payload: {}
+      }
+    }
+  });
+  assert.equal(spoofed.statusCode, 403);
+  assert.equal(spoofed.json.error, "authorization_error");
+
+  const playLand = await dispatch(server, {
+    method: "POST",
+    url: `/matches/${match.id}/commands`,
+    headers: { "x-millet-user-id": "u1" },
+    body: {
+      command: {
+        id: "cmd_http_p1_play_land",
+        matchId: match.id,
+        playerId: "p1",
+        type: "execute_behavior",
+        payload: {
+          behaviorId: "play_land",
+          sourceObjectId: "card_verdant_land_p1"
+        }
+      }
+    }
+  });
+  assert.equal(playLand.statusCode, 200);
+
+  const tapLand = await dispatch(server, {
+    method: "POST",
+    url: `/matches/${match.id}/commands`,
+    headers: { "x-millet-user-id": "u1" },
+    body: {
+      command: {
+        id: "cmd_http_p1_tap_land",
+        matchId: match.id,
+        playerId: "p1",
+        type: "execute_behavior",
+        payload: {
+          behaviorId: "tap_land_for_mana",
+          sourceObjectId: "card_verdant_land_p1"
+        }
+      }
+    }
+  });
+  assert.equal(tapLand.statusCode, 200);
+
+  const updated = await dispatch(server, {
+    method: "GET",
+    url: `/matches/${match.id}/state?playerId=p1`,
+    headers: { "x-millet-user-id": "u1" }
+  });
+  const updatedState = updated.json.state as ProjectedStateShape;
+  assert.equal(updatedState.players.p1?.resources.mana.current, 1);
+  assert.equal(updatedState.objects.card_verdant_land_p1?.exhausted, true);
 });
 
 test("HTTP replay endpoint returns projected events after a sequence cursor", async () => {
@@ -455,9 +578,10 @@ test("HTTP replay endpoint returns projected events after a sequence cursor", as
   });
   assert.equal(projected.statusCode, 200);
   const projectedEvents = projected.json.events as { type: string; payload: { object?: { id?: string; objectType?: string; templateId?: string } } }[];
-  const hiddenFirebolt = projectedEvents.find((event) => event.type === "object_created" && event.payload.object?.id === "card_firebolt");
-  assert.equal(hiddenFirebolt?.payload.object?.objectType, "hidden");
+  const hiddenFirebolt = projectedEvents.find((event) => event.type === "object_created" && event.payload.object?.objectType === "hidden");
+  assert.match(hiddenFirebolt?.payload.object?.id ?? "", /^hidden_/);
   assert.equal(hiddenFirebolt?.payload.object?.templateId, undefined);
+  assert.doesNotMatch(JSON.stringify(projected.json), /card_firebolt/);
 
   const admin = await dispatch(server, {
     method: "GET",

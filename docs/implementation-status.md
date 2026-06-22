@@ -11,7 +11,7 @@ Goal: implement M0-M8 from `docs/milestones.md`.
 
 Latest local result:
 
-- 197 tests passing.
+- 204 tests passing.
 
 Basic 1v1 demo smoke:
 
@@ -31,6 +31,7 @@ Latest local result:
 - Playtest panel smoke confirmed Millet Studio reports browser-local draft status, loads authored ruleset playtest scripts, runs the selected Ember Duel `Firebolt Smoke` script through live match APIs, updates the board to the generated match, summarizes replay metrics, renders a state diff, exposes selectable event payload JSON, and routes the Sanguosha Identity preview project back to fixture previews.
 - Rune Duel dogfood smoke confirmed a second playable 1v1 Studio project can register its own ruleset, layout, presentation catalog, preview fixture, and playtest script; run a `Rune Dart Smoke` script through live match APIs; and use presentation-driven card actions with non-Ember template ids.
 - Rune Duel gap-fill smoke confirmed 1v1 runtime widgets resolve core zones from board region `dataSource.zoneType`, behavior UX `visualEffect` hints drive VFX choice, and Ember Duel still keeps its existing Firebolt flow.
+- Player/spectator client smoke confirmed `?project=mana-clash&client=player&playerId=p1`, `playerId=p2`, and `client=spectator` fetch projected state/replay payloads, hide opponent hands as card backs, omit hidden hand object/template ids from DOM and network payloads, ignore Studio authoring controls/drafts, block wrong-seat/spectator commands, let P1 play and tap `Verdant Land` for `1/99` mana, and support a two-browser turn handoff where P1 ends turn, P2 reconnects by `matchId`, then plays/taps their own land without leaking P1 hand ids.
 - Basic Trio dogfood research mapped the early Basic card behavior surface for Mage, Warrior, Priest, and neutral cards against current Millet capabilities, then scaffolded and gap-filled `sample-basic-trio` with class damage, draw, healing, armor absorption, weapon durability, runtime token summon, object-target damage, matching-player/object area damage, deterministic random targeting, object freeze/readiness cleanup, hero-freeze resource gating, minion-to-hero freeze, weapon-plus-hero-attack stacking, charge-like attack expiry, selector-level Taunt routing, damaged/max-health selectors, object healing, heal-triggered draw, dynamic stat expressions, target-object UI selection, and neutral minion bodies.
 - Basic Trio browser smoke loaded `?project=basic-trio`, cast `Ember Lance` from Player 1 into Player 2, selected `Frost Pin` and clicked an enemy minion object target, observed object health drop from 7 to 4 and the frozen keyword event, ran `Mage Lance Smoke`, `Mage Spell Power Smoke`, `Mage Hero Freeze Smoke`, `Mage Glacier Hero Freeze Smoke`, `Neutral Battlecry Smoke`, `Warrior Axe Smoke`, `Warrior Reaper Smoke`, `Warrior Storm Runner Smoke`, `Warrior Drummer Smoke`, `Warrior Banner Aura Smoke`, `Warrior Focus Smoke`, `Warrior Focus Axe Smoke`, `Warrior Rush Expiry Smoke`, `Warrior Area Smoke`, `Warrior Random Smoke`, `Warrior Edict Smoke`, `Priest Mind Smoke`, `Priest Glimpse Smoke`, `Priest Bloom Smoke`, `Priest Control Smoke`, `Priest Verdict Smoke`, `Mage Board Tools Smoke`, `Mage Area Smoke`, `Mage Stasis Column Smoke`, `Mage Glacier Smoke`, `Mage Random Smoke`, `Mage Transform Smoke`, and `Neutral Minion Play Smoke` successfully through the Playtest panel, and confirmed compact card rows no longer block adjacent deck controls inside the `1280 x 720` viewport. Thirty-four generated card-art PNGs are saved under `assets/cards/basic-trio/` with real manifest hashes.
 - Basic Trio multi-action browser smoke loaded `?project=basic-trio`, confirmed `Ember Lance` and `Frost Pin` each render Hero and Minion action buttons, confirmed the Minion actions carry `targetZoneKinds: board`, selected `Ember Lance -> Minion`, observed only the enemy board Ogre highlighted as a valid target, clicked it, and verified Ogre health `7 -> 1`, `card_ember_lance_p1` moved to discard, and Player 1 mana `10 -> 6` while the play area stayed within a `1280 x 760` viewport.
@@ -445,6 +446,7 @@ Implemented:
 - Service-side command authorization for match id, seated player, player status, source-object control, prompt responders, active-player end turn, and active-player behavior execution.
 - Structured HTTP error payloads for authorization, invalid JSON, and engine command rejections.
 - User-session authorization that maps `userId` to seated player ownership for commands and private projections.
+- Projected hidden objects now use synthetic `hidden_*` ids in state, replay, SSE, and WebSocket payloads so hidden card/role template-ish object ids do not leak through zones, player refs, triggers, attachments, logs, or reconnect streams.
 - HTTP prototype session headers:
   - `x-millet-user-id`
   - `x-millet-admin`

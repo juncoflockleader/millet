@@ -2,6 +2,8 @@
 
 This guide gets you from a fresh checkout to a playable match, a validated ruleset, and a working API call path.
 
+For a guided browser version, open [Interactive Quick Start](quick-start.html). It includes a step-by-step workshop for creating a simplified two-player card game from the smallest reference ruleset, with copyable scaffold commands and starter content snippets.
+
 ## Requirements
 
 - Node.js `>=24`.
@@ -28,8 +30,8 @@ node scripts/run-tests.mjs
 Expected result:
 
 ```text
-tests 141
-pass 141
+tests 204
+pass 204
 fail 0
 ```
 
@@ -59,7 +61,20 @@ Play loop:
 
 The browser shell is Millet Studio. `Ember Duel` is the default playable project inside it, and the `Project` switcher changes the active ruleset project. Choose `Rune Duel` or open `?project=rune-duel` to try the second 1v1 dogfood game built from the same engine capabilities but different card/template ids. Choose `Basic Trio` or open `?project=basic-trio` to inspect the early-basic behavior dogfood for Mage, Warrior, and Priest style classes. Use click-to-select or drag-to-target for hero, battlefield, and object-target actions. Use `Preview` to inspect read-only UI fixture states, `Assets` to inspect the ruleset asset manifest, create local asset drafts, import image files, and promote imported drafts through the local authoring server, `Cards` to inspect card template drafts, compare card text with generated behavior summaries, edit card art/frame/crop presentation, edit property badge layouts, validate equipment and minion metadata, and promote reviewed card catalog drafts, `Presentation` to edit local card/hero presentation drafts plus hero ability badges and validation, `Layout` to edit the viewport-fitted board layout with board templates, document fields, region presets, region and widget inspectors, authored region/widget guides, diagnostics, snap-to-grid canvas drag/resize, copy/flip/fill actions, and full `BoardLayoutJson` import/export, and `Playtest` to inspect active browser-local drafts, select authored ruleset playtest scripts, run them through live match APIs, inspect replay event payloads, and review state diffs. Add `?project=sanguosha-identity` or legacy `?ruleset=sample-identity` to inspect the Sanguosha-like eight-player layout preview project.
 
-The browser demo is hotseat and intentionally uses an admin projection so both hands are visible on one screen. A networked client should use player projections instead.
+The default browser shell is Millet Studio and intentionally uses an admin projection so both hands are visible for hotseat debugging. To test projected player clients, open Mana Clash with a viewer mode:
+
+```text
+http://127.0.0.1:8787/?project=mana-clash&client=player&playerId=p1
+```
+
+After `New Match`, copy the `matchId` from the URL and open the other seat or a spectator:
+
+```text
+http://127.0.0.1:8787/?project=mana-clash&client=player&playerId=p2&matchId=<matchId>
+http://127.0.0.1:8787/?project=mana-clash&client=spectator&matchId=<matchId>
+```
+
+Player clients receive only their own hand plus public board state. Spectators receive public state only and cannot submit commands.
 
 ## 3. Create A Match Through HTTP
 

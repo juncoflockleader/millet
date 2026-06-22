@@ -126,13 +126,16 @@ test("match service authorizes projected viewers from user sessions", () => {
     return event.type === "object_created" && payload.object?.id === "role_p2";
   });
   const otherRoleEvent = reconnect.events.find((event) => {
-    const payload = event.payload as { object?: { id?: string } };
-    return event.type === "object_created" && payload.object?.id === "role_p3";
+    const payload = event.payload as { object?: { id?: string; objectType?: string } };
+    return event.type === "object_created" && payload.object?.objectType === "hidden";
   });
 
   assert.equal((ownRoleEvent?.payload as { object?: { templateId?: string } }).object?.templateId, "loyalist");
-  assert.equal((otherRoleEvent?.payload as { object?: { templateId?: string; objectType?: string } }).object?.templateId, undefined);
-  assert.equal((otherRoleEvent?.payload as { object?: { objectType?: string } }).object?.objectType, "hidden");
+  const otherRolePayload = otherRoleEvent?.payload as { object?: { id?: string; templateId?: string; objectType?: string } } | undefined;
+  assert.match(otherRolePayload?.object?.id ?? "", /^hidden_/);
+  assert.equal(otherRolePayload?.object?.templateId, undefined);
+  assert.equal(otherRolePayload?.object?.objectType, "hidden");
+  assert.doesNotMatch(JSON.stringify(reconnect.events), /role_p3/);
 });
 
 test("match service end_turn advances to next player and starts their phase graph", () => {
@@ -496,13 +499,15 @@ test("match reconnect projects historical events for the viewer", () => {
   const match = service.createMatch("sample-identity");
   const reconnect = service.reconnect(match.id, { playerId: "p2", seatId: "seat_2" }, 0);
   const hiddenRoleEvent = reconnect.events.find((event) => {
-    const payload = event.payload as { object?: { id?: string } };
-    return event.type === "object_created" && payload.object?.id === "role_p3";
+    const payload = event.payload as { object?: { id?: string; objectType?: string } };
+    return event.type === "object_created" && payload.object?.objectType === "hidden";
   });
 
   assert.ok(hiddenRoleEvent);
-  assert.equal((hiddenRoleEvent.payload as { object?: { objectType?: string; templateId?: string } }).object?.objectType, "hidden");
-  assert.equal((hiddenRoleEvent.payload as { object?: { objectType?: string; templateId?: string } }).object?.templateId, undefined);
+  const payload = hiddenRoleEvent.payload as { object?: { id?: string; objectType?: string; templateId?: string } };
+  assert.match(payload.object?.id ?? "", /^hidden_/);
+  assert.equal(payload.object?.templateId, undefined);
+  assert.doesNotMatch(JSON.stringify(reconnect.events), /role_p3/);
 });
 
 test("match service schedules guarded prompt default passes", () => {

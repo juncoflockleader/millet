@@ -85,10 +85,11 @@ test("attached WebSocket stream writes projected backlog and hides private ident
   const eventMessage = messages.find((message) => message.type === "events");
   assert.ok(eventMessage);
   const events = eventMessage.events as { type: string; payload: { object?: { id?: string; objectType?: string; templateId?: string } } }[];
-  const hiddenRoleEvent = events.find((event) => event.type === "object_created" && event.payload.object?.id === "role_p3");
+  const hiddenRoleEvent = events.find((event) => event.type === "object_created" && event.payload.object?.objectType === "hidden");
   assert.ok(hiddenRoleEvent);
-  assert.equal(hiddenRoleEvent.payload.object?.objectType, "hidden");
+  assert.match(hiddenRoleEvent.payload.object?.id ?? "", /^hidden_/);
   assert.equal(hiddenRoleEvent.payload.object?.templateId, undefined);
+  assert.doesNotMatch(JSON.stringify(events), /role_p3/);
 });
 
 test("attached WebSocket stream queues frames while the sink is backpressured", () => {
